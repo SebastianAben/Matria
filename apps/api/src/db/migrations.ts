@@ -92,6 +92,46 @@ export const migrations: Migration[] = [
         ON structured_observations(encounter_id);
     `,
   },
+  {
+    id: '0004',
+    name: 'ai-review-lifecycle',
+    sql: `
+      CREATE TABLE IF NOT EXISTS generated_outputs (
+        id uuid PRIMARY KEY,
+        encounter_id uuid NOT NULL REFERENCES encounters(id),
+        kind text NOT NULL,
+        status text NOT NULL,
+        content text NOT NULL,
+        preserves_rule_result_ids jsonb NOT NULL DEFAULT '[]'::jsonb,
+        uncertainty_notes jsonb NOT NULL DEFAULT '[]'::jsonb,
+        created_at timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE TABLE IF NOT EXISTS clinical_approvals (
+        id uuid PRIMARY KEY,
+        output_id uuid NOT NULL REFERENCES generated_outputs(id),
+        approver_user_id uuid NOT NULL,
+        action text NOT NULL,
+        edited_content text,
+        created_at timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE TABLE IF NOT EXISTS patient_memory_entries (
+        id uuid PRIMARY KEY,
+        patient_id uuid NOT NULL REFERENCES patients(id),
+        pregnancy_episode_id uuid NOT NULL REFERENCES pregnancy_episodes(id),
+        encounter_id uuid NOT NULL REFERENCES encounters(id),
+        source_output_id uuid NOT NULL REFERENCES generated_outputs(id),
+        content text NOT NULL,
+        created_at timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_generated_outputs_encounter_id
+        ON generated_outputs(encounter_id);
+      CREATE INDEX IF NOT EXISTS idx_patient_memory_scope
+        ON patient_memory_entries(patient_id, pregnancy_episode_id);
+    `,
+  },
 ];
 
 export async function ensureMigrationTable(database: Database) {

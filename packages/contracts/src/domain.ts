@@ -117,6 +117,16 @@ export const generatedOutputSchema = z.object({
   createdAt: isoDateTimeSchema,
 });
 
+export const patientMemoryEntrySchema = z.object({
+  id: idSchema,
+  patientId: idSchema,
+  pregnancyEpisodeId: idSchema,
+  encounterId: idSchema,
+  sourceOutputId: idSchema,
+  content: z.string().min(1),
+  createdAt: isoDateTimeSchema,
+});
+
 export const clinicalApprovalSchema = z.object({
   id: idSchema,
   outputId: idSchema,
@@ -157,6 +167,7 @@ export type PreflightPrompt = z.infer<typeof preflightPromptSchema>;
 export type UncertaintyAnnotation = z.infer<typeof uncertaintyAnnotationSchema>;
 export type ClinicalPreflight = z.infer<typeof clinicalPreflightSchema>;
 export type GeneratedOutput = z.infer<typeof generatedOutputSchema>;
+export type PatientMemoryEntry = z.infer<typeof patientMemoryEntrySchema>;
 export type ClinicalApproval = z.infer<typeof clinicalApprovalSchema>;
 export type FhirExport = z.infer<typeof fhirExportSchema>;
 export type AuditLog = z.infer<typeof auditLogSchema>;

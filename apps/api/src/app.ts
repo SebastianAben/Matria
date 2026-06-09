@@ -8,6 +8,19 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 
+import {
+  createGeminiSynthesisProvider,
+  createMedGemmaEvidenceToolAdapter,
+  type EvidenceToolAdapter,
+  type SynthesisProvider,
+} from './ai/ai-provider.js';
+import { createAiRouter } from './ai/ai-routes.js';
+import {
+  createInMemoryMemoryStore,
+  createInMemoryOutputStore,
+  type MemoryStore,
+  type OutputStore,
+} from './ai/output-store.js';
 import type { AuditWriter } from './audit/audit-log.js';
 import { createInMemoryAuditWriter } from './audit/audit-log.js';
 import { createAuthRouter } from './auth/auth-routes.js';
@@ -29,6 +42,10 @@ export type AppDependencies = {
   sessionStore?: SessionStore;
   auditWriter?: AuditWriter;
   clinicalStore?: ClinicalStore;
+  outputStore?: OutputStore;
+  memoryStore?: MemoryStore;
+  synthesisProvider?: SynthesisProvider;
+  evidenceTool?: EvidenceToolAdapter;
 };
 
 export async function createApp(config: AppConfig, dependencies: AppDependencies = {}) {
@@ -38,6 +55,10 @@ export async function createApp(config: AppConfig, dependencies: AppDependencies
   const sessionStore = dependencies.sessionStore ?? (await createInMemorySessionStore(config));
   const auditWriter = dependencies.auditWriter ?? createInMemoryAuditWriter();
   const clinicalStore = dependencies.clinicalStore ?? createInMemoryClinicalStore();
+  const outputStore = dependencies.outputStore ?? createInMemoryOutputStore();
+  const memoryStore = dependencies.memoryStore ?? createInMemoryMemoryStore();
+  const synthesisProvider = dependencies.synthesisProvider ?? createGeminiSynthesisProvider();
+  const evidenceTool = dependencies.evidenceTool ?? createMedGemmaEvidenceToolAdapter();
 
   app.use(helmet());
   app.use(cors());
@@ -68,6 +89,17 @@ export async function createApp(config: AppConfig, dependencies: AppDependencies
 
   app.use('/auth', createAuthRouter(sessionStore, auditWriter));
   app.use('/clinical', createClinicalRouter(clinicalStore, auditWriter));
+  app.use(
+    '/ai',
+    createAiRouter({
+      clinicalStore,
+      auditWriter,
+      outputStore,
+      memoryStore,
+      synthesisProvider,
+      evidenceTool,
+    }),
+  );
 
   app.get('/audit-logs', requirePermission('audit:read'), async (_req, res, next) => {
     try {

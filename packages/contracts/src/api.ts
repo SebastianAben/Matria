@@ -3,6 +3,8 @@ import { z } from 'zod';
 import {
   clinicalPreflightSchema,
   encounterSchema,
+  generatedOutputSchema,
+  patientMemoryEntrySchema,
   patientSchema,
   pregnancyEpisodeSchema,
   structuredObservationSchema,
@@ -76,6 +78,21 @@ export const createStructuredObservationRequestSchema = structuredObservationSch
   verifiedByClinician: true,
 });
 
+export const requestSynthesisRequestSchema = z.object({
+  kinds: z
+    .array(z.enum(['anc_note', 'risk_synthesis', 'missing_questions', 'referral_summary']))
+    .min(1)
+    .default(['anc_note', 'risk_synthesis', 'missing_questions', 'referral_summary']),
+});
+
+export const editGeneratedOutputRequestSchema = z.object({
+  content: z.string().min(1),
+});
+
+export const reviewGeneratedOutputRequestSchema = z.object({
+  editedContent: z.string().min(1).optional(),
+});
+
 export const patientResponseSchema = z.object({ data: patientSchema });
 export const pregnancyEpisodeResponseSchema = z.object({ data: pregnancyEpisodeSchema });
 export const encounterResponseSchema = z.object({ data: encounterSchema });
@@ -84,6 +101,11 @@ export const structuredObservationListResponseSchema = z.object({
   data: z.array(structuredObservationSchema),
 });
 export const clinicalPreflightResponseSchema = z.object({ data: clinicalPreflightSchema });
+export const generatedOutputResponseSchema = z.object({ data: generatedOutputSchema });
+export const generatedOutputListResponseSchema = z.object({ data: z.array(generatedOutputSchema) });
+export const patientMemoryListResponseSchema = z.object({
+  data: z.array(patientMemoryEntrySchema),
+});
 
 export type ApiError = z.infer<typeof apiErrorSchema>;
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
@@ -97,3 +119,6 @@ export type CreateEncounterRequest = z.infer<typeof createEncounterRequestSchema
 export type CreateStructuredObservationRequest = z.infer<
   typeof createStructuredObservationRequestSchema
 >;
+export type RequestSynthesisRequest = z.infer<typeof requestSynthesisRequestSchema>;
+export type EditGeneratedOutputRequest = z.infer<typeof editGeneratedOutputRequestSchema>;
+export type ReviewGeneratedOutputRequest = z.infer<typeof reviewGeneratedOutputRequestSchema>;

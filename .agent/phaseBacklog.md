@@ -8,7 +8,7 @@ Purpose: condensed actionable backlog for the next implementation sessions
 
 - Workspace contains `.agent` documentation plus the TypeScript monorepo scaffold.
 - Application scaffold exists for API, web, E2E, shared contracts, and synthetic fixtures.
-- Phase 3 clinical domain foundation is implemented with in-memory API persistence, deterministic preflight, and rules-engine tests.
+- Phase 4 AI orchestration and review lifecycle foundation is implemented with adapter boundaries, draft output lifecycle, approval-gated memory, and safety tests.
 - Product decisions are locked in `.agent/PRD.md`.
 
 ## Completed
@@ -21,10 +21,11 @@ Purpose: condensed actionable backlog for the next implementation sessions
 - Root quality gates pass locally: `format:check`, `lint`, `typecheck`, `test`, `build`, and `e2e`.
 - Phase 2 backend/API foundation section implemented locally on branch `codex/phase2-backend-api-foundation`.
 - Phase 3 initial clinical domain and rules engine foundation implemented locally.
+- Phase 4 initial AI orchestration and review lifecycle foundation implemented locally.
 
 ## Next Recommended Start
 
-Continue Phase 3 persistence hardening or return to pending Phase 2 backend foundation work.
+Continue persistence hardening or begin Phase 5 FHIR export after confirming whether the local Phase 2-4 work should be pushed.
 
 Recommended next batch:
 
@@ -34,6 +35,7 @@ Recommended next batch:
 4. Add seed data for roles and permissions.
 5. Add integration tests against a PostgreSQL test container or local database.
 6. Add rate limits and secure cookie production settings.
+7. Replace local deterministic AI provider stubs with configured provider implementations behind the existing adapter interfaces.
 
 ## Backend Backlog
 
@@ -48,8 +50,8 @@ Recommended next batch:
 - Structured observation APIs. Initial in-memory implementation complete.
 - Mandatory-field preflight. Initial implementation complete for systolic BP, diastolic BP, and gestational age.
 - Maternal red-flag rules. Initial implementation complete for severe hypertension and preeclampsia symptom cluster.
-- AI orchestration adapter boundaries.
-- Approval lifecycle.
+- AI orchestration adapter boundaries. Initial Gemini and MedGemma boundaries implemented with deterministic local adapters.
+- Approval lifecycle. Initial generated output edit, approve, reject, and approval-gated memory implemented.
 - FHIR R4 export.
 
 ## Frontend Backlog
@@ -70,6 +72,7 @@ Recommended next batch:
 - Vitest RBAC permission tests.
 - Vitest FHIR mapping tests.
 - Vitest audit logging tests.
+- Vitest AI orchestration and approval-gated memory tests.
 - Integration tests for encounter lifecycle.
 - Playwright clinician ANC flow.
 - Playwright admin RBAC flow.

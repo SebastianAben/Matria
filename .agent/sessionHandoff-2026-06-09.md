@@ -93,3 +93,32 @@ Notes:
 
 - `npm run build` and `npm run e2e` should be run serially because both use `apps/web/.next`.
 - `npm install` still reports 2 moderate vulnerabilities; no forced audit fix was applied.
+
+## Later Update - Phase 4 AI Orchestration and Review Lifecycle
+
+Implemented locally after Phase 3 foundation.
+
+Completed:
+
+- Shared contracts for generated output request/response schemas, review requests, and patient memory entries.
+- Authenticated AI API routes under `/ai` for encounter synthesis, output listing, editing, approval, rejection, and scoped patient memory retrieval.
+- Gemini synthesis and MedGemma evidence adapter boundaries with deterministic local implementations.
+- Synthesis preflight gating that blocks unresolved required prompts before provider calls.
+- Tool-call and provider audit records, including provider failure records.
+- Output validation that requires hard deterministic rule hits to be preserved and carries uncertainty notes forward.
+- Approval-gated patient memory writes scoped by patient and pregnancy episode.
+- PostgreSQL migration `0004` for generated output, clinical approval, and patient memory tables.
+
+Verification passed:
+
+- `npm run format:check`
+- `npm run lint`
+- `npm run typecheck`
+- `npm test`
+- `npm run build`
+- `npm run e2e`
+
+Notes:
+
+- Gemini and MedGemma are adapter boundaries only; real provider credentials, prompt governance, and provider clients remain pending.
+- `npm run build` and `npm run e2e` should still be run serially because both use `apps/web/.next`.

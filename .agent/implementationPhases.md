@@ -128,6 +128,8 @@ Implemented notes:
 
 ## 8. Phase 4 - AI Orchestration and Review Lifecycle
 
+Status: initial orchestration/review foundation implemented locally on 2026-06-09.
+
 Deliverables:
 
 - Gemini orchestration adapter.
@@ -142,6 +144,17 @@ Acceptance:
 - AI synthesis cannot run before preflight.
 - Provider failure leaves deterministic rules visible and does not create approved output.
 - Memory writes require approved output and correct scope.
+
+Implemented notes:
+
+- Express API exposes authenticated AI routes for encounter synthesis, generated output listing, edit, approve, reject, and scoped patient memory retrieval.
+- Gemini orchestration and MedGemma evidence are adapter boundaries with deterministic local implementations until provider credentials and model governance are configured.
+- AI synthesis reruns deterministic preflight and blocks when required prompts remain unresolved.
+- Tool-call and provider actions create audit records, including provider failure.
+- Output validation requires hard deterministic flags to be preserved and carries uncertainty notes into drafts.
+- Generated output lifecycle supports draft, edited, approved, and rejected states.
+- Approved outputs write scoped patient memory; draft, edited, and rejected outputs do not write memory.
+- Migration `0004` prepares tables for generated outputs, approvals, and patient memory entries.
 
 ## 9. Phase 5 - FHIR Export
 

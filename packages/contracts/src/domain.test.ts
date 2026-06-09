@@ -1,4 +1,10 @@
-import { clinicalPreflightSchema, roleNameSchema, ruleResultSchema } from './domain.js';
+import {
+  clinicalPreflightSchema,
+  generatedOutputSchema,
+  patientMemoryEntrySchema,
+  roleNameSchema,
+  ruleResultSchema,
+} from './domain.js';
 
 describe('domain contracts', () => {
   it('keeps RBAC role names explicit', () => {
@@ -44,5 +50,30 @@ describe('domain contracts', () => {
     });
 
     expect(parsed.readyForSynthesis).toBe(false);
+  });
+
+  it('models generated output review and approved patient memory', () => {
+    const output = generatedOutputSchema.parse({
+      id: 'b5985548-4248-4ae5-863e-ac14ff474a52',
+      encounterId: '964c1f2f-ad46-4e31-a7b9-a27d2f6405ba',
+      kind: 'risk_synthesis',
+      status: 'draft',
+      content: 'Draft risk synthesis.',
+      preservesRuleResultIds: ['44b6aa5b-f0f7-4884-b731-91813f0d44a9'],
+      uncertaintyNotes: ['Observation has not been verified by a clinician.'],
+      createdAt: '2026-06-09T14:18:28.000Z',
+    });
+    const memory = patientMemoryEntrySchema.parse({
+      id: '1595256f-dc25-47ec-acac-8eb5522cc5ac',
+      patientId: '6c9ea3be-0e4e-4e9c-93a3-6a9ec3556d9d',
+      pregnancyEpisodeId: 'd6643dfc-a07a-4961-b0c7-46736278721d',
+      encounterId: output.encounterId,
+      sourceOutputId: output.id,
+      content: output.content,
+      createdAt: '2026-06-09T14:18:28.000Z',
+    });
+
+    expect(output.status).toBe('draft');
+    expect(memory.sourceOutputId).toBe(output.id);
   });
 });
