@@ -158,6 +158,8 @@ Implemented notes:
 
 ## 9. Phase 5 - FHIR Export
 
+Status: initial FHIR export foundation implemented locally on 2026-06-09.
+
 Deliverables:
 
 - FHIR R4 formatter for approved encounter/referral summaries.
@@ -169,6 +171,16 @@ Acceptance:
 
 - FHIR export is blocked for draft or rejected output.
 - Generated FHIR artifacts validate against the project's schema expectations.
+
+Implemented notes:
+
+- Shared contracts now include FHIR export approval provenance through `approvingClinicianUserId`.
+- Express API exposes authenticated FHIR route `POST /fhir/outputs/:outputId/export`.
+- FHIR export is gated to approved generated outputs and requires approval provenance.
+- Generated artifacts are FHIR R4-style document Bundles with Composition, Patient, Encounter, DocumentReference, and Provenance resources.
+- Export artifacts are persisted through an in-memory store for local foundation work.
+- Migration `0005` prepares PostgreSQL persistence for FHIR export artifacts.
+- Vitest covers draft/rejected export blocking and approved output Bundle/provenance mapping.
 
 ## 10. Phase 6 - Web Clinical Workspace
 

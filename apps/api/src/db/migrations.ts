@@ -132,6 +132,26 @@ export const migrations: Migration[] = [
         ON patient_memory_entries(patient_id, pregnancy_episode_id);
     `,
   },
+  {
+    id: '0005',
+    name: 'fhir-export-artifacts',
+    sql: `
+      CREATE TABLE IF NOT EXISTS fhir_exports (
+        id uuid PRIMARY KEY,
+        encounter_id uuid NOT NULL REFERENCES encounters(id),
+        output_id uuid NOT NULL REFERENCES generated_outputs(id),
+        approving_clinician_user_id uuid NOT NULL,
+        status text NOT NULL,
+        artifact_json jsonb NOT NULL,
+        generated_at timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_fhir_exports_output_id
+        ON fhir_exports(output_id);
+      CREATE INDEX IF NOT EXISTS idx_fhir_exports_encounter_id
+        ON fhir_exports(encounter_id);
+    `,
+  },
 ];
 
 export async function ensureMigrationTable(database: Database) {

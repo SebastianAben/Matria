@@ -4,6 +4,7 @@ import {
   clinicalPreflightSchema,
   encounterSchema,
   generatedOutputSchema,
+  fhirExportSchema,
   patientMemoryEntrySchema,
   patientSchema,
   pregnancyEpisodeSchema,
@@ -106,6 +107,7 @@ export const generatedOutputListResponseSchema = z.object({ data: z.array(genera
 export const patientMemoryListResponseSchema = z.object({
   data: z.array(patientMemoryEntrySchema),
 });
+export const fhirExportResponseSchema = z.object({ data: fhirExportSchema });
 
 export type ApiError = z.infer<typeof apiErrorSchema>;
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
@@ -122,3 +124,4 @@ export type CreateStructuredObservationRequest = z.infer<
 export type RequestSynthesisRequest = z.infer<typeof requestSynthesisRequestSchema>;
 export type EditGeneratedOutputRequest = z.infer<typeof editGeneratedOutputRequestSchema>;
 export type ReviewGeneratedOutputRequest = z.infer<typeof reviewGeneratedOutputRequestSchema>;
+export type FhirExportResponse = z.infer<typeof fhirExportResponseSchema>;

@@ -122,3 +122,31 @@ Notes:
 
 - Gemini and MedGemma are adapter boundaries only; real provider credentials, prompt governance, and provider clients remain pending.
 - `npm run build` and `npm run e2e` should still be run serially because both use `apps/web/.next`.
+
+## Later Update - Phase 5 FHIR Export Foundation
+
+Implemented locally after Phase 4 foundation.
+
+Completed:
+
+- Shared FHIR export contract now records approving clinician provenance.
+- Authenticated FHIR export route added at `POST /fhir/outputs/:outputId/export`.
+- Export is blocked unless the generated output is approved and has approval provenance.
+- FHIR R4-style document Bundle formatter added with Composition, Patient, Encounter, DocumentReference, and Provenance resources.
+- In-memory FHIR export artifact store added for local foundation work.
+- PostgreSQL migration `0005` added for FHIR export artifact persistence.
+- Vitest coverage added for draft/rejected export blocking and approved Bundle/provenance export.
+
+Verification passed after the Phase 5 changes:
+
+- `npm run format:check`
+- `npm run typecheck`
+- `npm run lint`
+- `npm test`
+- `npm run build`
+- `npm run e2e`
+
+Notes:
+
+- `npm test` initially exposed an outdated readiness fixture that only listed migrations `0001`-`0004`; the fixture was updated for `0005` and the full quality gates passed afterward.
+- Next.js still reports the existing ESLint plugin warning during build and `allowedDevOrigins` warning during E2E.

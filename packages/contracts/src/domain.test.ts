@@ -1,5 +1,6 @@
 import {
   clinicalPreflightSchema,
+  fhirExportSchema,
   generatedOutputSchema,
   patientMemoryEntrySchema,
   roleNameSchema,
@@ -75,5 +76,22 @@ describe('domain contracts', () => {
 
     expect(output.status).toBe('draft');
     expect(memory.sourceOutputId).toBe(output.id);
+  });
+
+  it('models FHIR export provenance for approved outputs', () => {
+    const parsed = fhirExportSchema.parse({
+      id: 'f038ff92-8a3b-44fa-85e6-3102f69d95ca',
+      encounterId: '964c1f2f-ad46-4e31-a7b9-a27d2f6405ba',
+      outputId: 'b5985548-4248-4ae5-863e-ac14ff474a52',
+      approvingClinicianUserId: '343f9737-e017-469d-af7e-78cdd15a459f',
+      status: 'generated',
+      generatedAt: '2026-06-09T14:18:28.000Z',
+      artifactJson: {
+        resourceType: 'Bundle',
+        type: 'document',
+      },
+    });
+
+    expect(parsed.artifactJson).toMatchObject({ resourceType: 'Bundle' });
   });
 });

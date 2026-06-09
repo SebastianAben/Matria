@@ -140,6 +140,7 @@ export const fhirExportSchema = z.object({
   id: idSchema,
   encounterId: idSchema,
   outputId: idSchema,
+  approvingClinicianUserId: idSchema,
   status: z.enum(['generated', 'downloaded', 'voided']),
   artifactJson: z.record(z.unknown()),
   generatedAt: isoDateTimeSchema,

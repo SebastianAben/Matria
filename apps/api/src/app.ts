@@ -32,6 +32,8 @@ import { createInMemoryClinicalStore, type ClinicalStore } from './clinical/clin
 import type { AppConfig } from './config.js';
 import { createDatabase, type Database } from './db/client.js';
 import { errorHandler, notFoundHandler } from './errors.js';
+import { createFhirRouter } from './fhir/fhir-routes.js';
+import { createInMemoryFhirExportStore, type FhirExportStore } from './fhir/fhir-store.js';
 import { createLogger, type AppLogger } from './logger.js';
 import { buildReadiness } from './readiness.js';
 import { requestContextMiddleware } from './request-context.js';
@@ -46,6 +48,7 @@ export type AppDependencies = {
   memoryStore?: MemoryStore;
   synthesisProvider?: SynthesisProvider;
   evidenceTool?: EvidenceToolAdapter;
+  fhirExportStore?: FhirExportStore;
 };
 
 export async function createApp(config: AppConfig, dependencies: AppDependencies = {}) {
@@ -59,6 +62,7 @@ export async function createApp(config: AppConfig, dependencies: AppDependencies
   const memoryStore = dependencies.memoryStore ?? createInMemoryMemoryStore();
   const synthesisProvider = dependencies.synthesisProvider ?? createGeminiSynthesisProvider();
   const evidenceTool = dependencies.evidenceTool ?? createMedGemmaEvidenceToolAdapter();
+  const fhirExportStore = dependencies.fhirExportStore ?? createInMemoryFhirExportStore();
 
   app.use(helmet());
   app.use(cors());
@@ -98,6 +102,15 @@ export async function createApp(config: AppConfig, dependencies: AppDependencies
       memoryStore,
       synthesisProvider,
       evidenceTool,
+    }),
+  );
+  app.use(
+    '/fhir',
+    createFhirRouter({
+      auditWriter,
+      clinicalStore,
+      outputStore,
+      fhirExportStore,
     }),
   );
 
