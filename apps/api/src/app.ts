@@ -65,7 +65,17 @@ export async function createApp(config: AppConfig, dependencies: AppDependencies
   const fhirExportStore = dependencies.fhirExportStore ?? createInMemoryFhirExportStore();
 
   app.use(helmet());
-  app.use(cors());
+  app.use(
+    cors({
+      credentials: true,
+      origin: [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'http://localhost:3001',
+        'http://127.0.0.1:3001',
+      ],
+    }),
+  );
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
   app.use(requestContextMiddleware);

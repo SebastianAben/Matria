@@ -8,7 +8,7 @@ Purpose: condensed actionable backlog for the next implementation sessions
 
 - Workspace contains `.agent` documentation plus the TypeScript monorepo scaffold.
 - Application scaffold exists for API, web, E2E, shared contracts, and synthetic fixtures.
-- Phase 5 FHIR export foundation is implemented with approval-gated export, FHIR R4-style Bundle formatting, provenance, artifact persistence boundary, migration, and tests.
+- Phase 6 initial web clinical workspace is implemented with authenticated API workflow, encounter capture, preflight results, clinician review, approval/reject actions, FHIR export, and Playwright coverage.
 - Product decisions are locked in `.agent/PRD.md`.
 
 ## Completed
@@ -23,14 +23,15 @@ Purpose: condensed actionable backlog for the next implementation sessions
 - Phase 3 initial clinical domain and rules engine foundation implemented locally.
 - Phase 4 initial AI orchestration and review lifecycle foundation implemented locally.
 - Phase 5 initial FHIR export foundation implemented locally.
+- Phase 6 initial web clinical workspace implemented locally.
 
 ## Next Recommended Start
 
-Continue persistence hardening or begin Phase 6 web clinical workspace after confirming whether the local Phase 2-5 work should be pushed.
+Continue persistence hardening and production hardening after confirming whether the local Phase 2-6 work should be pushed.
 
 Recommended next batch:
 
-1. Review and confirm whether to push the backend/API section branch.
+1. Review and confirm whether to push the backend/API and web clinical workspace branch.
 2. Replace the in-memory clinical store with PostgreSQL-backed repositories using migration `0003`.
 3. Add real database-backed auth/session storage or document the transition from in-memory bootstrap sessions.
 4. Add seed data for roles and permissions.
@@ -58,13 +59,13 @@ Recommended next batch:
 
 ## Frontend Backlog
 
-- Authenticated app shell.
-- Clinical encounter capture.
-- Vitals and structured observation forms.
-- File upload surfaces for lab, record, audio, and ultrasound media.
-- Preflight results panel.
-- Clinician review workspace.
-- Approval/edit/reject flows.
+- Authenticated app shell. Initial implementation complete.
+- Clinical encounter capture. Initial API-backed demo workflow complete.
+- Vitals and structured observation forms. Initial seeded structured observation capture complete.
+- File upload surfaces for lab, record, audio, and ultrasound media. Initial UI surfaces complete; real upload persistence pending.
+- Preflight results panel. Initial implementation complete.
+- Clinician review workspace. Initial implementation complete.
+- Approval/edit/reject flows. Initial implementation complete.
 - Admin user and role management.
 - Audit log view.
 
@@ -76,7 +77,7 @@ Recommended next batch:
 - Vitest audit logging tests.
 - Vitest AI orchestration and approval-gated memory tests.
 - Integration tests for encounter lifecycle.
-- Playwright clinician ANC flow.
+- Playwright clinician ANC flow. Initial capture-to-FHIR workflow implemented.
 - Playwright admin RBAC flow.
 - Playwright unauthorized access flow.
 - Deployment smoke tests.
