@@ -70,6 +70,8 @@ Implemented notes:
 
 ## 6. Phase 2 - Backend Foundation
 
+Status: backend/API foundation section implemented locally on branch `codex/phase2-backend-api-foundation` on 2026-06-09. Push requires user confirmation.
+
 Deliverables:
 
 - Express runtime with structured config, logging, error handling, and request IDs.
@@ -85,6 +87,16 @@ Acceptance:
 - `/health` and `/ready` respond correctly.
 - RBAC middleware is covered by Vitest.
 - Readiness fails when database dependency is unavailable.
+
+Implemented notes:
+
+- Express runtime now has request context propagation, structured logger setup, centralized not-found and error handlers.
+- PostgreSQL pool creation and migration runner exist under `apps/api/src/db`.
+- Initial migrations cover pgvector extension enablement plus RBAC/audit foundation tables.
+- `/ready` checks database connectivity, pending migrations, pgvector availability, and contract health.
+- Auth/session foundation supports bootstrap admin login with secure HTTP-only session cookie semantics for local foundation work.
+- RBAC middleware protects `/audit-logs`, and Vitest covers unauthenticated and authorized access.
+- Audit writer has in-memory and database-backed implementations.
 
 ## 7. Phase 3 - Clinical Domain and Rules Engine
 

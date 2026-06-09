@@ -18,28 +18,29 @@ Purpose: condensed actionable backlog for the next implementation sessions
 - Environment, deployment, release, and provisioning docs seeded.
 - Phase 1 initial monorepo scaffold completed.
 - Root quality gates pass locally: `format:check`, `lint`, `typecheck`, `test`, `build`, and `e2e`.
+- Phase 2 backend/API foundation section implemented locally on branch `codex/phase2-backend-api-foundation`.
 
 ## Next Recommended Start
 
-Start with Phase 2: backend foundation.
+Continue Phase 2: backend foundation.
 
 Recommended next batch:
 
-1. Add structured logging and request context propagation.
-2. Add PostgreSQL connection and migration tooling.
-3. Add pgvector extension migration.
-4. Replace readiness placeholder with real database and migration checks.
-5. Add authentication/session foundation.
-6. Add RBAC entities, permission middleware, and audit logging infrastructure.
+1. Review and confirm whether to push the backend/API section branch.
+2. Add real database-backed auth/session storage or document the transition from in-memory bootstrap sessions.
+3. Add seed data for roles and permissions.
+4. Add integration tests against a PostgreSQL test container or local database.
+5. Add rate limits and secure cookie production settings.
+6. Decide the next section branch: backend persistence, deployment assets, or frontend authenticated shell.
 
 ## Backend Backlog
 
-- Express runtime foundation.
-- PostgreSQL migration tooling.
-- pgvector extension migration.
-- Authentication/session model.
-- Full RBAC schema and middleware.
-- Audit log writer.
+- Express runtime foundation. Implemented for backend/API section.
+- PostgreSQL migration tooling. Initial runner implemented.
+- pgvector extension migration. Initial migration implemented.
+- Authentication/session model. In-memory bootstrap foundation implemented; durable storage pending.
+- Full RBAC schema and middleware. Middleware and initial schema migration implemented; role/permission seeding pending.
+- Audit log writer. In-memory and database writer implemented.
 - Patient, pregnancy episode, and encounter APIs.
 - Consent and clinical file metadata APIs.
 - Structured observation APIs.

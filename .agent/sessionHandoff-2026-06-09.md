@@ -41,3 +41,27 @@ Start Phase 2 backend foundation:
 4. Make `/ready` check database and migration status.
 5. Add authentication/session foundation.
 6. Add RBAC middleware and audit event writer with tests.
+
+## Later Update - Phase 2 Backend/API Section
+
+Implemented locally on branch `codex/phase2-backend-api-foundation`. Push has not been performed and requires explicit user confirmation.
+
+Completed:
+
+- Structured logger setup with request context propagation.
+- Centralized 404 and error response handling.
+- PostgreSQL pool creation and migration runner.
+- Initial pgvector and RBAC/audit foundation migrations.
+- `/ready` now checks database connectivity, migration state, pgvector availability, and contracts.
+- Bootstrap admin login/session routes under `/auth`.
+- RBAC middleware and protected `/audit-logs` route.
+- In-memory and database-backed audit writer implementations.
+
+Verification passed:
+
+- `npm run format:check`
+- `npm run lint`
+- `npm run typecheck`
+- `npm test`
+- `npm run build`
+- `npm run e2e`
