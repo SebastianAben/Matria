@@ -100,6 +100,8 @@ Implemented notes:
 
 ## 7. Phase 3 - Clinical Domain and Rules Engine
 
+Status: initial clinical/API foundation implemented locally on 2026-06-09.
+
 Deliverables:
 
 - Patient, pregnancy episode, encounter, consent, file metadata, and structured observation APIs.
@@ -113,6 +115,16 @@ Acceptance:
 - Severe hypertension and other configured red flags trigger deterministic rule results.
 - Missing required fields create prompts before AI synthesis.
 - Patient and pregnancy scoping is enforced in tests.
+
+Implemented notes:
+
+- Shared contracts now include clinical preflight prompts, uncertainty annotations, and coded structured observations.
+- Express API exposes authenticated clinical routes for patients, pregnancy episodes, encounters, structured observations, and encounter preflight.
+- In-memory clinical store enforces patient/pregnancy episode scoping for encounter creation.
+- Deterministic rules engine triggers severe hypertension and preeclampsia symptom-cluster rule results before AI synthesis.
+- Mandatory ANC preflight currently requires systolic BP, diastolic BP, and gestational age.
+- Synthetic fixtures cover normal ANC, missing-field ANC, and severe-hypertension ANC observations.
+- Migration `0003` prepares PostgreSQL tables for patients, pregnancy episodes, encounters, and structured observations.
 
 ## 8. Phase 4 - AI Orchestration and Review Lifecycle
 

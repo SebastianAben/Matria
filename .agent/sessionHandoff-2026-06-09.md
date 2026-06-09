@@ -65,3 +65,31 @@ Verification passed:
 - `npm test`
 - `npm run build`
 - `npm run e2e`
+
+## Later Update - Phase 3 Clinical Domain Foundation
+
+Implemented locally after Phase 2 foundation.
+
+Completed:
+
+- Shared contracts for coded structured observations, clinical preflight prompts, and uncertainty annotations.
+- Authenticated clinical API routes under `/clinical` for patients, pregnancy episodes, encounters, observations, and preflight.
+- In-memory clinical store with patient and pregnancy episode scoping enforcement.
+- Deterministic maternal rules engine for severe hypertension and preeclampsia symptom cluster.
+- Mandatory ANC preflight prompts for systolic BP, diastolic BP, and gestational age before AI synthesis.
+- Synthetic fixture observation sets for normal ANC, missing-field ANC, and severe-hypertension ANC.
+- PostgreSQL migration `0003` for clinical domain foundation tables.
+
+Verification passed:
+
+- `npm test`
+- `npm run typecheck`
+- `npm run lint`
+- `npm run format:check`
+- `npm run build`
+- `npm run e2e`
+
+Notes:
+
+- `npm run build` and `npm run e2e` should be run serially because both use `apps/web/.next`.
+- `npm install` still reports 2 moderate vulnerabilities; no forced audit fix was applied.

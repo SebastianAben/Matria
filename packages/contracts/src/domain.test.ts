@@ -1,4 +1,4 @@
-import { roleNameSchema, ruleResultSchema } from './domain.js';
+import { clinicalPreflightSchema, roleNameSchema, ruleResultSchema } from './domain.js';
 
 describe('domain contracts', () => {
   it('keeps RBAC role names explicit', () => {
@@ -20,5 +20,29 @@ describe('domain contracts', () => {
     });
 
     expect(parsed.mustAcknowledge).toBe(true);
+  });
+
+  it('models preflight prompts and uncertainty before AI synthesis', () => {
+    const parsed = clinicalPreflightSchema.parse({
+      encounterId: '964c1f2f-ad46-4e31-a7b9-a27d2f6405ba',
+      readyForSynthesis: false,
+      prompts: [
+        {
+          field: 'diastolic_bp',
+          message: 'Required ANC field diastolic_bp is missing before AI synthesis.',
+          severity: 'required',
+        },
+      ],
+      ruleResults: [],
+      uncertainty: [
+        {
+          field: 'systolic_bp',
+          reason: 'low_confidence',
+          message: 'Observation confidence is below the clinical review threshold.',
+        },
+      ],
+    });
+
+    expect(parsed.readyForSynthesis).toBe(false);
   });
 });

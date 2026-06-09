@@ -8,8 +8,8 @@ function createReadyDatabase(): Database {
     async query<T = unknown>(text: string): Promise<QueryResult<T>> {
       if (text.includes('SELECT id FROM schema_migrations')) {
         return {
-          rows: [{ id: '0001' }, { id: '0002' }],
-          rowCount: 2,
+          rows: [{ id: '0001' }, { id: '0002' }, { id: '0003' }],
+          rowCount: 3,
         } as QueryResult<T>;
       }
 

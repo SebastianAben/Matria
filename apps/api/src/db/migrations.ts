@@ -43,6 +43,55 @@ export const migrations: Migration[] = [
       );
     `,
   },
+  {
+    id: '0003',
+    name: 'clinical-domain-foundation',
+    sql: `
+      CREATE TABLE IF NOT EXISTS patients (
+        id uuid PRIMARY KEY,
+        hospital_record_number text NOT NULL UNIQUE,
+        display_name text NOT NULL,
+        date_of_birth date,
+        created_at timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE TABLE IF NOT EXISTS pregnancy_episodes (
+        id uuid PRIMARY KEY,
+        patient_id uuid NOT NULL REFERENCES patients(id),
+        status text NOT NULL,
+        estimated_due_date date,
+        created_at timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE TABLE IF NOT EXISTS encounters (
+        id uuid PRIMARY KEY,
+        patient_id uuid NOT NULL REFERENCES patients(id),
+        pregnancy_episode_id uuid NOT NULL REFERENCES pregnancy_episodes(id),
+        type text NOT NULL,
+        status text NOT NULL,
+        started_at timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE TABLE IF NOT EXISTS structured_observations (
+        id uuid PRIMARY KEY,
+        encounter_id uuid NOT NULL REFERENCES encounters(id),
+        kind text NOT NULL,
+        code text,
+        value jsonb NOT NULL,
+        unit text,
+        confidence numeric,
+        source text NOT NULL,
+        verified_by_clinician boolean NOT NULL DEFAULT false
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_pregnancy_episodes_patient_id
+        ON pregnancy_episodes(patient_id);
+      CREATE INDEX IF NOT EXISTS idx_encounters_patient_episode
+        ON encounters(patient_id, pregnancy_episode_id);
+      CREATE INDEX IF NOT EXISTS idx_structured_observations_encounter_id
+        ON structured_observations(encounter_id);
+    `,
+  },
 ];
 
 export async function ensureMigrationTable(database: Database) {

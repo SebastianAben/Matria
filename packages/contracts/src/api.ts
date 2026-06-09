@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+import {
+  clinicalPreflightSchema,
+  encounterSchema,
+  patientSchema,
+  pregnancyEpisodeSchema,
+  structuredObservationSchema,
+} from './domain.js';
+
 export const apiErrorSchema = z.object({
   code: z.string().min(1),
   message: z.string().min(1),
@@ -42,9 +50,50 @@ export const sessionResponseSchema = z.object({
   user: sessionUserSchema.optional(),
 });
 
+export const createPatientRequestSchema = patientSchema.pick({
+  hospitalRecordNumber: true,
+  displayName: true,
+  dateOfBirth: true,
+});
+
+export const createPregnancyEpisodeRequestSchema = pregnancyEpisodeSchema.pick({
+  estimatedDueDate: true,
+});
+
+export const createEncounterRequestSchema = encounterSchema.pick({
+  patientId: true,
+  pregnancyEpisodeId: true,
+  type: true,
+});
+
+export const createStructuredObservationRequestSchema = structuredObservationSchema.pick({
+  kind: true,
+  code: true,
+  value: true,
+  unit: true,
+  confidence: true,
+  source: true,
+  verifiedByClinician: true,
+});
+
+export const patientResponseSchema = z.object({ data: patientSchema });
+export const pregnancyEpisodeResponseSchema = z.object({ data: pregnancyEpisodeSchema });
+export const encounterResponseSchema = z.object({ data: encounterSchema });
+export const structuredObservationResponseSchema = z.object({ data: structuredObservationSchema });
+export const structuredObservationListResponseSchema = z.object({
+  data: z.array(structuredObservationSchema),
+});
+export const clinicalPreflightResponseSchema = z.object({ data: clinicalPreflightSchema });
+
 export type ApiError = z.infer<typeof apiErrorSchema>;
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
 export type ReadinessResponse = z.infer<typeof readinessResponseSchema>;
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
 export type SessionUser = z.infer<typeof sessionUserSchema>;
 export type SessionResponse = z.infer<typeof sessionResponseSchema>;
+export type CreatePatientRequest = z.infer<typeof createPatientRequestSchema>;
+export type CreatePregnancyEpisodeRequest = z.infer<typeof createPregnancyEpisodeRequestSchema>;
+export type CreateEncounterRequest = z.infer<typeof createEncounterRequestSchema>;
+export type CreateStructuredObservationRequest = z.infer<
+  typeof createStructuredObservationRequestSchema
+>;

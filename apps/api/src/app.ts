@@ -14,6 +14,8 @@ import { createAuthRouter } from './auth/auth-routes.js';
 import { requirePermission } from './auth/rbac.js';
 import { sessionMiddleware } from './auth/session-middleware.js';
 import { createInMemorySessionStore, type SessionStore } from './auth/session-store.js';
+import { createClinicalRouter } from './clinical/clinical-routes.js';
+import { createInMemoryClinicalStore, type ClinicalStore } from './clinical/clinical-store.js';
 import type { AppConfig } from './config.js';
 import { createDatabase, type Database } from './db/client.js';
 import { errorHandler, notFoundHandler } from './errors.js';
@@ -26,6 +28,7 @@ export type AppDependencies = {
   logger?: AppLogger;
   sessionStore?: SessionStore;
   auditWriter?: AuditWriter;
+  clinicalStore?: ClinicalStore;
 };
 
 export async function createApp(config: AppConfig, dependencies: AppDependencies = {}) {
@@ -34,6 +37,7 @@ export async function createApp(config: AppConfig, dependencies: AppDependencies
   const database = dependencies.database ?? createDatabase(config);
   const sessionStore = dependencies.sessionStore ?? (await createInMemorySessionStore(config));
   const auditWriter = dependencies.auditWriter ?? createInMemoryAuditWriter();
+  const clinicalStore = dependencies.clinicalStore ?? createInMemoryClinicalStore();
 
   app.use(helmet());
   app.use(cors());
@@ -63,6 +67,7 @@ export async function createApp(config: AppConfig, dependencies: AppDependencies
   });
 
   app.use('/auth', createAuthRouter(sessionStore, auditWriter));
+  app.use('/clinical', createClinicalRouter(clinicalStore, auditWriter));
 
   app.get('/audit-logs', requirePermission('audit:read'), async (_req, res, next) => {
     try {

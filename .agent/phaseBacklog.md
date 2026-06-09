@@ -6,8 +6,9 @@ Purpose: condensed actionable backlog for the next implementation sessions
 
 ## Current Repo State
 
-- Workspace contains `.agent` documentation plus the initial Phase 1 TypeScript monorepo scaffold.
+- Workspace contains `.agent` documentation plus the TypeScript monorepo scaffold.
 - Application scaffold exists for API, web, E2E, shared contracts, and synthetic fixtures.
+- Phase 3 clinical domain foundation is implemented with in-memory API persistence, deterministic preflight, and rules-engine tests.
 - Product decisions are locked in `.agent/PRD.md`.
 
 ## Completed
@@ -19,19 +20,20 @@ Purpose: condensed actionable backlog for the next implementation sessions
 - Phase 1 initial monorepo scaffold completed.
 - Root quality gates pass locally: `format:check`, `lint`, `typecheck`, `test`, `build`, and `e2e`.
 - Phase 2 backend/API foundation section implemented locally on branch `codex/phase2-backend-api-foundation`.
+- Phase 3 initial clinical domain and rules engine foundation implemented locally.
 
 ## Next Recommended Start
 
-Continue Phase 2: backend foundation.
+Continue Phase 3 persistence hardening or return to pending Phase 2 backend foundation work.
 
 Recommended next batch:
 
 1. Review and confirm whether to push the backend/API section branch.
-2. Add real database-backed auth/session storage or document the transition from in-memory bootstrap sessions.
-3. Add seed data for roles and permissions.
-4. Add integration tests against a PostgreSQL test container or local database.
-5. Add rate limits and secure cookie production settings.
-6. Decide the next section branch: backend persistence, deployment assets, or frontend authenticated shell.
+2. Replace the in-memory clinical store with PostgreSQL-backed repositories using migration `0003`.
+3. Add real database-backed auth/session storage or document the transition from in-memory bootstrap sessions.
+4. Add seed data for roles and permissions.
+5. Add integration tests against a PostgreSQL test container or local database.
+6. Add rate limits and secure cookie production settings.
 
 ## Backend Backlog
 
@@ -41,11 +43,11 @@ Recommended next batch:
 - Authentication/session model. In-memory bootstrap foundation implemented; durable storage pending.
 - Full RBAC schema and middleware. Middleware and initial schema migration implemented; role/permission seeding pending.
 - Audit log writer. In-memory and database writer implemented.
-- Patient, pregnancy episode, and encounter APIs.
+- Patient, pregnancy episode, and encounter APIs. Initial in-memory implementation complete.
 - Consent and clinical file metadata APIs.
-- Structured observation APIs.
-- Mandatory-field preflight.
-- Maternal red-flag rules.
+- Structured observation APIs. Initial in-memory implementation complete.
+- Mandatory-field preflight. Initial implementation complete for systolic BP, diastolic BP, and gestational age.
+- Maternal red-flag rules. Initial implementation complete for severe hypertension and preeclampsia symptom cluster.
 - AI orchestration adapter boundaries.
 - Approval lifecycle.
 - FHIR R4 export.
