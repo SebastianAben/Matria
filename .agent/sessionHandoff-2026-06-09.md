@@ -150,3 +150,31 @@ Notes:
 
 - `npm test` initially exposed an outdated readiness fixture that only listed migrations `0001`-`0004`; the fixture was updated for `0005` and the full quality gates passed afterward.
 - Next.js still reports the existing ESLint plugin warning during build and `allowedDevOrigins` warning during E2E.
+
+## Later Update - Phase 6 Web Clinical Workspace
+
+Implemented locally after Phase 5 foundation.
+
+Completed:
+
+- Replaced the minimal web shell with an API-backed clinical workspace on `/` and `/clinical`.
+- Added a browser API client for bootstrap login, clinical encounter capture, preflight, synthesis, output edit/review, approval/rejection, and FHIR export.
+- Added synthetic ANC capture data aligned with the deterministic rules engine (`systolic_bp`, `diastolic_bp`, `gestational_age_weeks`, and preeclampsia symptom codes).
+- Added UI sections for authenticated session context, encounter capture surfaces, deterministic preflight results, generated draft review, approval gates, and FHIR artifact status.
+- Enabled local browser-to-API cookie auth by configuring CORS credentials for local web origins.
+- Updated Playwright E2E to run the core ANC workflow from capture through FHIR export.
+
+Verification passed after the Phase 6 changes:
+
+- `npm run format:check`
+- `npm run typecheck`
+- `npm run lint`
+- `npm test`
+- `npm run build`
+- `npm run e2e`
+
+Notes:
+
+- The workspace still uses bootstrap credentials and in-memory API stores for local foundation work.
+- Real file upload persistence, durable frontend auth, and production origin configuration remain pending.
+- Next.js still reports the existing `allowedDevOrigins` dev warning during E2E.

@@ -184,6 +184,8 @@ Implemented notes:
 
 ## 10. Phase 6 - Web Clinical Workspace
 
+Status: initial web clinical workspace implemented locally on 2026-06-09.
+
 Deliverables:
 
 - Next.js app shell and authenticated routing.
@@ -196,6 +198,15 @@ Acceptance:
 
 - Clinician can complete the core ANC workflow end to end against API.
 - UI clearly separates deterministic rule hits from AI-generated text.
+
+Implemented notes:
+
+- Next.js root and `/clinical` route now render the Phase 6 clinical workspace.
+- Web app performs bootstrap login against the API and creates a synthetic ANC patient, pregnancy episode, encounter, and structured observations.
+- Encounter capture surface includes audio, vitals, file, ultrasound, and notes-oriented review areas.
+- Preflight UI displays deterministic readiness, required prompts, and rule hits separately from generated drafts.
+- Clinician review workspace supports draft selection, editing, approval, rejection, and FHIR export actions through existing API routes.
+- Browser E2E now runs the core ANC workflow from capture through preflight, synthesis, approval, and FHIR export.
 
 ## 11. Phase 7 - Admin, Audit, and RBAC UI
 
