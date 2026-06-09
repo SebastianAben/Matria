@@ -1,0 +1,43 @@
+# Matria Session Handoff - 2026-06-09
+
+## Summary
+
+Phase 1 initial implementation is complete. The repository now has a TypeScript npm workspace scaffold with Express API, Next.js web app, Playwright E2E harness, shared Zod contracts, and synthetic ANC fixtures.
+
+## Implemented
+
+- Root workspace scripts for `format:check`, `lint`, `typecheck`, `test`, `build`, and `e2e`.
+- Shared TypeScript base config, ESLint flat config, Prettier config, and ignore files.
+- `packages/contracts` with API response schemas and core domain schemas for patients, pregnancy episodes, encounters, observations, deterministic rule results, generated outputs, approvals, FHIR exports, audit logs, RBAC role names, and permission actions.
+- `packages/test-fixtures` with synthetic ANC patient, active pregnancy episode, urgent encounter, and severe hypertension rule hit.
+- `apps/api` with Express 5, Helmet, CORS, request IDs, `/health`, `/ready`, and Vitest/Supertest coverage.
+- `apps/web` with Next.js App Router clinical workspace shell.
+- `apps/e2e` with Playwright config that starts API and web dev servers and verifies the shell plus API health.
+
+## Verification
+
+Passed locally:
+
+- `npm run format:check`
+- `npm run lint`
+- `npm run typecheck`
+- `npm test`
+- `npm run build`
+- `npm run e2e`
+
+Notes:
+
+- `npm install` reported 2 moderate vulnerabilities. Do not run `npm audit fix --force` without reviewing breaking changes.
+- Next.js build reports a warning that the Next ESLint plugin is not configured. This is not blocking but should be considered in a future frontend tooling pass.
+- Playwright dev run reports a future Next.js `allowedDevOrigins` warning for `127.0.0.1`; not blocking for current harness.
+
+## Next Recommended Work
+
+Start Phase 2 backend foundation:
+
+1. Add structured logger and error handler.
+2. Add PostgreSQL client and migration system.
+3. Add pgvector migration.
+4. Make `/ready` check database and migration status.
+5. Add authentication/session foundation.
+6. Add RBAC middleware and audit event writer with tests.

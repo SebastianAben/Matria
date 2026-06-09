@@ -74,7 +74,7 @@ Release notes should include:
 
 After release:
 
-- Update `.agents/phaseBacklog.md`.
+- Update `.agent/phaseBacklog.md`.
 - Add or update a `sessionHandoff-YYYY-MM-DD.md` if the release changed recommended next work.
 - Update `deploymentGuide.md` if any operational steps changed.
 - Add an ADR if a durable architecture decision changed.

@@ -1,0 +1,135 @@
+:root {
+  color-scheme: light;
+  --ink: #17201b;
+  --muted: #5f6f68;
+  --line: #d7dfd9;
+  --panel: #ffffff;
+  --wash: #eef4f0;
+  --accent: #0f766e;
+  --alert: #9f1d1d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--wash);
+  color: var(--ink);
+  font-family:
+    Arial,
+    Helvetica Neue,
+    sans-serif;
+}
+
+.workspace {
+  min-height: 100vh;
+  padding: 32px;
+}
+
+.statusBar {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 24px;
+}
+
+.eyebrow,
+.sectionLabel {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(32px, 5vw, 64px);
+  line-height: 1;
+}
+
+h2 {
+  font-size: 30px;
+  line-height: 1.1;
+  margin-bottom: 16px;
+  max-width: 680px;
+}
+
+.statusPill {
+  background: #f9e7e7;
+  border: 1px solid #e8b7b7;
+  color: var(--alert);
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 14px;
+  white-space: nowrap;
+}
+
+.panelGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.6fr);
+  margin-top: 24px;
+}
+
+.primaryPanel,
+.workflowPanel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.primaryPanel p {
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.6;
+  max-width: 760px;
+}
+
+.workflowPanel {
+  display: grid;
+  gap: 12px;
+}
+
+.workflowRow {
+  align-items: center;
+  border: 1px solid var(--line);
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 40px 1fr;
+  min-height: 58px;
+  padding: 12px;
+}
+
+.workflowRow span {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .workspace {
+    padding: 20px;
+  }
+
+  .statusBar,
+  .panelGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .statusBar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

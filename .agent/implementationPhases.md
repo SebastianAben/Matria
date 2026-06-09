@@ -17,7 +17,7 @@ Matria should be built as a TypeScript monorepo with Express.js backend, Next.js
 - `packages/test-fixtures`: synthetic ANC cases, red-flag scenarios, FHIR examples.
 - `deploy`: Docker Compose, Caddy, runtime env example, remote deploy scripts, smoke checks.
 - `.github/workflows`: CI, security scans, production deploy.
-- `.agents`: project memory and execution docs.
+- `.agent`: project memory and execution docs.
 
 ## 3. Cross-cutting Engineering Rules
 
@@ -35,8 +35,8 @@ Status: initial docs seeded.
 
 Deliverables:
 
-- `.agents/PRD.md`
-- `.agents/RULES.md`
+- `.agent/PRD.md`
+- `.agent/RULES.md`
 - implementation roadmap, backlog, environment matrix, deployment guide, release checklist, provisioning checklist
 
 Acceptance:
@@ -44,6 +44,8 @@ Acceptance:
 - Future sessions can implement without re-deciding product scope, deployment model, or clinical safety posture.
 
 ## 5. Phase 1 - Monorepo Scaffold and Shared Contracts
+
+Status: initial implementation complete on 2026-06-09.
 
 Deliverables:
 
@@ -56,6 +58,15 @@ Acceptance:
 
 - CI-style commands run locally.
 - Contracts build before API and web.
+
+Implemented notes:
+
+- npm workspace root, TypeScript base config, ESLint, Prettier, and shared scripts are present.
+- `apps/api`, `apps/web`, `apps/e2e`, `packages/contracts`, and `packages/test-fixtures` are present.
+- Shared Zod contracts cover core Phase 1 entities and API health/readiness responses.
+- Minimal Express API exposes `/health` and `/ready`.
+- Minimal Next.js app shell exposes a clinical workspace landing surface.
+- Vitest and Playwright harnesses run locally.
 
 ## 6. Phase 2 - Backend Foundation
 

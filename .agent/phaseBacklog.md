@@ -6,9 +6,9 @@ Purpose: condensed actionable backlog for the next implementation sessions
 
 ## Current Repo State
 
-- Workspace currently contains `.agents` documentation only.
-- No application scaffold exists yet.
-- Product decisions are locked in `.agents/PRD.md`.
+- Workspace contains `.agent` documentation plus the initial Phase 1 TypeScript monorepo scaffold.
+- Application scaffold exists for API, web, E2E, shared contracts, and synthetic fixtures.
+- Product decisions are locked in `.agent/PRD.md`.
 
 ## Completed
 
@@ -16,19 +16,21 @@ Purpose: condensed actionable backlog for the next implementation sessions
 - Agent operating rules seeded.
 - Implementation phases seeded.
 - Environment, deployment, release, and provisioning docs seeded.
+- Phase 1 initial monorepo scaffold completed.
+- Root quality gates pass locally: `format:check`, `lint`, `typecheck`, `test`, `build`, and `e2e`.
 
 ## Next Recommended Start
 
-Start with Phase 1: monorepo scaffold and shared contracts.
+Start with Phase 2: backend foundation.
 
-Recommended first batch:
+Recommended next batch:
 
-1. Create npm workspace root with TypeScript, ESLint, Prettier, and package scripts.
-2. Add `apps/api`, `apps/web`, `apps/e2e`, `packages/contracts`, and `packages/test-fixtures`.
-3. Define shared contract schemas for core entities and API response conventions.
-4. Add minimal Express API with `/health` and `/ready`.
-5. Add minimal Next.js app shell.
-6. Add Vitest and Playwright harnesses.
+1. Add structured logging and request context propagation.
+2. Add PostgreSQL connection and migration tooling.
+3. Add pgvector extension migration.
+4. Replace readiness placeholder with real database and migration checks.
+5. Add authentication/session foundation.
+6. Add RBAC entities, permission middleware, and audit logging infrastructure.
 
 ## Backend Backlog
 
