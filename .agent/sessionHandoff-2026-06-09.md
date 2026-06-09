@@ -178,3 +178,61 @@ Notes:
 - The workspace still uses bootstrap credentials and in-memory API stores for local foundation work.
 - Real file upload persistence, durable frontend auth, and production origin configuration remain pending.
 - Next.js still reports the existing `allowedDevOrigins` dev warning during E2E.
+
+## Later Update - Phase 7 Admin, Audit, and RBAC UI
+
+Implemented locally after Phase 6 foundation.
+
+Completed:
+
+- Shared contracts for admin users, roles, permissions, user creation/update, role assignment, permission assignment, and audit log list responses.
+- Migration `0006` for `users`, `user_roles`, `role_permissions`, seeded role records, seeded permission records, and default role-permission mappings.
+- Admin API routes under `/admin` for users, roles, permissions, and audit logs.
+- Database-backed admin store for user credential lookup and effective permissions, with in-memory fallback for local/test runs without `DATABASE_URL`.
+- Session login now resolves active users through the admin store; disabled users cannot log in.
+- Admin mutation and audit-read events are recorded through the audit writer.
+- Web `/admin` route with Users, Roles, and Audit views, permission-aware protected states, create-user flow, role assignment, enable/disable actions, and role permission toggles.
+- Clinical workspace now exposes an admin link for users with `user:admin` or `audit:read`.
+- Playwright E2E now covers the admin user creation, auditor role assignment, and audit viewer flow.
+
+Verification passed after the Phase 7 changes:
+
+- `npm run format:check`
+- `npm run lint`
+- `npm run typecheck`
+- `npm test`
+- `npm run build`
+- `npm run e2e`
+
+Notes:
+
+- Durable session-token persistence remains pending; current session tokens are still process-local.
+- Clinical, AI output, memory, and FHIR repositories still use in-memory fallbacks when no database is configured.
+- Next.js still reports the existing ESLint plugin warning during build and `allowedDevOrigins` dev warning during E2E.
+
+## Later Update - Phase 8 E2E and Clinical Safety Hardening
+
+Implemented locally after Phase 7 foundation.
+
+Completed:
+
+- Split Playwright coverage into five focused Phase 8 scenarios: clinician capture-to-FHIR, admin RBAC/audit, unauthorized protected API access, missing-field ANC preflight blocking, and AI provider failure.
+- Added deterministic API-level E2E setup helpers for complete and incomplete ANC encounters.
+- Added a test-only synthesis failure control through `x-matria-test-provider-failure`, enabled only when the API is created with `APP_ENV=test`.
+- Updated Playwright web server config to start API in `APP_ENV=test` and avoid reusing stale local dev servers.
+- Added backend safety gate coverage for protected-route authentication, route-specific RBAC forbids, provider failure audit events, approval-gated memory writes, rejected-output memory blocking, and no-output/no-memory behavior after provider failure.
+
+Verification passed after the Phase 8 changes:
+
+- `npm -w apps/api test -- ai-routes.test.ts clinical-safety-gates.test.ts`
+- `npm -w apps/e2e run typecheck`
+- `npm run format:check`
+- `npm run lint`
+- `npm run typecheck`
+- `npm test`
+- `npm run build`
+- `npm run e2e`
+
+Notes:
+
+- Playwright now requires ports `3000` and `4000` to be free so it can start the correct test-mode servers.

@@ -8,7 +8,7 @@ Purpose: condensed actionable backlog for the next implementation sessions
 
 - Workspace contains `.agent` documentation plus the TypeScript monorepo scaffold.
 - Application scaffold exists for API, web, E2E, shared contracts, and synthetic fixtures.
-- Phase 6 initial web clinical workspace is implemented with authenticated API workflow, encounter capture, preflight results, clinician review, approval/reject actions, FHIR export, and Playwright coverage.
+- Phase 8 initial E2E and clinical safety hardening is implemented with focused Playwright scenarios and expanded backend safety gate coverage.
 - Product decisions are locked in `.agent/PRD.md`.
 
 ## Completed
@@ -24,17 +24,19 @@ Purpose: condensed actionable backlog for the next implementation sessions
 - Phase 4 initial AI orchestration and review lifecycle foundation implemented locally.
 - Phase 5 initial FHIR export foundation implemented locally.
 - Phase 6 initial web clinical workspace implemented locally.
+- Phase 7 initial admin, audit, and RBAC UI foundation implemented locally.
+- Phase 8 initial E2E and clinical safety hardening implemented locally.
 
 ## Next Recommended Start
 
-Continue persistence hardening and production hardening after confirming whether the local Phase 2-6 work should be pushed.
+Continue persistence hardening and production hardening after confirming whether the local Phase 2-8 work should be pushed.
 
 Recommended next batch:
 
-1. Review and confirm whether to push the backend/API and web clinical workspace branch.
+1. Review and confirm whether to push the backend/API, web clinical workspace, admin/RBAC, and Phase 8 testing branch.
 2. Replace the in-memory clinical store with PostgreSQL-backed repositories using migration `0003`.
-3. Add real database-backed auth/session storage or document the transition from in-memory bootstrap sessions.
-4. Add seed data for roles and permissions.
+3. Add durable session-token persistence; user credential and effective permission lookup now has DB-backed foundation.
+4. Add integration tests for DB-backed users, roles, permissions, and session login against PostgreSQL.
 5. Add integration tests against a PostgreSQL test container or local database.
 6. Add rate limits and secure cookie production settings.
 7. Replace local deterministic AI provider stubs with configured provider implementations behind the existing adapter interfaces.
@@ -45,8 +47,8 @@ Recommended next batch:
 - Express runtime foundation. Implemented for backend/API section.
 - PostgreSQL migration tooling. Initial runner implemented.
 - pgvector extension migration. Initial migration implemented.
-- Authentication/session model. In-memory bootstrap foundation implemented; durable storage pending.
-- Full RBAC schema and middleware. Middleware and initial schema migration implemented; role/permission seeding pending.
+- Authentication/session model. DB-backed user credential lookup implemented; durable session-token storage pending.
+- Full RBAC schema and middleware. Middleware, seeded role/permission schema, assignment APIs, and admin UI implemented.
 - Audit log writer. In-memory and database writer implemented.
 - Patient, pregnancy episode, and encounter APIs. Initial in-memory implementation complete.
 - Consent and clinical file metadata APIs.
@@ -66,20 +68,22 @@ Recommended next batch:
 - Preflight results panel. Initial implementation complete.
 - Clinician review workspace. Initial implementation complete.
 - Approval/edit/reject flows. Initial implementation complete.
-- Admin user and role management.
-- Audit log view.
+- Admin user and role management. Initial DB-backed API and UI implemented.
+- Audit log view. Initial API and UI implemented.
 
 ## Testing Backlog
 
 - Vitest rules engine tests.
-- Vitest RBAC permission tests.
+- Vitest RBAC permission tests. Initial protected-route and forbidden coverage implemented.
 - Vitest FHIR mapping tests. Initial route and provenance coverage implemented.
-- Vitest audit logging tests.
-- Vitest AI orchestration and approval-gated memory tests.
+- Vitest audit logging tests. Initial admin, audit-read, provider-failure, and approval/rejection event coverage implemented.
+- Vitest AI orchestration and approval-gated memory tests. Initial provider failure, approval-gated memory, and rejected-output memory blocking coverage implemented.
 - Integration tests for encounter lifecycle.
 - Playwright clinician ANC flow. Initial capture-to-FHIR workflow implemented.
-- Playwright admin RBAC flow.
-- Playwright unauthorized access flow.
+- Playwright admin RBAC flow. Initial admin create-user, assign-role, audit-view flow implemented.
+- Playwright unauthorized access flow. Initial protected API coverage implemented.
+- Playwright missing-field ANC flow. Initial preflight prompt and synthesis-blocking coverage implemented.
+- Playwright AI provider failure flow. Initial deterministic preflight visibility and no-output/no-memory coverage implemented.
 - Deployment smoke tests.
 
 ## Deployment Backlog

@@ -21,12 +21,18 @@ import {
   type MemoryStore,
   type OutputStore,
 } from './ai/output-store.js';
+import { createAdminRouter } from './admin/admin-routes.js';
+import {
+  createDatabaseAdminStore,
+  createInMemoryAdminStore,
+  type AdminStore,
+} from './admin/admin-store.js';
 import type { AuditWriter } from './audit/audit-log.js';
 import { createInMemoryAuditWriter } from './audit/audit-log.js';
 import { createAuthRouter } from './auth/auth-routes.js';
 import { requirePermission } from './auth/rbac.js';
 import { sessionMiddleware } from './auth/session-middleware.js';
-import { createInMemorySessionStore, type SessionStore } from './auth/session-store.js';
+import { createSessionStore, type SessionStore } from './auth/session-store.js';
 import { createClinicalRouter } from './clinical/clinical-routes.js';
 import { createInMemoryClinicalStore, type ClinicalStore } from './clinical/clinical-store.js';
 import type { AppConfig } from './config.js';
@@ -41,6 +47,7 @@ import { requestContextMiddleware } from './request-context.js';
 export type AppDependencies = {
   database?: Database;
   logger?: AppLogger;
+  adminStore?: AdminStore;
   sessionStore?: SessionStore;
   auditWriter?: AuditWriter;
   clinicalStore?: ClinicalStore;
@@ -55,7 +62,13 @@ export async function createApp(config: AppConfig, dependencies: AppDependencies
   const app = express();
   const logger = dependencies.logger ?? createLogger(config);
   const database = dependencies.database ?? createDatabase(config);
-  const sessionStore = dependencies.sessionStore ?? (await createInMemorySessionStore(config));
+  const adminStore =
+    dependencies.adminStore ??
+    (database && config.appEnv !== 'test'
+      ? await createDatabaseAdminStore(database, config)
+      : await createInMemoryAdminStore(config));
+  await adminStore.ensureBootstrapAdmin();
+  const sessionStore = dependencies.sessionStore ?? createSessionStore(adminStore);
   const auditWriter = dependencies.auditWriter ?? createInMemoryAuditWriter();
   const clinicalStore = dependencies.clinicalStore ?? createInMemoryClinicalStore();
   const outputStore = dependencies.outputStore ?? createInMemoryOutputStore();
@@ -102,6 +115,7 @@ export async function createApp(config: AppConfig, dependencies: AppDependencies
   });
 
   app.use('/auth', createAuthRouter(sessionStore, auditWriter));
+  app.use('/admin', createAdminRouter(adminStore, auditWriter));
   app.use('/clinical', createClinicalRouter(clinicalStore, auditWriter));
   app.use(
     '/ai',
@@ -112,6 +126,7 @@ export async function createApp(config: AppConfig, dependencies: AppDependencies
       memoryStore,
       synthesisProvider,
       evidenceTool,
+      allowTestProviderFailure: config.appEnv === 'test',
     }),
   );
   app.use(
@@ -124,8 +139,13 @@ export async function createApp(config: AppConfig, dependencies: AppDependencies
     }),
   );
 
-  app.get('/audit-logs', requirePermission('audit:read'), async (_req, res, next) => {
+  app.get('/audit-logs', requirePermission('audit:read'), async (req, res, next) => {
     try {
+      await auditWriter.record({
+        actorUserId: req.user?.id,
+        action: 'audit.read',
+        resourceType: 'audit_log',
+      });
       res.json({ data: await auditWriter.list() });
     } catch (error) {
       next(error);

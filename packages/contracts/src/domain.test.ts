@@ -1,10 +1,14 @@
 import {
+  permissionActionSchema,
+  permissionSchema,
+  roleSchema,
   clinicalPreflightSchema,
   fhirExportSchema,
   generatedOutputSchema,
   patientMemoryEntrySchema,
   roleNameSchema,
   ruleResultSchema,
+  userSchema,
 } from './domain.js';
 
 describe('domain contracts', () => {
@@ -12,6 +16,36 @@ describe('domain contracts', () => {
     expect(roleNameSchema.options).toContain('clinician');
     expect(roleNameSchema.options).toContain('auditor');
     expect(roleNameSchema.options).toContain('it_operator');
+  });
+
+  it('models admin users, roles, and permissions', () => {
+    const user = userSchema.parse({
+      id: '343f9737-e017-469d-af7e-78cdd15a459f',
+      email: 'admin@matria.local',
+      displayName: 'Bootstrap Administrator',
+      status: 'active',
+      roleNames: ['hospital_admin'],
+      permissions: permissionActionSchema.options,
+      createdAt: '2026-06-09T14:18:28.000Z',
+      updatedAt: '2026-06-09T14:18:28.000Z',
+    });
+    const role = roleSchema.parse({
+      id: 'a5bf7b4e-f6f5-4db2-a74b-e7c614f66230',
+      name: 'auditor',
+      description: 'Reads audit logs.',
+      permissions: ['audit:read'],
+      createdAt: '2026-06-09T14:18:28.000Z',
+    });
+    const permission = permissionSchema.parse({
+      id: 'e1ca5f72-40dd-47fb-b2fc-22b7e8ddda39',
+      action: 'audit:read',
+      description: 'Read audit logs.',
+      createdAt: '2026-06-09T14:18:28.000Z',
+    });
+
+    expect(user.permissions).toContain('user:admin');
+    expect(role.permissions).toEqual(['audit:read']);
+    expect(permission.action).toBe('audit:read');
   });
 
   it('models must-acknowledge deterministic rule results', () => {

@@ -32,10 +32,18 @@ export function createAiRouter(dependencies: {
   memoryStore: MemoryStore;
   synthesisProvider: SynthesisProvider;
   evidenceTool: EvidenceToolAdapter;
+  allowTestProviderFailure?: boolean;
 }) {
   const router = Router();
-  const { auditWriter, clinicalStore, evidenceTool, memoryStore, outputStore, synthesisProvider } =
-    dependencies;
+  const {
+    allowTestProviderFailure = false,
+    auditWriter,
+    clinicalStore,
+    evidenceTool,
+    memoryStore,
+    outputStore,
+    synthesisProvider,
+  } = dependencies;
 
   router.post(
     '/encounters/:encounterId/synthesis',
@@ -71,6 +79,10 @@ export function createAiRouter(dependencies: {
         }
 
         try {
+          if (allowTestProviderFailure && req.get('x-matria-test-provider-failure') === 'true') {
+            throw new Error('test provider failure requested');
+          }
+
           const evidence = await evidenceTool.collectEvidence({ encounter, observations });
           await auditWriter.record({
             actorUserId: req.user?.id,

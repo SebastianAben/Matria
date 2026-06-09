@@ -152,6 +152,75 @@ export const migrations: Migration[] = [
         ON fhir_exports(encounter_id);
     `,
   },
+  {
+    id: '0006',
+    name: 'admin-users-and-rbac-assignments',
+    sql: `
+      CREATE TABLE IF NOT EXISTS users (
+        id uuid PRIMARY KEY,
+        email text NOT NULL UNIQUE,
+        display_name text NOT NULL,
+        password_hash text NOT NULL,
+        status text NOT NULL,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now()
+      );
+
+      CREATE TABLE IF NOT EXISTS role_permissions (
+        role_id uuid NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+        permission_id uuid NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
+        PRIMARY KEY (role_id, permission_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS user_roles (
+        user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        role_id uuid NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+        PRIMARY KEY (user_id, role_id)
+      );
+
+      INSERT INTO roles (id, name, description)
+      VALUES
+        ('10000000-0000-4000-8000-000000000001', 'clinician', 'Creates and reviews ANC encounters.'),
+        ('10000000-0000-4000-8000-000000000002', 'obgyn_specialist', 'Reviews escalated obstetric cases.'),
+        ('10000000-0000-4000-8000-000000000003', 'nurse_midwife', 'Captures intake, vitals, and encounter context.'),
+        ('10000000-0000-4000-8000-000000000004', 'lab_staff', 'Uploads and verifies lab-related files.'),
+        ('10000000-0000-4000-8000-000000000005', 'radiology_sonographer', 'Uploads ultrasound media and metadata.'),
+        ('10000000-0000-4000-8000-000000000006', 'hospital_admin', 'Manages users, roles, and system configuration.'),
+        ('10000000-0000-4000-8000-000000000007', 'auditor', 'Reads audit logs and compliance reports.'),
+        ('10000000-0000-4000-8000-000000000008', 'it_operator', 'Manages operational health and configuration.')
+      ON CONFLICT (name) DO UPDATE SET description = EXCLUDED.description;
+
+      INSERT INTO permissions (id, action, description)
+      VALUES
+        ('20000000-0000-4000-8000-000000000001', 'patient:read', 'Read patient records.'),
+        ('20000000-0000-4000-8000-000000000002', 'encounter:write', 'Create and update encounters.'),
+        ('20000000-0000-4000-8000-000000000003', 'file:upload', 'Upload clinical files.'),
+        ('20000000-0000-4000-8000-000000000004', 'ai:synthesis:request', 'Request AI synthesis.'),
+        ('20000000-0000-4000-8000-000000000005', 'output:approve', 'Approve clinical outputs.'),
+        ('20000000-0000-4000-8000-000000000006', 'fhir:export', 'Export approved FHIR artifacts.'),
+        ('20000000-0000-4000-8000-000000000007', 'user:admin', 'Manage users and roles.'),
+        ('20000000-0000-4000-8000-000000000008', 'audit:read', 'Read audit logs.'),
+        ('20000000-0000-4000-8000-000000000009', 'system:configure', 'Configure system settings.')
+      ON CONFLICT (action) DO UPDATE SET description = EXCLUDED.description;
+
+      INSERT INTO role_permissions (role_id, permission_id)
+      SELECT r.id, p.id
+      FROM roles r
+      JOIN permissions p ON (
+        (r.name = 'hospital_admin') OR
+        (r.name = 'auditor' AND p.action = 'audit:read') OR
+        (r.name = 'it_operator' AND p.action IN ('audit:read', 'system:configure')) OR
+        (r.name IN ('clinician', 'obgyn_specialist') AND p.action IN ('patient:read', 'encounter:write', 'file:upload', 'ai:synthesis:request', 'output:approve', 'fhir:export')) OR
+        (r.name = 'nurse_midwife' AND p.action IN ('patient:read', 'encounter:write', 'file:upload', 'ai:synthesis:request')) OR
+        (r.name IN ('lab_staff', 'radiology_sonographer') AND p.action IN ('patient:read', 'file:upload'))
+      )
+      ON CONFLICT DO NOTHING;
+
+      CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+      CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON user_roles(user_id);
+      CREATE INDEX IF NOT EXISTS idx_role_permissions_role_id ON role_permissions(role_id);
+    `,
+  },
 ];
 
 export async function ensureMigrationTable(database: Database) {

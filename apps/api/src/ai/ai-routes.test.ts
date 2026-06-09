@@ -106,6 +106,32 @@ describe('AI orchestration and review lifecycle', () => {
     ]);
   });
 
+  it('supports test-only provider failure without creating outputs or memory', async () => {
+    const agent = await createLoggedInAgent();
+    const { patientId, pregnancyEpisodeId, encounterId } = await createEncounter(agent);
+    await addRequiredAncObservations(agent, encounterId);
+
+    const response = await agent
+      .post(`/ai/encounters/${encounterId}/synthesis`)
+      .set('x-matria-test-provider-failure', 'true')
+      .send({})
+      .expect(502);
+    const outputs = await agent.get(`/ai/encounters/${encounterId}/outputs`).expect(200);
+    const memory = await agent
+      .get(`/ai/patients/${patientId}/pregnancy-episodes/${pregnancyEpisodeId}/memory`)
+      .expect(200);
+    const auditLogs = await agent.get('/audit-logs').expect(200);
+
+    expect(response.body).toMatchObject({
+      code: 'ai_provider_failed',
+    });
+    expect(outputs.body.data).toEqual([]);
+    expect(memory.body.data).toEqual([]);
+    expect(auditLogs.body.data).toEqual(
+      expect.arrayContaining([expect.objectContaining({ action: 'ai.provider.failure' })]),
+    );
+  });
+
   it('creates draft outputs and writes patient memory only after approval', async () => {
     const agent = await createLoggedInAgent();
     const { patientId, pregnancyEpisodeId, encounterId } = await createEncounter(agent);
@@ -143,5 +169,24 @@ describe('AI orchestration and review lifecycle', () => {
         content: 'Clinician-approved risk synthesis.',
       }),
     ]);
+  });
+
+  it('does not write patient memory for rejected outputs', async () => {
+    const agent = await createLoggedInAgent();
+    const { patientId, pregnancyEpisodeId, encounterId } = await createEncounter(agent);
+    await addRequiredAncObservations(agent, encounterId);
+
+    const synthesis = await agent
+      .post(`/ai/encounters/${encounterId}/synthesis`)
+      .send({ kinds: ['risk_synthesis'] })
+      .expect(201);
+    const [output] = synthesis.body.data;
+
+    await agent.post(`/ai/outputs/${output.id}/reject`).send({}).expect(200);
+    const memory = await agent
+      .get(`/ai/patients/${patientId}/pregnancy-episodes/${pregnancyEpisodeId}/memory`)
+      .expect(200);
+
+    expect(memory.body.data).toEqual([]);
   });
 });

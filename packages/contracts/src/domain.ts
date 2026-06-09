@@ -26,6 +26,34 @@ export const roleNameSchema = z.enum([
   'it_operator',
 ]);
 
+export const userStatusSchema = z.enum(['active', 'disabled']);
+
+export const permissionSchema = z.object({
+  id: idSchema,
+  action: permissionActionSchema,
+  description: z.string().optional(),
+  createdAt: isoDateTimeSchema,
+});
+
+export const roleSchema = z.object({
+  id: idSchema,
+  name: roleNameSchema,
+  description: z.string().optional(),
+  permissions: z.array(permissionActionSchema).default([]),
+  createdAt: isoDateTimeSchema,
+});
+
+export const userSchema = z.object({
+  id: idSchema,
+  email: z.string().email(),
+  displayName: z.string().min(1),
+  status: userStatusSchema,
+  roleNames: z.array(roleNameSchema).default([]),
+  permissions: z.array(permissionActionSchema).default([]),
+  createdAt: isoDateTimeSchema,
+  updatedAt: isoDateTimeSchema,
+});
+
 export const patientSchema = z.object({
   id: idSchema,
   hospitalRecordNumber: z.string().min(1),
@@ -159,6 +187,10 @@ export const auditLogSchema = z.object({
 
 export type PermissionAction = z.infer<typeof permissionActionSchema>;
 export type RoleName = z.infer<typeof roleNameSchema>;
+export type UserStatus = z.infer<typeof userStatusSchema>;
+export type Permission = z.infer<typeof permissionSchema>;
+export type Role = z.infer<typeof roleSchema>;
+export type User = z.infer<typeof userSchema>;
 export type Patient = z.infer<typeof patientSchema>;
 export type PregnancyEpisode = z.infer<typeof pregnancyEpisodeSchema>;
 export type Encounter = z.infer<typeof encounterSchema>;

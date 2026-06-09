@@ -51,6 +51,9 @@ export function ClinicalWorkspace() {
     () => state.outputs.find((output) => output.id === state.selectedOutputId) ?? state.outputs[0],
     [state.outputs, state.selectedOutputId],
   );
+  const canOpenAdmin =
+    state.user?.permissions.includes('user:admin') ||
+    state.user?.permissions.includes('audit:read');
 
   async function runStep<T>(key: string, action: () => Promise<T>, doneMessage: string) {
     setStepStatus((current) => ({ ...current, [key]: 'working' }));
@@ -224,7 +227,10 @@ export function ClinicalWorkspace() {
           <p className="eyebrow">Matria clinical workspace</p>
           <h1>Antenatal encounter review</h1>
         </div>
-        <span className="statusPill">Decision support only</span>
+        <div className="statusActions">
+          {canOpenAdmin ? <a href="/admin">Admin</a> : null}
+          <span className="statusPill">Decision support only</span>
+        </div>
       </section>
 
       <section className="commandBar" aria-label="Workflow actions">

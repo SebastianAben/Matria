@@ -11,15 +11,19 @@ export default defineConfig({
     {
       command: 'npm -w apps/api run dev',
       cwd: '../..',
+      env: {
+        ...process.env,
+        APP_ENV: 'test',
+      },
       url: 'http://127.0.0.1:4000/health',
-      reuseExistingServer: true,
+      reuseExistingServer: false,
       timeout: 30_000,
     },
     {
       command: 'npm -w apps/web run dev',
       cwd: '../..',
       url: 'http://127.0.0.1:3000',
-      reuseExistingServer: true,
+      reuseExistingServer: false,
       timeout: 30_000,
     },
   ],

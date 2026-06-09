@@ -1,16 +1,24 @@
 import type {
+  AuditLog,
+  AssignRolePermissionsRequest,
+  AssignUserRolesRequest,
   ClinicalPreflight,
   CreateEncounterRequest,
   CreatePatientRequest,
   CreatePregnancyEpisodeRequest,
   CreateStructuredObservationRequest,
+  CreateUserRequest,
   Encounter,
   FhirExport,
   GeneratedOutput,
   Patient,
+  Permission,
   PregnancyEpisode,
+  Role,
   SessionResponse,
   StructuredObservation,
+  UpdateUserRequest,
+  User,
 } from '@matria/contracts';
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:4000';
@@ -57,6 +65,45 @@ export const matriaApi = {
         password: 'development-password',
       }),
     });
+  },
+  getSession() {
+    return request<SessionResponse>('/auth/session');
+  },
+  listUsers() {
+    return request<ApiEnvelope<User[]>>('/admin/users');
+  },
+  createUser(payload: CreateUserRequest) {
+    return request<ApiEnvelope<User>>('/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+  updateUser(userId: string, payload: UpdateUserRequest) {
+    return request<ApiEnvelope<User>>(`/admin/users/${userId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  },
+  assignUserRoles(userId: string, payload: AssignUserRolesRequest) {
+    return request<ApiEnvelope<User>>(`/admin/users/${userId}/roles`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+  listRoles() {
+    return request<ApiEnvelope<Role[]>>('/admin/roles');
+  },
+  assignRolePermissions(roleId: string, payload: AssignRolePermissionsRequest) {
+    return request<ApiEnvelope<Role>>(`/admin/roles/${roleId}/permissions`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+  listPermissions() {
+    return request<ApiEnvelope<Permission[]>>('/admin/permissions');
+  },
+  listAuditLogs() {
+    return request<ApiEnvelope<AuditLog[]>>('/admin/audit-logs');
   },
   createPatient(payload: CreatePatientRequest) {
     return request<ApiEnvelope<Patient>>('/clinical/patients', {

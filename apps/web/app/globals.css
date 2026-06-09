@@ -79,6 +79,21 @@ h2 {
   white-space: nowrap;
 }
 
+.statusActions {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.statusActions a {
+  border: 1px solid var(--line);
+  color: var(--accent-strong);
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 14px;
+  text-decoration: none;
+}
+
 .commandBar {
   align-items: center;
   display: flex;
@@ -110,10 +125,116 @@ button:disabled {
   cursor: not-allowed;
 }
 
+input,
+select {
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font: inherit;
+  min-height: 42px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+label {
+  color: var(--muted);
+  display: grid;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 6px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
 .message {
   color: var(--muted);
   font-size: 14px;
   margin-top: 12px;
+}
+
+.adminWorkspace {
+  display: grid;
+  gap: 20px;
+}
+
+.sessionPanel {
+  max-width: 840px;
+}
+
+.permissionLine {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+  margin-top: 10px;
+  overflow-wrap: anywhere;
+}
+
+.adminTabs {
+  margin-bottom: -4px;
+}
+
+.adminGrid {
+  margin-top: 0;
+}
+
+.widePanel {
+  grid-column: 1 / -1;
+}
+
+.adminTable,
+.roleMatrix {
+  display: grid;
+  gap: 10px;
+}
+
+.adminTable article,
+.roleMatrix article {
+  border: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.adminTable article {
+  align-items: center;
+  grid-template-columns:
+    minmax(160px, 1fr) minmax(200px, 1fr) 100px minmax(140px, 0.8fr)
+    minmax(220px, 1.3fr) auto;
+}
+
+.adminTable span,
+.adminTable small,
+.roleMatrix span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.auditTable article {
+  grid-template-columns: minmax(180px, 1fr) minmax(120px, 0.7fr) minmax(220px, 1fr) minmax(
+      220px,
+      1fr
+    );
+}
+
+.roleMatrix article div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.roleMatrix label {
+  align-items: center;
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 10px;
+  text-transform: none;
+}
+
+.roleMatrix input {
+  min-height: auto;
+  width: auto;
 }
 
 .workspaceGrid {
@@ -322,6 +443,11 @@ textarea {
 
   .workspaceGrid,
   .captureGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .adminTable article,
+  .auditTable article {
     grid-template-columns: 1fr;
   }
 }

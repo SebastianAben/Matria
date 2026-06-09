@@ -210,6 +210,8 @@ Implemented notes:
 
 ## 11. Phase 7 - Admin, Audit, and RBAC UI
 
+Status: initial admin/RBAC UI foundation implemented locally after Phase 6.
+
 Deliverables:
 
 - User management.
@@ -223,7 +225,18 @@ Acceptance:
 - Auditor can inspect logs without clinical mutation privileges.
 - Unauthorized users cannot access protected surfaces.
 
+Implemented notes:
+
+- Shared contracts now include admin users, roles, permissions, request schemas, and audit log list responses.
+- Migration `0006` adds users, user-role mappings, role-permission mappings, and seeded role/permission records.
+- API exposes DB-backed admin foundation routes under `/admin` for user management, role management, permission assignment, and audit log viewing.
+- Session login now resolves active users and effective permissions from the admin store, while preserving bootstrap admin credentials for local entry.
+- Web route `/admin` provides Users, Roles, and Audit views with permission-aware protected states.
+- Playwright now covers the admin user creation, role assignment, and audit inspection flow.
+
 ## 12. Phase 8 - E2E and Clinical Safety Hardening
+
+Status: initial E2E and clinical safety hardening implemented locally after Phase 7.
 
 Deliverables:
 
@@ -237,6 +250,14 @@ Acceptance:
 
 - E2E tests cover the required product acceptance criteria.
 - Backend Vitest covers rules, RBAC, FHIR, audit, and approval gates.
+
+Implemented notes:
+
+- Playwright now covers five focused Phase 8 scenarios: clinician capture-to-FHIR, admin RBAC/audit, unauthorized protected API access, missing ANC field gating, and AI provider failure.
+- E2E API server runs with `APP_ENV=test` and does not reuse stale dev servers so test-only controls are deterministic.
+- API synthesis supports a test-only provider-failure header when `APP_ENV=test`; production runtime does not enable this control.
+- Backend Vitest now covers protected route authentication, route-specific RBAC forbids, provider failure audit behavior, missing-field synthesis blocking, approval-gated memory, rejected-output memory blocking, and FHIR approval gating.
+- Provider failure leaves deterministic preflight available and does not create generated outputs or patient memory entries.
 
 ## 13. Phase 9 - Production Deployment
 
