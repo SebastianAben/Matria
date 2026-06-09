@@ -66,6 +66,7 @@ export const structuredObservationSchema = z.object({
   id: idSchema,
   encounterId: idSchema,
   kind: observationKindSchema,
+  code: z.string().min(1).optional(),
   value: z.union([z.string(), z.number(), z.boolean()]),
   unit: z.string().optional(),
   confidence: z.number().min(0).max(1).optional(),
@@ -84,6 +85,27 @@ export const ruleResultSchema = z.object({
   mustAcknowledge: z.boolean().default(false),
 });
 
+export const preflightPromptSchema = z.object({
+  field: z.string().min(1),
+  message: z.string().min(1),
+  severity: z.enum(['required', 'recommended']),
+});
+
+export const uncertaintyAnnotationSchema = z.object({
+  observationId: idSchema.optional(),
+  field: z.string().min(1),
+  reason: z.enum(['missing', 'low_confidence', 'unverified']),
+  message: z.string().min(1),
+});
+
+export const clinicalPreflightSchema = z.object({
+  encounterId: idSchema,
+  readyForSynthesis: z.boolean(),
+  prompts: z.array(preflightPromptSchema),
+  ruleResults: z.array(ruleResultSchema),
+  uncertainty: z.array(uncertaintyAnnotationSchema),
+});
+
 export const generatedOutputSchema = z.object({
   id: idSchema,
   encounterId: idSchema,
@@ -92,6 +114,16 @@ export const generatedOutputSchema = z.object({
   content: z.string(),
   preservesRuleResultIds: z.array(idSchema).default([]),
   uncertaintyNotes: z.array(z.string()).default([]),
+  createdAt: isoDateTimeSchema,
+});
+
+export const patientMemoryEntrySchema = z.object({
+  id: idSchema,
+  patientId: idSchema,
+  pregnancyEpisodeId: idSchema,
+  encounterId: idSchema,
+  sourceOutputId: idSchema,
+  content: z.string().min(1),
   createdAt: isoDateTimeSchema,
 });
 
@@ -108,6 +140,7 @@ export const fhirExportSchema = z.object({
   id: idSchema,
   encounterId: idSchema,
   outputId: idSchema,
+  approvingClinicianUserId: idSchema,
   status: z.enum(['generated', 'downloaded', 'voided']),
   artifactJson: z.record(z.unknown()),
   generatedAt: isoDateTimeSchema,
@@ -131,7 +164,11 @@ export type PregnancyEpisode = z.infer<typeof pregnancyEpisodeSchema>;
 export type Encounter = z.infer<typeof encounterSchema>;
 export type StructuredObservation = z.infer<typeof structuredObservationSchema>;
 export type RuleResult = z.infer<typeof ruleResultSchema>;
+export type PreflightPrompt = z.infer<typeof preflightPromptSchema>;
+export type UncertaintyAnnotation = z.infer<typeof uncertaintyAnnotationSchema>;
+export type ClinicalPreflight = z.infer<typeof clinicalPreflightSchema>;
 export type GeneratedOutput = z.infer<typeof generatedOutputSchema>;
+export type PatientMemoryEntry = z.infer<typeof patientMemoryEntrySchema>;
 export type ClinicalApproval = z.infer<typeof clinicalApprovalSchema>;
 export type FhirExport = z.infer<typeof fhirExportSchema>;
 export type AuditLog = z.infer<typeof auditLogSchema>;

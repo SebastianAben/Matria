@@ -70,6 +70,8 @@ Implemented notes:
 
 ## 6. Phase 2 - Backend Foundation
 
+Status: backend/API foundation section implemented locally on branch `codex/phase2-backend-api-foundation` on 2026-06-09. Push requires user confirmation.
+
 Deliverables:
 
 - Express runtime with structured config, logging, error handling, and request IDs.
@@ -86,7 +88,19 @@ Acceptance:
 - RBAC middleware is covered by Vitest.
 - Readiness fails when database dependency is unavailable.
 
+Implemented notes:
+
+- Express runtime now has request context propagation, structured logger setup, centralized not-found and error handlers.
+- PostgreSQL pool creation and migration runner exist under `apps/api/src/db`.
+- Initial migrations cover pgvector extension enablement plus RBAC/audit foundation tables.
+- `/ready` checks database connectivity, pending migrations, pgvector availability, and contract health.
+- Auth/session foundation supports bootstrap admin login with secure HTTP-only session cookie semantics for local foundation work.
+- RBAC middleware protects `/audit-logs`, and Vitest covers unauthenticated and authorized access.
+- Audit writer has in-memory and database-backed implementations.
+
 ## 7. Phase 3 - Clinical Domain and Rules Engine
+
+Status: initial clinical/API foundation implemented locally on 2026-06-09.
 
 Deliverables:
 
@@ -102,7 +116,19 @@ Acceptance:
 - Missing required fields create prompts before AI synthesis.
 - Patient and pregnancy scoping is enforced in tests.
 
+Implemented notes:
+
+- Shared contracts now include clinical preflight prompts, uncertainty annotations, and coded structured observations.
+- Express API exposes authenticated clinical routes for patients, pregnancy episodes, encounters, structured observations, and encounter preflight.
+- In-memory clinical store enforces patient/pregnancy episode scoping for encounter creation.
+- Deterministic rules engine triggers severe hypertension and preeclampsia symptom-cluster rule results before AI synthesis.
+- Mandatory ANC preflight currently requires systolic BP, diastolic BP, and gestational age.
+- Synthetic fixtures cover normal ANC, missing-field ANC, and severe-hypertension ANC observations.
+- Migration `0003` prepares PostgreSQL tables for patients, pregnancy episodes, encounters, and structured observations.
+
 ## 8. Phase 4 - AI Orchestration and Review Lifecycle
+
+Status: initial orchestration/review foundation implemented locally on 2026-06-09.
 
 Deliverables:
 
@@ -119,7 +145,20 @@ Acceptance:
 - Provider failure leaves deterministic rules visible and does not create approved output.
 - Memory writes require approved output and correct scope.
 
+Implemented notes:
+
+- Express API exposes authenticated AI routes for encounter synthesis, generated output listing, edit, approve, reject, and scoped patient memory retrieval.
+- Gemini orchestration and MedGemma evidence are adapter boundaries with deterministic local implementations until provider credentials and model governance are configured.
+- AI synthesis reruns deterministic preflight and blocks when required prompts remain unresolved.
+- Tool-call and provider actions create audit records, including provider failure.
+- Output validation requires hard deterministic flags to be preserved and carries uncertainty notes into drafts.
+- Generated output lifecycle supports draft, edited, approved, and rejected states.
+- Approved outputs write scoped patient memory; draft, edited, and rejected outputs do not write memory.
+- Migration `0004` prepares tables for generated outputs, approvals, and patient memory entries.
+
 ## 9. Phase 5 - FHIR Export
+
+Status: initial FHIR export foundation implemented locally on 2026-06-09.
 
 Deliverables:
 
@@ -132,6 +171,16 @@ Acceptance:
 
 - FHIR export is blocked for draft or rejected output.
 - Generated FHIR artifacts validate against the project's schema expectations.
+
+Implemented notes:
+
+- Shared contracts now include FHIR export approval provenance through `approvingClinicianUserId`.
+- Express API exposes authenticated FHIR route `POST /fhir/outputs/:outputId/export`.
+- FHIR export is gated to approved generated outputs and requires approval provenance.
+- Generated artifacts are FHIR R4-style document Bundles with Composition, Patient, Encounter, DocumentReference, and Provenance resources.
+- Export artifacts are persisted through an in-memory store for local foundation work.
+- Migration `0005` prepares PostgreSQL persistence for FHIR export artifacts.
+- Vitest covers draft/rejected export blocking and approved output Bundle/provenance mapping.
 
 ## 10. Phase 6 - Web Clinical Workspace
 

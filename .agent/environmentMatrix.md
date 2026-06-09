@@ -22,6 +22,15 @@ Local env expectations:
 - AI provider keys stored in local ignored env files.
 - File uploads may use local filesystem or local object-storage emulator until production storage is chosen.
 
+Current API env variables:
+
+- `APP_ENV`: `development`, `test`, or `production`.
+- `PORT`: API port, defaults to `4000`.
+- `DATABASE_URL`: optional locally; required for migrations and full readiness.
+- `SESSION_SECRET`: required before production hardening; local foundation currently accepts absence.
+- `ADMIN_BOOTSTRAP_EMAIL`: optional local bootstrap admin email.
+- `ADMIN_BOOTSTRAP_PASSWORD`: optional local bootstrap admin password, minimum 12 characters.
+
 ## E2E
 
 Purpose: automated browser validation of backend/web workflows.

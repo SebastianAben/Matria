@@ -12,7 +12,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "typecheck": "npm -w packages/contracts run build && npm -w packages/contracts run typecheck && npm -w packages/test-fixtures run typecheck && npm -w apps/api run typecheck && npm -w apps/web run typecheck && npm -w apps/e2e run typecheck",
-    "test": "npm -w packages/contracts run build && npm -w packages/contracts test && npm -w apps/api test",
+    "test": "npm -w packages/contracts run build && npm -w packages/test-fixtures run build && npm -w packages/contracts test && npm -w apps/api test",
     "build": "npm -w packages/contracts run build && npm -w packages/test-fixtures run build && npm -w apps/api run build && npm -w apps/web run build",
     "e2e": "npm -w apps/e2e test"
   },

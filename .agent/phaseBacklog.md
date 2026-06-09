@@ -6,8 +6,9 @@ Purpose: condensed actionable backlog for the next implementation sessions
 
 ## Current Repo State
 
-- Workspace contains `.agent` documentation plus the initial Phase 1 TypeScript monorepo scaffold.
+- Workspace contains `.agent` documentation plus the TypeScript monorepo scaffold.
 - Application scaffold exists for API, web, E2E, shared contracts, and synthetic fixtures.
+- Phase 5 FHIR export foundation is implemented with approval-gated export, FHIR R4-style Bundle formatting, provenance, artifact persistence boundary, migration, and tests.
 - Product decisions are locked in `.agent/PRD.md`.
 
 ## Completed
@@ -18,36 +19,42 @@ Purpose: condensed actionable backlog for the next implementation sessions
 - Environment, deployment, release, and provisioning docs seeded.
 - Phase 1 initial monorepo scaffold completed.
 - Root quality gates pass locally: `format:check`, `lint`, `typecheck`, `test`, `build`, and `e2e`.
+- Phase 2 backend/API foundation section implemented locally on branch `codex/phase2-backend-api-foundation`.
+- Phase 3 initial clinical domain and rules engine foundation implemented locally.
+- Phase 4 initial AI orchestration and review lifecycle foundation implemented locally.
+- Phase 5 initial FHIR export foundation implemented locally.
 
 ## Next Recommended Start
 
-Start with Phase 2: backend foundation.
+Continue persistence hardening or begin Phase 6 web clinical workspace after confirming whether the local Phase 2-5 work should be pushed.
 
 Recommended next batch:
 
-1. Add structured logging and request context propagation.
-2. Add PostgreSQL connection and migration tooling.
-3. Add pgvector extension migration.
-4. Replace readiness placeholder with real database and migration checks.
-5. Add authentication/session foundation.
-6. Add RBAC entities, permission middleware, and audit logging infrastructure.
+1. Review and confirm whether to push the backend/API section branch.
+2. Replace the in-memory clinical store with PostgreSQL-backed repositories using migration `0003`.
+3. Add real database-backed auth/session storage or document the transition from in-memory bootstrap sessions.
+4. Add seed data for roles and permissions.
+5. Add integration tests against a PostgreSQL test container or local database.
+6. Add rate limits and secure cookie production settings.
+7. Replace local deterministic AI provider stubs with configured provider implementations behind the existing adapter interfaces.
+8. Add database-backed FHIR export repository using migration `0005`.
 
 ## Backend Backlog
 
-- Express runtime foundation.
-- PostgreSQL migration tooling.
-- pgvector extension migration.
-- Authentication/session model.
-- Full RBAC schema and middleware.
-- Audit log writer.
-- Patient, pregnancy episode, and encounter APIs.
+- Express runtime foundation. Implemented for backend/API section.
+- PostgreSQL migration tooling. Initial runner implemented.
+- pgvector extension migration. Initial migration implemented.
+- Authentication/session model. In-memory bootstrap foundation implemented; durable storage pending.
+- Full RBAC schema and middleware. Middleware and initial schema migration implemented; role/permission seeding pending.
+- Audit log writer. In-memory and database writer implemented.
+- Patient, pregnancy episode, and encounter APIs. Initial in-memory implementation complete.
 - Consent and clinical file metadata APIs.
-- Structured observation APIs.
-- Mandatory-field preflight.
-- Maternal red-flag rules.
-- AI orchestration adapter boundaries.
-- Approval lifecycle.
-- FHIR R4 export.
+- Structured observation APIs. Initial in-memory implementation complete.
+- Mandatory-field preflight. Initial implementation complete for systolic BP, diastolic BP, and gestational age.
+- Maternal red-flag rules. Initial implementation complete for severe hypertension and preeclampsia symptom cluster.
+- AI orchestration adapter boundaries. Initial Gemini and MedGemma boundaries implemented with deterministic local adapters.
+- Approval lifecycle. Initial generated output edit, approve, reject, and approval-gated memory implemented.
+- FHIR R4 export. Initial in-memory implementation complete; database-backed repository pending.
 
 ## Frontend Backlog
 
@@ -65,8 +72,9 @@ Recommended next batch:
 
 - Vitest rules engine tests.
 - Vitest RBAC permission tests.
-- Vitest FHIR mapping tests.
+- Vitest FHIR mapping tests. Initial route and provenance coverage implemented.
 - Vitest audit logging tests.
+- Vitest AI orchestration and approval-gated memory tests.
 - Integration tests for encounter lifecycle.
 - Playwright clinician ANC flow.
 - Playwright admin RBAC flow.
