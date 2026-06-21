@@ -24,23 +24,19 @@ For most implementation sessions, read in this order:
 
 1. `.agent/RULES.md`
 2. `.agent/PRD.md`
-3. newest `.agent/sessionHandoff-YYYY-MM-DD.md`, if present
+3. `.agent/sessionHandoff.md`, if present
 4. `.agent/implementationPhases.md`
-5. `.agent/phaseBacklog.md`
-6. `.agent/environmentMatrix.md`
-7. `.agent/deploymentGuide.md` if the task touches environments, secrets, deploys, VM, Docker, Caddy, PostgreSQL, or GitHub Actions
-8. `.agent/releaseExecutionChecklist.md` if preparing a rollout
-9. relevant ADRs under `docs/adr/` if present
+5. `.agent/releaseExecutionChecklist.md`, if present and relevant
+6. deployment or environment docs only after they are recreated for deployment work
+7. relevant ADRs under `docs/adr/` if present
 
 ## 3. Source-of-truth Files
 
 - `PRD.md`: product contract, clinical safety posture, users, workflows, data model, API scope, AI decisions, deployment scope, acceptance criteria.
-- `implementationPhases.md`: implementation roadmap and sequencing.
-- `phaseBacklog.md`: short actionable backlog and next recommended start.
-- `environmentMatrix.md`: local, E2E, and production topology.
-- `deploymentGuide.md`: canonical deployment, secrets, provisioning, rollback, and smoke-test runbook.
-- `releaseExecutionChecklist.md`: operator checklist for release windows.
-- `manualProvisioningChecklist.md`: external provisioning checklist.
+- `implementationPhases.md`: implementation roadmap, phase/subphase sequencing, progress state, dependencies, acceptance checks, and next recommended task.
+- `sessionHandoff.md`: latest session handoff, current objective, changed files, decisions, blockers, checks run, and next recommended action.
+- `releaseExecutionChecklist.md`: operator checklist for release windows, if present and relevant.
+- Deployment/environment docs: future source-of-truth files to recreate only when deployment work is ready.
 
 If code and docs disagree, do not silently pick one. Inspect the current repo state, identify the mismatch, and update the relevant `.agent` file as part of the same work when the change is intentional.
 
@@ -59,6 +55,16 @@ Future agents must preserve these decisions:
 
 If implementation changes any of these rules, update `PRD.md` and add or update an ADR.
 
+## 4.1 Local Development Runtime Rules
+
+Future agents must preserve these development-environment decisions:
+
+- Local development database must run as a Docker-managed PostgreSQL instance with pgvector enabled or provisioned through the local Compose setup.
+- Do not require developers to install or use a host-machine PostgreSQL service for normal local development.
+- Local app and tests should read database connection details from environment variables that point to the Docker database.
+- Automated tests may use isolated Docker databases, disposable schemas, transactions, or test containers, but must not depend on a manually configured host PostgreSQL instance.
+- Frontend clients must never connect directly to the database; all database access goes through the backend API.
+
 ## 5. When To Update `.agent`
 
 Update `.agent` when implementation changes:
@@ -75,6 +81,43 @@ Update `.agent` when implementation changes:
 
 Do not let `.agent` become stale after major implementation sessions.
 
+## 5.1 Required Progress Updates
+
+Every substantive task or session must update:
+
+1. `.agent/sessionHandoff.md`
+2. `.agent/implementationPhases.md`
+3. `docs/adr/`
+
+Update `.agent/sessionHandoff.md` at the end of each substantive task/session with:
+
+- current objective
+- files changed
+- current phase and subphase
+- completed work
+- decisions made
+- blockers or open questions
+- next recommended action
+- tests and checks run
+
+Update `.agent/implementationPhases.md` whenever:
+
+- a phase or subphase starts
+- a phase or subphase completes
+- a phase or subphase becomes blocked
+- a phase or subphase is deferred
+- dependencies, acceptance checks, scope, or sequencing materially change
+
+Implementation phase progress rules:
+
+- keep only one current phase/subphase marked `in_progress`
+- mark completed subphases `done`
+- preserve blockers and deferred work explicitly
+- never silently skip a phase dependency
+- if implementation diverges from the roadmap, update the roadmap in the same session
+
+Create or update an ADR under `docs/adr/` after every substantive task/session. The ADR must record the meaningful decision, implementation direction, tradeoffs, consequences, validation, and follow-up work from the session. If the session extends an existing decision, update the existing ADR instead of creating a duplicate.
+
 ## 6. When To Add Files
 
 Add a new `.agent` file when:
@@ -86,7 +129,7 @@ Add a new `.agent` file when:
 
 Use these naming patterns:
 
-- `sessionHandoff-YYYY-MM-DD.md`
+- `sessionHandoff.md`
 - `phase{N}Kickoff.md`
 - stable docs in `camelCase.md`
 - ADRs in `docs/adr/000N-kebab-case-title.md`
@@ -105,7 +148,7 @@ Use ADRs for durable architecture decisions such as:
 - FHIR export contract
 - file storage and clinical media processing
 
-ADRs must include status, date, context, decision, rationale, consequences, and follow-up work.
+ADRs must include status, date, context, decision, rationale, alternatives considered, implementation details, consequences, validation plan, risks, and follow-up work. ADRs must be comprehensive enough that a future agent can understand why the decision was made without reading the full chat transcript.
 
 ## 8. Commit Message Rules
 
@@ -120,7 +163,19 @@ Use conventional commit prefixes:
 - `build:` for build systems, Dockerfiles, and packaging
 - `chore:` for maintenance and repo hygiene
 
-Subjects should be imperative, concise, and specific. Prefer one logical change per commit.
+Commit subjects should be behavior-based, imperative, concise, and specific. They should describe the observable behavior or capability change, not the implementation phase or roadmap position.
+
+Good examples:
+
+- `docs: require Docker PostgreSQL for local development`
+- `feat: add ambient session transcript correction`
+- `fix: preserve rule warnings in generated summaries`
+
+Avoid commit subjects that reference phases or sequencing instead of behavior:
+
+- `phase 2 database work`
+- `implement phase 6`
+- `docs: update phase roadmap`
 
 ## 9. Content Rules
 
@@ -135,12 +190,15 @@ When updating `.agent`:
 
 ## 10. Required End-of-session Updates
 
-After a major implementation or deployment-prep session, usually update:
+After every substantive task/session, update:
 
 1. `.agent/implementationPhases.md`
-2. `.agent/phaseBacklog.md`
-3. newest handoff or a new `sessionHandoff-YYYY-MM-DD.md`
-4. `.agent/environmentMatrix.md` or `.agent/deploymentGuide.md` if environment assumptions changed
-5. ADRs if a durable technical decision changed
+2. `.agent/sessionHandoff.md`
+3. `docs/adr/`
+
+Also update, when relevant:
+
+4. `.agent/releaseExecutionChecklist.md` if preparing a rollout
+5. deployment/environment docs after they are recreated for deployment work
 
 If the session only makes small local edits, update only the docs that actually changed in meaning.
