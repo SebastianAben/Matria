@@ -1,0 +1,273 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  active
+  disabled
+}
+
+enum AuditOutcome {
+  success
+  failure
+  denied
+}
+
+enum EncounterStatus {
+  draft
+  active
+  reviewing
+  closed
+  approved
+  archived
+}
+
+enum ConsentMode {
+  audio
+  transcript
+  ai
+  media
+  fhir_export
+}
+
+enum ConsentStatus {
+  granted
+  withdrawn
+  declined
+}
+
+enum ClinicalFileKind {
+  audio
+  image
+  document
+  ultrasound
+}
+
+enum ObservationType {
+  vitals
+  labs
+  symptoms
+  history
+  medications
+  allergies
+  gestational_age
+}
+
+enum ObservationVerificationStatus {
+  unverified
+  clinician_entered
+  clinician_verified
+  corrected
+  rejected
+}
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  email        String     @unique
+  fullName     String
+  passwordHash String
+  status       UserStatus @default(active)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  roles        UserRole[]
+  sessions     Session[]
+  auditLogs    AuditLog[]             @relation("AuditActor")
+  patients     Patient[]              @relation("PatientCreator")
+  encounters   Encounter[]            @relation("EncounterCreator")
+  observations StructuredObservation[]
+  sessionNotes SessionNote[]
+}
+
+model Role {
+  id          String   @id @default(uuid()) @db.Uuid
+  key         String   @unique
+  name        String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       UserRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String   @id @default(uuid()) @db.Uuid
+  key         String   @unique
+  description String
+  createdAt   DateTime @default(now())
+
+  roles       RolePermission[]
+}
+
+model UserRole {
+  userId    String   @db.Uuid
+  roleId    String   @db.Uuid
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model RolePermission {
+  roleId       String   @db.Uuid
+  permissionId String   @db.Uuid
+  createdAt    DateTime @default(now())
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  tokenHash String   @unique
+  userId    String   @db.Uuid
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id         String       @id @default(uuid()) @db.Uuid
+  actorId    String?      @db.Uuid
+  action     String
+  targetType String
+  targetId   String?
+  outcome    AuditOutcome
+  requestId  String
+  metadata   Json?
+  createdAt  DateTime     @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([targetType, targetId])
+  @@index([action])
+}
+
+model Patient {
+  id             String   @id @default(uuid()) @db.Uuid
+  hospitalNumber String   @unique
+  fullName       String
+  dateOfBirth    DateTime?
+  phone          String?
+  address        String?
+  createdById    String   @db.Uuid
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  createdBy User @relation("PatientCreator", fields: [createdById], references: [id])
+  pregnancyEpisodes PregnancyEpisode[]
+  encounters Encounter[]
+}
+
+model PregnancyEpisode {
+  id                  String   @id @default(uuid()) @db.Uuid
+  patientId           String   @db.Uuid
+  label               String
+  estimatedDueDate    DateTime?
+  gestationalAgeWeeks Int?
+  status              String   @default("active")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  encounters Encounter[]
+
+  @@index([patientId])
+}
+
+model Encounter {
+  id                 String          @id @default(uuid()) @db.Uuid
+  patientId          String          @db.Uuid
+  pregnancyEpisodeId String          @db.Uuid
+  status             EncounterStatus @default(draft)
+  visitType          String          @default("routine_anc")
+  facilityName       String?
+  createdById        String          @db.Uuid
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  pregnancyEpisode PregnancyEpisode @relation(fields: [pregnancyEpisodeId], references: [id], onDelete: Restrict)
+  createdBy User @relation("EncounterCreator", fields: [createdById], references: [id])
+  consentRecords ConsentRecord[]
+  clinicalFiles ClinicalFile[]
+  observations StructuredObservation[]
+  sessionNote SessionNote?
+
+  @@index([patientId])
+  @@index([pregnancyEpisodeId])
+}
+
+model ConsentRecord {
+  id          String        @id @default(uuid()) @db.Uuid
+  encounterId String        @db.Uuid
+  mode        ConsentMode
+  status      ConsentStatus
+  note        String?
+  actorId     String        @db.Uuid
+  createdAt   DateTime      @default(now())
+
+  encounter Encounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+
+  @@index([encounterId, mode])
+}
+
+model ClinicalFile {
+  id          String           @id @default(uuid()) @db.Uuid
+  encounterId String           @db.Uuid
+  kind        ClinicalFileKind
+  fileName    String
+  mimeType    String
+  sizeBytes   Int
+  storageUri  String?
+  createdById String           @db.Uuid
+  createdAt   DateTime         @default(now())
+
+  encounter Encounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+
+  @@index([encounterId])
+}
+
+model StructuredObservation {
+  id                 String                        @id @default(uuid()) @db.Uuid
+  encounterId        String                        @db.Uuid
+  type               ObservationType
+  value              Json
+  verificationStatus ObservationVerificationStatus @default(clinician_entered)
+  source             String                        @default("manual_entry")
+  createdById        String                        @db.Uuid
+  createdAt          DateTime                      @default(now())
+  updatedAt          DateTime                      @updatedAt
+
+  encounter Encounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@index([encounterId, type])
+}
+
+model SessionNote {
+  id          String   @id @default(uuid()) @db.Uuid
+  encounterId String   @unique @db.Uuid
+  content     String   @default("")
+  version     Int      @default(1)
+  updatedById String   @db.Uuid
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  encounter Encounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  updatedBy User @relation(fields: [updatedById], references: [id])
+}
+

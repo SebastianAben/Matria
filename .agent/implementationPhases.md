@@ -27,11 +27,11 @@ Progress maintenance rules:
 
 ## Current Execution State
 
-- Current phase: Phase 0 - Product Memory And Governance
-- Current subphase: 0.5 - Document clinical safety invariants
-- Last completed subphase: 0.7 - Define ADR and commit governance
-- Active blockers: none
-- Next recommended task: finish Phase 0 docs validation, then begin Phase 1 repository and app foundation.
+- Current phase: Phase 2 - Database, Auth, RBAC, And Audit Core
+- Current subphase: 2.1 - Docker PostgreSQL and pgvector setup
+- Last completed subphase: 1.10 - Add env examples
+- Active blockers: local Docker/OrbStack daemon is not running, so Docker PostgreSQL, migrations, pgvector, and DB-backed API tests could not be validated.
+- Next recommended task: start the local Docker runtime, run `pnpm db:up`, apply migrations, seed roles/admin, and rerun the full API test suite.
 
 ## Phase Template
 
@@ -49,20 +49,20 @@ Each phase follows this structure:
 ## Phase 0: Product Memory And Governance
 
 Objective: establish the project memory, sequencing rules, handoff habit, and clinical safety invariants before code implementation starts.  
-Status: `in_progress`  
+Status: `done`  
 Dependencies: `.agent/PRD.md`
 
 ### Subphases
 
-| ID | Name | Status | Expected output |
-| --- | --- | --- | --- |
-| 0.1 | Align `.agent` source docs | `done` | `.agent/RULES.md` and `.agent/PRD.md` use `.agent/` as canonical project memory. |
-| 0.2 | Lock source-of-truth rules | `done` | Rules preserve PRD authority, clinical safety posture, and doc-update triggers. |
-| 0.3 | Define status conventions | `done` | Roadmap statuses and progress rules are defined in this file. |
-| 0.4 | Create stable session handoff | `done` | `.agent/sessionHandoff.md` exists and records the current session. |
-| 0.5 | Document clinical safety invariants | `in_progress` | Safety invariants are summarized in phase notes and preserved in future implementation tasks. |
-| 0.6 | Confirm deleted deployment docs policy | `done` | RULES states deployment/environment docs are recreated only when deployment work starts. |
-| 0.7 | Define ADR and commit governance | `done` | RULES requires behavior-based commit messages with no phase references and comprehensive ADR updates after substantive sessions. |
+| ID  | Name                                   | Status | Expected output                                                                                                                  |
+| --- | -------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| 0.1 | Align `.agent` source docs             | `done` | `.agent/RULES.md` and `.agent/PRD.md` use `.agent/` as canonical project memory.                                                 |
+| 0.2 | Lock source-of-truth rules             | `done` | Rules preserve PRD authority, clinical safety posture, and doc-update triggers.                                                  |
+| 0.3 | Define status conventions              | `done` | Roadmap statuses and progress rules are defined in this file.                                                                    |
+| 0.4 | Create stable session handoff          | `done` | `.agent/sessionHandoff.md` exists and records the current session.                                                               |
+| 0.5 | Document clinical safety invariants    | `done` | Safety invariants are summarized in phase notes and preserved in future implementation tasks.                                    |
+| 0.6 | Confirm deleted deployment docs policy | `done` | RULES states deployment/environment docs are recreated only when deployment work starts.                                         |
+| 0.7 | Define ADR and commit governance       | `done` | RULES requires behavior-based commit messages with no phase references and comprehensive ADR updates after substantive sessions. |
 
 ### Deliverables
 
@@ -95,28 +95,28 @@ Dependencies: `.agent/PRD.md`
 
 ### Update Notes
 
-- When this phase completes, set Phase 1 as the current phase and identify the first app-foundation task in `.agent/sessionHandoff.md`.
+- Completed before application scaffolding. Clinical safety invariants remain enforced through RBAC, consent gates, audit logging, clinician authority, and deferred AI/STT/MedGemma boundaries.
 
 ## Phase 1: Repository And App Foundation
 
 Objective: create the runnable local app skeleton and project tooling foundation.  
-Status: `not_started`  
+Status: `done`  
 Dependencies: Phase 0
 
 ### Subphases
 
-| ID | Name | Status | Expected output |
-| --- | --- | --- | --- |
-| 1.1 | Choose repository layout | `not_started` | Decide and document monorepo layout, likely `apps/api`, `apps/web`, `packages/shared`, and `apps/e2e` if Playwright is separated. |
-| 1.2 | Initialize package manager and scripts | `not_started` | Root package scripts for install, dev, format, lint, typecheck, test, build, e2e, and compose validation. |
-| 1.3 | Configure TypeScript baseline | `not_started` | Shared strict TypeScript config and per-app configs. |
-| 1.4 | Configure formatting and linting | `not_started` | Formatter/linter config with deterministic CI commands. |
-| 1.5 | Scaffold backend app | `not_started` | Express.js TypeScript API with `/health`, `/ready`, structured errors, env loading, and request logging. |
-| 1.6 | Scaffold web app | `not_started` | Next.js TypeScript app with authenticated workspace shell placeholder and basic layout system. |
-| 1.7 | Scaffold shared package | `not_started` | Shared types, constants, validation helpers, and API response shapes. |
-| 1.8 | Configure Vitest | `not_started` | Unit/integration test setup for backend and shared packages. |
-| 1.9 | Configure Playwright | `not_started` | E2E harness that starts API/web locally and verifies a basic route. |
-| 1.10 | Add env examples | `not_started` | `.env.example` files for local API/web plus production placeholders without secrets. |
+| ID   | Name                                   | Status | Expected output                                                                                             |
+| ---- | -------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------- |
+| 1.1  | Choose repository layout               | `done` | `apps/api`, `apps/web`, `packages/shared`, and `apps/e2e` workspace layout exists.                          |
+| 1.2  | Initialize package manager and scripts | `done` | Root `pnpm` scripts exist for dev, format, lint, typecheck, test, build, e2e, and Docker database commands. |
+| 1.3  | Configure TypeScript baseline          | `done` | Shared strict TypeScript config and per-app configs exist.                                                  |
+| 1.4  | Configure formatting and linting       | `done` | Prettier and ESLint are configured with deterministic check commands.                                       |
+| 1.5  | Scaffold backend app                   | `done` | Express.js TypeScript API has `/health`, `/ready`, structured errors, env loading, request IDs, and CORS.   |
+| 1.6  | Scaffold web app                       | `done` | Next.js TypeScript app has login, workspace, patients, and admin shells with clinical product styling.      |
+| 1.7  | Scaffold shared package                | `done` | Shared enums, validators, API envelopes, and error codes exist.                                             |
+| 1.8  | Configure Vitest                       | `done` | Vitest is configured for shared and API tests.                                                              |
+| 1.9  | Configure Playwright                   | `done` | Playwright harness verifies workspace and patient capture routes.                                           |
+| 1.10 | Add env examples                       | `done` | Root/API/web `.env.example` files include local, production placeholder, and Vertex AI global variables.    |
 
 ### Deliverables
 
@@ -142,27 +142,27 @@ Dependencies: Phase 0
 
 ### Update Notes
 
-- Do not add clinical workflow logic before app foundation and test harness are stable.
+- Phase completed with `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, `pnpm build`, shared tests, API health tests, and Playwright smoke tests passing.
 
 ## Phase 2: Database, Auth, RBAC, And Audit Core
 
 Objective: build the secure clinical data foundation.  
-Status: `not_started`  
+Status: `blocked`  
 Dependencies: Phase 1
 
 ### Subphases
 
-| ID | Name | Status | Expected output |
-| --- | --- | --- | --- |
-| 2.1 | Docker PostgreSQL and pgvector setup | `not_started` | Local Docker-managed PostgreSQL configuration with pgvector enabled through Compose, plus hosted-ready PostgreSQL assumptions. |
-| 2.2 | Migration framework | `not_started` | Repeatable migrations with local reset/apply commands and CI-safe validation. |
-| 2.3 | Base identity entities | `not_started` | `User`, auth metadata, account status, password hashing, and seed/bootstrap admin path. |
-| 2.4 | Session authentication | `not_started` | Secure session/cookie handling and authenticated route guard. |
-| 2.5 | Role and permission model | `not_started` | `Role`, `Permission`, `UserRole`, default roles, and permission constants. |
-| 2.6 | RBAC middleware | `not_started` | Permission checks for protected routes and audit-visible denials. |
-| 2.7 | Audit log writer | `not_started` | Immutable `AuditLog` entity and helper used by sensitive actions. |
-| 2.8 | Admin user management APIs | `not_started` | Initial admin routes for users, roles, and permissions. |
-| 2.9 | Security tests | `not_started` | Tests for auth required, permission denied, and audit logging behavior. |
+| ID  | Name                                 | Status    | Expected output                                                                                   |
+| --- | ------------------------------------ | --------- | ------------------------------------------------------------------------------------------------- |
+| 2.1 | Docker PostgreSQL and pgvector setup | `blocked` | Compose config exists, but local Docker/OrbStack daemon is unavailable for runtime validation.    |
+| 2.2 | Migration framework                  | `done`    | Prisma schema and initial SQL migration exist, including `CREATE EXTENSION IF NOT EXISTS vector`. |
+| 2.3 | Base identity entities               | `done`    | `User`, auth metadata, account status, password hashing, and seed/bootstrap admin path exist.     |
+| 2.4 | Session authentication               | `done`    | Secure cookie session creation, read, and revocation are implemented.                             |
+| 2.5 | Role and permission model            | `done`    | `Role`, `Permission`, `UserRole`, default roles, and permission constants are implemented.        |
+| 2.6 | RBAC middleware                      | `done`    | Permission checks protect routes and write audit-visible denials.                                 |
+| 2.7 | Audit log writer                     | `done`    | Immutable `AuditLog` entity and helper are implemented for sensitive actions.                     |
+| 2.8 | Admin user management APIs           | `done`    | Initial admin users, roles, and role assignment routes exist.                                     |
+| 2.9 | Security tests                       | `blocked` | Tests exist, but DB-backed assertions cannot run until Docker PostgreSQL is available.            |
 
 ### Deliverables
 
@@ -191,27 +191,27 @@ Dependencies: Phase 1
 
 ### Update Notes
 
-- Patient data work must not proceed until patient-scope and RBAC patterns are established.
+- Code for the phase is present, but completion is blocked until Docker PostgreSQL/pgvector starts, migrations apply, seed succeeds, and DB-backed auth/RBAC/audit tests pass.
 
 ## Phase 3: ANC Domain Model And Encounter Workflow
 
 Objective: implement the core ANC data model and encounter capture workflow.  
-Status: `not_started`  
+Status: `blocked`  
 Dependencies: Phase 2
 
 ### Subphases
 
-| ID | Name | Status | Expected output |
-| --- | --- | --- | --- |
-| 3.1 | Patient records | `not_started` | `Patient` entity, create/read APIs, RBAC, and audit logging. |
-| 3.2 | Pregnancy episodes | `not_started` | `PregnancyEpisode` entity and patient-scoped episode APIs. |
-| 3.3 | Encounter lifecycle | `not_started` | `Encounter` entity with draft, active, reviewing, closed, approved, archived states. |
-| 3.4 | Consent records | `not_started` | `ConsentRecord` entity and processing-mode checks for audio/media/AI. |
-| 3.5 | Clinical file metadata | `not_started` | `ClinicalFile` metadata for audio, image, document, and ultrasound media. |
-| 3.6 | Structured observations | `not_started` | Vitals, labs, symptoms, history, medications, allergies, and gestational-age observations. |
-| 3.7 | Session notes | `not_started` | Clinician-editable note entity and APIs tied to encounter/ambient session. |
-| 3.8 | Encounter capture UI | `not_started` | Web screens for patient lookup, episode selection, encounter creation, and structured capture. |
-| 3.9 | Scoping tests | `not_started` | Tests proving patient and pregnancy episode scoping on all reads/writes. |
+| ID  | Name                    | Status    | Expected output                                                                                                                             |
+| --- | ----------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| 3.1 | Patient records         | `done`    | `Patient` entity, create/read/search APIs, RBAC, and audit logging are implemented.                                                         |
+| 3.2 | Pregnancy episodes      | `done`    | `PregnancyEpisode` entity and patient-scoped episode APIs are implemented.                                                                  |
+| 3.3 | Encounter lifecycle     | `done`    | `Encounter` entity and draft/active/reviewing/closed/approved/archived transition policy are implemented.                                   |
+| 3.4 | Consent records         | `done`    | `ConsentRecord` entity and processing-mode checks for audio/media/AI placeholders are implemented.                                          |
+| 3.5 | Clinical file metadata  | `done`    | `ClinicalFile` metadata route exists for audio, image, document, and ultrasound media.                                                      |
+| 3.6 | Structured observations | `done`    | Vitals, labs, symptoms, history, medications, allergies, and gestational-age observation contracts are implemented.                         |
+| 3.7 | Session notes           | `done`    | Clinician-editable session note entity and APIs are implemented and modeled as future LLM context.                                          |
+| 3.8 | Encounter capture UI    | `done`    | Web screens exist for patient lookup/create, episode selection/create, encounter creation, consent, observations, file metadata, and notes. |
+| 3.9 | Scoping tests           | `blocked` | Scoping tests exist, but DB-backed execution is blocked until Docker PostgreSQL is available.                                               |
 
 ### Deliverables
 
@@ -237,7 +237,7 @@ Dependencies: Phase 2
 
 ### Update Notes
 
-- Keep raw clinical media storage minimal until the media pipeline phase defines storage policy.
+- Raw clinical media storage remains metadata-only. Phase completion is blocked until Docker PostgreSQL validation proves migrations, consent checks, scoping tests, and audit writes.
 
 ## Phase 4: Advisory Rule Engine And Clinical Preflight
 
@@ -247,18 +247,18 @@ Dependencies: Phase 3
 
 ### Subphases
 
-| ID | Name | Status | Expected output |
-| --- | --- | --- | --- |
-| 4.1 | Rule schema | `not_started` | Versioned YAML/JSON or database-backed rule definition shape. |
-| 4.2 | Rule runner | `not_started` | Deterministic evaluator over structured observations, transcript candidates, and notes. |
-| 4.3 | Rule result persistence | `not_started` | `RuleResult` entity with severity, evidence, confidence, blocking level, and status. |
-| 4.4 | Blocking policy implementation | `not_started` | Hard blocks only for consent, scope, authorization, unsafe write/export, and critical acknowledgement cases. |
-| 4.5 | Maternal safety rule family | `not_started` | Initial rules for severe hypertension, bleeding, fetal movement, anemia, infection, urine values, history, and gestational context. |
-| 4.6 | Missing-field checks | `not_started` | Missing context produces prompts/suggestions instead of global synthesis blocks. |
-| 4.7 | Contradiction checks | `not_started` | Detect contradictions among manual inputs, transcript candidates, session notes, OCR, and media evidence. |
-| 4.8 | Preflight APIs | `not_started` | `POST /encounters/:encounterId/preflight` and internal rule evaluation hooks. |
-| 4.9 | Rule UI panel | `not_started` | Frontend displays deterministic rules separately from AI synthesis. |
-| 4.10 | Rule tests | `not_started` | Unit tests for severity, blocking level, evidence references, and nonblocking missing fields. |
+| ID   | Name                           | Status        | Expected output                                                                                                                     |
+| ---- | ------------------------------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 4.1  | Rule schema                    | `not_started` | Versioned YAML/JSON or database-backed rule definition shape.                                                                       |
+| 4.2  | Rule runner                    | `not_started` | Deterministic evaluator over structured observations, transcript candidates, and notes.                                             |
+| 4.3  | Rule result persistence        | `not_started` | `RuleResult` entity with severity, evidence, confidence, blocking level, and status.                                                |
+| 4.4  | Blocking policy implementation | `not_started` | Hard blocks only for consent, scope, authorization, unsafe write/export, and critical acknowledgement cases.                        |
+| 4.5  | Maternal safety rule family    | `not_started` | Initial rules for severe hypertension, bleeding, fetal movement, anemia, infection, urine values, history, and gestational context. |
+| 4.6  | Missing-field checks           | `not_started` | Missing context produces prompts/suggestions instead of global synthesis blocks.                                                    |
+| 4.7  | Contradiction checks           | `not_started` | Detect contradictions among manual inputs, transcript candidates, session notes, OCR, and media evidence.                           |
+| 4.8  | Preflight APIs                 | `not_started` | `POST /encounters/:encounterId/preflight` and internal rule evaluation hooks.                                                       |
+| 4.9  | Rule UI panel                  | `not_started` | Frontend displays deterministic rules separately from AI synthesis.                                                                 |
+| 4.10 | Rule tests                     | `not_started` | Unit tests for severity, blocking level, evidence references, and nonblocking missing fields.                                       |
 
 ### Deliverables
 
@@ -295,18 +295,18 @@ Dependencies: Phase 4
 
 ### Subphases
 
-| ID | Name | Status | Expected output |
-| --- | --- | --- | --- |
-| 5.1 | Ambient session lifecycle | `not_started` | `AmbientSessionState` entity and start/stop APIs. |
-| 5.2 | Audio event ingestion | `not_started` | Backend endpoint or stream boundary for audio/transcript events. |
-| 5.3 | Google STT integration boundary | `not_started` | Provider adapter for Google Cloud Speech-to-Text with mockable interface. |
-| 5.4 | Native diarization path | `not_started` | Two-speaker native STT diarization for supported English-centered model/region combos. |
-| 5.5 | Transcript turn persistence | `not_started` | `TranscriptTurn` entity and APIs for list/create/update. |
-| 5.6 | Speaker role correction | `not_started` | Clinician-correctable speaker labels and role guesses. |
-| 5.7 | Transcript clinical extraction candidates | `not_started` | Lightweight extraction of candidate facts, symptoms, questions, and danger signs. |
-| 5.8 | Future multilingual diarization boundary | `not_started` | Interface reserved for `gemini-flash-lite-latest` post-STT diarization. |
-| 5.9 | Failure/degraded mode | `not_started` | Manual notes and structured observations remain usable when STT fails. |
-| 5.10 | Ambient transcript UI | `not_started` | Live transcript panel with timestamps, confidence, and corrections. |
+| ID   | Name                                      | Status        | Expected output                                                                        |
+| ---- | ----------------------------------------- | ------------- | -------------------------------------------------------------------------------------- |
+| 5.1  | Ambient session lifecycle                 | `not_started` | `AmbientSessionState` entity and start/stop APIs.                                      |
+| 5.2  | Audio event ingestion                     | `not_started` | Backend endpoint or stream boundary for audio/transcript events.                       |
+| 5.3  | Google STT integration boundary           | `not_started` | Provider adapter for Google Cloud Speech-to-Text with mockable interface.              |
+| 5.4  | Native diarization path                   | `not_started` | Two-speaker native STT diarization for supported English-centered model/region combos. |
+| 5.5  | Transcript turn persistence               | `not_started` | `TranscriptTurn` entity and APIs for list/create/update.                               |
+| 5.6  | Speaker role correction                   | `not_started` | Clinician-correctable speaker labels and role guesses.                                 |
+| 5.7  | Transcript clinical extraction candidates | `not_started` | Lightweight extraction of candidate facts, symptoms, questions, and danger signs.      |
+| 5.8  | Future multilingual diarization boundary  | `not_started` | Interface reserved for `gemini-flash-lite-latest` post-STT diarization.                |
+| 5.9  | Failure/degraded mode                     | `not_started` | Manual notes and structured observations remain usable when STT fails.                 |
+| 5.10 | Ambient transcript UI                     | `not_started` | Live transcript panel with timestamps, confidence, and corrections.                    |
 
 ### Deliverables
 
@@ -344,19 +344,19 @@ Dependencies: Phase 5
 
 ### Subphases
 
-| ID | Name | Status | Expected output |
-| --- | --- | --- | --- |
-| 6.1 | Vertex AI runtime config | `not_started` | Provider config for `GEMINI_PROVIDER=vertex_ai`, `GOOGLE_CLOUD_PROJECT`, and `GOOGLE_CLOUD_LOCATION=global`. |
-| 6.2 | Gemini client adapter | `not_started` | Mockable adapter for `gemini-3.1-pro-preview` and structured output calls. |
-| 6.3 | Context snapshot entity | `not_started` | `ContextSnapshot` persistence with patient/pregnancy/encounter/session scope. |
-| 6.4 | Context builder | `not_started` | Builder assembles patient, pregnancy, transcript, session note, observations, rules, suggestions, memory, media, and artifact revisions. |
-| 6.5 | Patient-scoped memory retrieval | `not_started` | pgvector-backed retrieval scoped by patient and pregnancy episode. |
-| 6.6 | Gemini patch schema | `not_started` | Runtime validation for summary, highlights, suggestions, notes, referral drafts, and handoff requests. |
-| 6.7 | Summary/highlight/suggestion generation | `not_started` | Orchestrator tick creates progressive artifacts from context snapshots. |
-| 6.8 | Output validator | `not_started` | Ensures uncertainty, rule references, source references, and clinician review requirements are preserved. |
-| 6.9 | Artifact revision history | `not_started` | `AiArtifactRevision` stores patch history and prevents stale patches from overwriting clinician edits. |
-| 6.10 | Synthesis tick scheduling | `not_started` | Debounced event-driven and periodic synthesis triggers. |
-| 6.11 | Gemini failure mode | `not_started` | Existing transcript, rules, notes, and structured data remain visible when AI fails. |
+| ID   | Name                                    | Status        | Expected output                                                                                                                          |
+| ---- | --------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 6.1  | Vertex AI runtime config                | `not_started` | Provider config for `GEMINI_PROVIDER=vertex_ai`, `GOOGLE_CLOUD_PROJECT`, and `GOOGLE_CLOUD_LOCATION=global`.                             |
+| 6.2  | Gemini client adapter                   | `not_started` | Mockable adapter for `gemini-3.1-pro-preview` and structured output calls.                                                               |
+| 6.3  | Context snapshot entity                 | `not_started` | `ContextSnapshot` persistence with patient/pregnancy/encounter/session scope.                                                            |
+| 6.4  | Context builder                         | `not_started` | Builder assembles patient, pregnancy, transcript, session note, observations, rules, suggestions, memory, media, and artifact revisions. |
+| 6.5  | Patient-scoped memory retrieval         | `not_started` | pgvector-backed retrieval scoped by patient and pregnancy episode.                                                                       |
+| 6.6  | Gemini patch schema                     | `not_started` | Runtime validation for summary, highlights, suggestions, notes, referral drafts, and handoff requests.                                   |
+| 6.7  | Summary/highlight/suggestion generation | `not_started` | Orchestrator tick creates progressive artifacts from context snapshots.                                                                  |
+| 6.8  | Output validator                        | `not_started` | Ensures uncertainty, rule references, source references, and clinician review requirements are preserved.                                |
+| 6.9  | Artifact revision history               | `not_started` | `AiArtifactRevision` stores patch history and prevents stale patches from overwriting clinician edits.                                   |
+| 6.10 | Synthesis tick scheduling               | `not_started` | Debounced event-driven and periodic synthesis triggers.                                                                                  |
+| 6.11 | Gemini failure mode                     | `not_started` | Existing transcript, rules, notes, and structured data remain visible when AI fails.                                                     |
 
 ### Deliverables
 
@@ -395,18 +395,18 @@ Dependencies: Phase 6
 
 ### Subphases
 
-| ID | Name | Status | Expected output |
-| --- | --- | --- | --- |
-| 7.1 | Clinical file upload pipeline | `not_started` | Upload handling, metadata persistence, type/size validation, and storage abstraction. |
-| 7.2 | Media quality metadata | `not_started` | Store frame/video quality signals and source references. |
-| 7.3 | Frame sampler | `not_started` | Sample ultrasound/video frames every 5-10 seconds when media analysis is active. |
-| 7.4 | MedGemma hosting boundary | `not_started` | Mockable client/service boundary for MedGemma 4B/1.5 4B. |
-| 7.5 | MedGemma handoff packets | `not_started` | `MedGemmaHandoff` schema and Gemini handoff executor. |
-| 7.6 | MedGemma response schema | `not_started` | Findings, extracted values, frame references, confidence, limitations, and clinician review flag. |
-| 7.7 | OCR/document extraction boundary | `not_started` | Adapter boundary for lab and maternal record image extraction. |
-| 7.8 | Evidence persistence | `not_started` | Store media/document evidence separately from approved clinical facts. |
-| 7.9 | Evidence UI | `not_started` | Display MedGemma/OCR findings with uncertainty and clinician review requirement. |
-| 7.10 | Media failure/degraded mode | `not_started` | Poor media quality and provider failures remain visible without blocking manual workflow. |
+| ID   | Name                             | Status        | Expected output                                                                                   |
+| ---- | -------------------------------- | ------------- | ------------------------------------------------------------------------------------------------- |
+| 7.1  | Clinical file upload pipeline    | `not_started` | Upload handling, metadata persistence, type/size validation, and storage abstraction.             |
+| 7.2  | Media quality metadata           | `not_started` | Store frame/video quality signals and source references.                                          |
+| 7.3  | Frame sampler                    | `not_started` | Sample ultrasound/video frames every 5-10 seconds when media analysis is active.                  |
+| 7.4  | MedGemma hosting boundary        | `not_started` | Mockable client/service boundary for MedGemma 4B/1.5 4B.                                          |
+| 7.5  | MedGemma handoff packets         | `not_started` | `MedGemmaHandoff` schema and Gemini handoff executor.                                             |
+| 7.6  | MedGemma response schema         | `not_started` | Findings, extracted values, frame references, confidence, limitations, and clinician review flag. |
+| 7.7  | OCR/document extraction boundary | `not_started` | Adapter boundary for lab and maternal record image extraction.                                    |
+| 7.8  | Evidence persistence             | `not_started` | Store media/document evidence separately from approved clinical facts.                            |
+| 7.9  | Evidence UI                      | `not_started` | Display MedGemma/OCR findings with uncertainty and clinician review requirement.                  |
+| 7.10 | Media failure/degraded mode      | `not_started` | Poor media quality and provider failures remain visible without blocking manual workflow.         |
 
 ### Deliverables
 
@@ -444,20 +444,20 @@ Dependencies: Phases 3 through 7
 
 ### Subphases
 
-| ID | Name | Status | Expected output |
-| --- | --- | --- | --- |
-| 8.1 | Patient and encounter navigation | `not_started` | Clinician can find patient, select pregnancy episode, and enter an encounter. |
-| 8.2 | Encounter capture layout | `not_started` | Dense work-focused clinical layout for repeated use. |
-| 8.3 | Live transcript panel | `not_started` | Speaker-labeled transcript with timestamps, confidence, and correction controls. |
-| 8.4 | Session note editor | `not_started` | Editable clinician note with autosave/version behavior. |
-| 8.5 | Progressive summary panel | `not_started` | Shows summary revisions and source references. |
-| 8.6 | Highlight cards | `not_started` | Cards for risks, possible issues, uncertainty, contradictions, missing context, and memory. |
-| 8.7 | Suggestions checklist | `not_started` | Suggestions can be done, skipped, or marked follow-up with result options and free text. |
-| 8.8 | Rules panel | `not_started` | Deterministic rule hits separated from AI interpretation. |
-| 8.9 | MedGemma evidence panel | `not_started` | Reviewable media/document evidence with limitations and confidence. |
-| 8.10 | Approval/rejection UI | `not_started` | Clinician can approve, edit, reject, acknowledge, or mark uncertain. |
-| 8.11 | Artifact history UI | `not_started` | Show AI revision history and what changed. |
-| 8.12 | RBAC-aware affordances | `not_started` | Unauthorized actions are hidden or disabled and server-enforced. |
+| ID   | Name                             | Status        | Expected output                                                                             |
+| ---- | -------------------------------- | ------------- | ------------------------------------------------------------------------------------------- |
+| 8.1  | Patient and encounter navigation | `not_started` | Clinician can find patient, select pregnancy episode, and enter an encounter.               |
+| 8.2  | Encounter capture layout         | `not_started` | Dense work-focused clinical layout for repeated use.                                        |
+| 8.3  | Live transcript panel            | `not_started` | Speaker-labeled transcript with timestamps, confidence, and correction controls.            |
+| 8.4  | Session note editor              | `not_started` | Editable clinician note with autosave/version behavior.                                     |
+| 8.5  | Progressive summary panel        | `not_started` | Shows summary revisions and source references.                                              |
+| 8.6  | Highlight cards                  | `not_started` | Cards for risks, possible issues, uncertainty, contradictions, missing context, and memory. |
+| 8.7  | Suggestions checklist            | `not_started` | Suggestions can be done, skipped, or marked follow-up with result options and free text.    |
+| 8.8  | Rules panel                      | `not_started` | Deterministic rule hits separated from AI interpretation.                                   |
+| 8.9  | MedGemma evidence panel          | `not_started` | Reviewable media/document evidence with limitations and confidence.                         |
+| 8.10 | Approval/rejection UI            | `not_started` | Clinician can approve, edit, reject, acknowledge, or mark uncertain.                        |
+| 8.11 | Artifact history UI              | `not_started` | Show AI revision history and what changed.                                                  |
+| 8.12 | RBAC-aware affordances           | `not_started` | Unauthorized actions are hidden or disabled and server-enforced.                            |
 
 ### Deliverables
 
@@ -493,18 +493,18 @@ Dependencies: Phase 8
 
 ### Subphases
 
-| ID | Name | Status | Expected output |
-| --- | --- | --- | --- |
-| 9.1 | Generated output review model | `not_started` | `GeneratedOutput` and review states for notes, summaries, and FHIR draft inputs. |
-| 9.2 | Approval/edit/reject APIs | `not_started` | Approve, edit, reject, mark uncertain, and acknowledge endpoints. |
-| 9.3 | Clinician edit provenance | `not_started` | Edited AI output becomes canonical approved content with provenance. |
-| 9.4 | Durable memory writeback | `not_started` | `PatientMemoryFact` creation only after clinician approval. |
-| 9.5 | Memory deduplication | `not_started` | Repeated synthesis does not duplicate approved facts. |
-| 9.6 | Referral summary output | `not_started` | Approved referral-ready summary generation and review. |
-| 9.7 | Teleconsult summary output | `not_started` | Approved teleconsult summary generation and review. |
-| 9.8 | FHIR R4 formatter | `not_started` | Export-ready FHIR resources and composition where sufficient data exists. |
-| 9.9 | FHIR provenance | `not_started` | Clinician approval, timestamp, source artifact, and generation provenance. |
-| 9.10 | Rejection audit behavior | `not_started` | Rejected content retained for audit but excluded from export and memory. |
+| ID   | Name                          | Status        | Expected output                                                                  |
+| ---- | ----------------------------- | ------------- | -------------------------------------------------------------------------------- |
+| 9.1  | Generated output review model | `not_started` | `GeneratedOutput` and review states for notes, summaries, and FHIR draft inputs. |
+| 9.2  | Approval/edit/reject APIs     | `not_started` | Approve, edit, reject, mark uncertain, and acknowledge endpoints.                |
+| 9.3  | Clinician edit provenance     | `not_started` | Edited AI output becomes canonical approved content with provenance.             |
+| 9.4  | Durable memory writeback      | `not_started` | `PatientMemoryFact` creation only after clinician approval.                      |
+| 9.5  | Memory deduplication          | `not_started` | Repeated synthesis does not duplicate approved facts.                            |
+| 9.6  | Referral summary output       | `not_started` | Approved referral-ready summary generation and review.                           |
+| 9.7  | Teleconsult summary output    | `not_started` | Approved teleconsult summary generation and review.                              |
+| 9.8  | FHIR R4 formatter             | `not_started` | Export-ready FHIR resources and composition where sufficient data exists.        |
+| 9.9  | FHIR provenance               | `not_started` | Clinician approval, timestamp, source artifact, and generation provenance.       |
+| 9.10 | Rejection audit behavior      | `not_started` | Rejected content retained for audit but excluded from export and memory.         |
 
 ### Deliverables
 
@@ -542,16 +542,16 @@ Dependencies: Phases 1 through 9
 
 ### Subphases
 
-| ID | Name | Status | Expected output |
-| --- | --- | --- | --- |
-| 10.1 | CI workflow | `not_started` | GitHub Actions CI for install, format, lint, typecheck, tests, build, E2E, Compose config/build. |
-| 10.2 | Dockerfiles | `not_started` | Production Dockerfiles for API, web, and optional worker. |
-| 10.3 | Docker Compose remote config | `not_started` | Compose services for postgres, api, web, caddy, and optional worker. |
-| 10.4 | Runtime env examples | `not_started` | Production env examples without secrets, including Vertex AI `global` config. |
-| 10.5 | VM script contracts | `not_started` | Bootstrap/preflight/deploy/rollback script interfaces. |
-| 10.6 | Caddy/domain assumptions | `not_started` | `matriacare.site` and `api.matriacare.site` assumptions wired into runtime examples. |
-| 10.7 | Smoke check scripts | `not_started` | Health, ready, and web route checks. |
-| 10.8 | Deployment docs trigger | `not_started` | Recreate deployment/environment docs only once implementation reaches hosted deployment work. |
+| ID   | Name                         | Status        | Expected output                                                                                  |
+| ---- | ---------------------------- | ------------- | ------------------------------------------------------------------------------------------------ |
+| 10.1 | CI workflow                  | `not_started` | GitHub Actions CI for install, format, lint, typecheck, tests, build, E2E, Compose config/build. |
+| 10.2 | Dockerfiles                  | `not_started` | Production Dockerfiles for API, web, and optional worker.                                        |
+| 10.3 | Docker Compose remote config | `not_started` | Compose services for postgres, api, web, caddy, and optional worker.                             |
+| 10.4 | Runtime env examples         | `not_started` | Production env examples without secrets, including Vertex AI `global` config.                    |
+| 10.5 | VM script contracts          | `not_started` | Bootstrap/preflight/deploy/rollback script interfaces.                                           |
+| 10.6 | Caddy/domain assumptions     | `not_started` | `matriacare.site` and `api.matriacare.site` assumptions wired into runtime examples.             |
+| 10.7 | Smoke check scripts          | `not_started` | Health, ready, and web route checks.                                                             |
+| 10.8 | Deployment docs trigger      | `not_started` | Recreate deployment/environment docs only once implementation reaches hosted deployment work.    |
 
 ### Deliverables
 
@@ -587,18 +587,18 @@ Dependencies: Phases 1 through 10
 
 ### Subphases
 
-| ID | Name | Status | Expected output |
-| --- | --- | --- | --- |
-| 11.1 | PRD E2E scenario suite | `not_started` | Playwright scenarios covering ambient ANC workflow and approval paths. |
-| 11.2 | AI failure modes | `not_started` | Gemini/MedGemma failures leave transcript, rules, notes, and manual data usable. |
-| 11.3 | STT failure modes | `not_started` | Google STT failure permits manual note and structured observation workflow. |
-| 11.4 | RBAC denial cases | `not_started` | Unauthorized roles cannot approve/export/administer. |
-| 11.5 | Cross-patient memory tests | `not_started` | Memory retrieval and writes never leak across patient or pregnancy episode. |
-| 11.6 | Clinical safety cases | `not_started` | Severe BP, bleeding, fetal movement, missing gestational age, and low-confidence OCR cases. |
-| 11.7 | UI usability and accessibility pass | `not_started` | Clinical workspace remains scannable, responsive, and keyboard/screen-reader reasonable. |
-| 11.8 | Demo data and fixtures | `not_started` | Synthetic ANC scenarios for routine and high-risk workflows. |
-| 11.9 | Performance and provider-cost observation | `not_started` | Basic timings and provider-call visibility by session/tool type. |
-| 11.10 | Release readiness review | `not_started` | Final checklist of docs, tests, known gaps, and deferred decisions. |
+| ID    | Name                                      | Status        | Expected output                                                                             |
+| ----- | ----------------------------------------- | ------------- | ------------------------------------------------------------------------------------------- |
+| 11.1  | PRD E2E scenario suite                    | `not_started` | Playwright scenarios covering ambient ANC workflow and approval paths.                      |
+| 11.2  | AI failure modes                          | `not_started` | Gemini/MedGemma failures leave transcript, rules, notes, and manual data usable.            |
+| 11.3  | STT failure modes                         | `not_started` | Google STT failure permits manual note and structured observation workflow.                 |
+| 11.4  | RBAC denial cases                         | `not_started` | Unauthorized roles cannot approve/export/administer.                                        |
+| 11.5  | Cross-patient memory tests                | `not_started` | Memory retrieval and writes never leak across patient or pregnancy episode.                 |
+| 11.6  | Clinical safety cases                     | `not_started` | Severe BP, bleeding, fetal movement, missing gestational age, and low-confidence OCR cases. |
+| 11.7  | UI usability and accessibility pass       | `not_started` | Clinical workspace remains scannable, responsive, and keyboard/screen-reader reasonable.    |
+| 11.8  | Demo data and fixtures                    | `not_started` | Synthetic ANC scenarios for routine and high-risk workflows.                                |
+| 11.9  | Performance and provider-cost observation | `not_started` | Basic timings and provider-call visibility by session/tool type.                            |
+| 11.10 | Release readiness review                  | `not_started` | Final checklist of docs, tests, known gaps, and deferred decisions.                         |
 
 ### Deliverables
 

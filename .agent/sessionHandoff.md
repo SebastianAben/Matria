@@ -7,61 +7,78 @@ Purpose: stable handoff for the latest substantive Matria task/session
 
 ## Current Objective
 
-Add commit-message and ADR governance to agent rules, and record the decision in `docs/adr/`.
+Implement Matria through the first usable ANC encounter workflow: monorepo foundation, Express API, Next.js web shell, shared contracts, Docker PostgreSQL/pgvector config, Prisma schema, auth/RBAC/audit, and patient/pregnancy/encounter capture.
 
 ## Current Phase
 
-- Phase: 0 - Product Memory And Governance
-- Subphase: 0.5 - Document clinical safety invariants
-- Status: in_progress
+- Phase: 2 - Database, Auth, RBAC, And Audit Core
+- Subphase: 2.1 - Docker PostgreSQL and pgvector setup
+- Status: blocked
 
 ## Files Changed This Session
 
-- `.agent/implementationPhases.md`
-- `.agent/RULES.md`
-- `.agent/sessionHandoff.md`
-- `docs/adr/0001-agent-governance-and-documentation-continuity.md`
+- Root workspace files: `package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `tsconfig.base.json`, `eslint.config.mjs`, `.prettierrc.json`, `.gitignore`, `.env.example`, `docker-compose.yml`
+- Shared package: `packages/shared/`
+- API app: `apps/api/`
+- Web app: `apps/web/`
+- E2E app: `apps/e2e/`
+- Agent memory: `.agent/implementationPhases.md`, `.agent/sessionHandoff.md`
+- ADRs: `docs/adr/0002-application-foundation-and-anc-workflow.md`
 
 ## Completed Work
 
-- Planned the implementation phase structure from the PRD.
-- Confirmed `deploymentGuide.md` and `environmentMatrix.md` are intentionally absent for now.
-- Created the stable handoff file requested by the user.
-- Created the full implementation roadmap with Phases 0 through 11 and detailed subphases.
-- Updated rules to require implementation-phase and handoff maintenance after substantive sessions.
-- Added a dedicated `Test Plan` section to every implementation phase.
-- Added local development runtime rules requiring a Docker-managed PostgreSQL database with pgvector.
-- Updated Phase 2 database setup/test wording to target Docker PostgreSQL/pgvector.
-- Added RULES guidance that commit messages must be behavior-based and must not refer to phases.
-- Added RULES guidance requiring comprehensive ADR updates under `docs/adr/` after each substantive task/session.
-- Added an ADR documenting agent governance, handoff, roadmap, ADR, commit-message, and local Docker database decisions.
+- Created a `pnpm` monorepo with `apps/api`, `apps/web`, `apps/e2e`, and `packages/shared`.
+- Added strict TypeScript, Prettier, ESLint, Vitest, and Playwright.
+- Added Docker Compose for local PostgreSQL using the `pgvector/pgvector:pg16` image.
+- Added shared enums, Zod validators, stable API response envelopes, and stable error codes.
+- Built an Express API with request IDs, CORS, JSON parsing, `/health`, `/ready`, structured errors, and route modules.
+- Added Prisma schema and initial SQL migration for users, roles, permissions, sessions, audit logs, patients, pregnancy episodes, encounters, consent records, clinical file metadata, structured observations, and session notes.
+- Added cookie-session auth with password hashing, login/logout/session endpoints, RBAC middleware, default PRD roles, and permission constants.
+- Added immutable audit logging for sensitive actions and permission denials.
+- Added admin APIs for users, roles, and role assignment.
+- Added ANC APIs for patient search/create/read, pregnancy episodes, encounters, lifecycle transitions, consent records, clinical file metadata, structured observations, consent checks, and session notes.
+- Added a Next.js clinical product UI with login, workspace, patients/ANC capture, and admin routes.
+- Applied frontend taste constraints where appropriate for a regulated clinical product UI: compact clinical density, clear labels, high contrast buttons, stable grids, reduced-motion support, no decorative marketing labels, no fake screenshots, and no emoji.
+- Added API and shared tests plus Playwright smoke tests.
 
 ## Decisions Made
 
-- Use one stable `.agent/sessionHandoff.md` instead of dated handoff files.
-- Do not recreate deployment/environment docs until deployment work is ready.
-- Treat `.agent/implementationPhases.md` as the sequencing and progress tracker.
-- Keep `.agent/PRD.md` as the product, API, and architecture source of truth.
-- Keep phase-level tests close to each phase rather than only in the final validation phase.
-- Local development database must use Docker-managed PostgreSQL with pgvector; normal local development must not depend on host-machine PostgreSQL.
-- Commit messages must describe behavior/capability changes and must not refer to phases.
-- Every substantive task/session must create or update a comprehensive ADR in `docs/adr/`.
+- Use `pnpm` workspaces for the monorepo.
+- Use Prisma as the first database/migration layer.
+- Use backend-owned email/password authentication with secure HTTP-only cookie sessions.
+- Use `bcryptjs` for this first slice because it installs cleanly and avoids native Argon2 build friction in the current environment.
+- Use local Docker PostgreSQL with pgvector as the normal development database target.
+- Keep Phase 3 clinical file handling metadata-only; binary storage remains deferred to the media phase.
+- Keep STT, Gemini, MedGemma, rule engine, approvals, memory, FHIR, and full ambient workspace work deferred to later phases.
+- Treat Phase 2 and Phase 3 as implemented but blocked from completion until the Docker database runtime can be started and DB-backed tests pass.
 
 ## Blockers And Open Questions
 
-- None currently.
+- Local Docker/OrbStack daemon is not running. `pnpm db:up` failed because the Docker socket at `/Users/khalfanishaquille/.orbstack/run/docker.sock` is unavailable.
+- Because Docker PostgreSQL is unavailable, migrations, pgvector availability, seed, full API auth/RBAC/audit tests, and clinical scoping tests could not be validated.
 
 ## Next Recommended Action
 
-Begin Phase 1 repository and app foundation once the user asks for code implementation. Keep updating `.agent/implementationPhases.md`, `.agent/sessionHandoff.md`, and `docs/adr/` after every substantive session.
+Start the local Docker runtime, then run:
+
+1. `pnpm db:up`
+2. `pnpm --filter @matria/api prisma:migrate`
+3. `pnpm --filter @matria/api seed`
+4. `pnpm --filter @matria/api test`
+
+If those pass, update `.agent/implementationPhases.md` to mark Phase 2 and Phase 3 blocked subphases as `done`.
 
 ## Tests And Checks Run
 
-- Verified `.agent/implementationPhases.md`, `.agent/RULES.md`, and `.agent/sessionHandoff.md` have balanced Markdown fences.
-- Verified `.agent/implementationPhases.md`, `.agent/RULES.md`, and `.agent/sessionHandoff.md` contain no non-ASCII characters.
-- Verified `.agent/RULES.md` references `.agent/sessionHandoff.md`.
-- Verified `.agent/implementationPhases.md` contains Phases 0 through 11.
-- Verified each numbered phase has a `Test Plan` section.
-- Verified `.agent/RULES.md` contains behavior-based commit guidance and prohibits phase-based commit subjects.
-- Verified `.agent/RULES.md` requires `docs/adr/` updates after substantive sessions.
-- Verified `docs/adr/0001-agent-governance-and-documentation-continuity.md` exists and is comprehensive.
+- `pnpm install` passed after approving required build scripts for Prisma, esbuild, and sharp.
+- `pnpm --filter @matria/api prisma:generate` passed.
+- `pnpm lint` passed.
+- `pnpm format:check` passed.
+- `pnpm typecheck` passed.
+- `pnpm --filter @matria/shared test` passed.
+- `pnpm --filter @matria/api exec vitest run src/tests/health.test.ts` passed.
+- `pnpm build` passed.
+- `pnpm --filter @matria/e2e exec playwright install chromium` installed the local Chromium browser.
+- `pnpm e2e` passed.
+- `pnpm db:up` failed because local Docker/OrbStack is not running.
+- `pnpm --filter @matria/api test` partially passed: API health tests passed, DB-backed tests failed because PostgreSQL at `localhost:54329` is unavailable.

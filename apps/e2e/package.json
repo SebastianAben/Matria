@@ -1,0 +1,16 @@
+{
+  "name": "@matria/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "echo e2e-build-ok"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2",
+    "@types/node": "^24.3.0",
+    "typescript": "^5.9.2"
+  }
+}
