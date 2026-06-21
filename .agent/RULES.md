@@ -2,11 +2,11 @@
 
 Document status: Active  
 Created: 2026-06-09  
-Purpose: operating rules for Codex and future agents when reading or updating `.agents/`
+Purpose: operating rules for Codex and future agents when reading or updating `.agent/`
 
 ## 1. Why This Folder Exists
 
-The `.agents/` folder is the project memory and execution layer for Matria.
+The `.agent/` folder is the project memory and execution layer for Matria.
 
 It exists to:
 
@@ -16,20 +16,20 @@ It exists to:
 - record roadmap status, deployment assumptions, and recommended next steps
 - make future sessions aware that Matria handles sensitive clinical data
 
-The reference repository `github.com/khalshaqzzy/loom` uses `.agent/`. Matria intentionally uses `.agents/` because that is the requested canonical folder name for this project.
+The reference repository `github.com/khalshaqzzy/loom` uses `.agent/`. Matria also uses `.agent/` as the canonical project-memory folder.
 
 ## 2. Required Read Order
 
 For most implementation sessions, read in this order:
 
-1. `.agents/RULES.md`
-2. `.agents/PRD.md`
-3. newest `.agents/sessionHandoff-YYYY-MM-DD.md`, if present
-4. `.agents/implementationPhases.md`
-5. `.agents/phaseBacklog.md`
-6. `.agents/environmentMatrix.md`
-7. `.agents/deploymentGuide.md` if the task touches environments, secrets, deploys, VM, Docker, Caddy, PostgreSQL, or GitHub Actions
-8. `.agents/releaseExecutionChecklist.md` if preparing a rollout
+1. `.agent/RULES.md`
+2. `.agent/PRD.md`
+3. newest `.agent/sessionHandoff-YYYY-MM-DD.md`, if present
+4. `.agent/implementationPhases.md`
+5. `.agent/phaseBacklog.md`
+6. `.agent/environmentMatrix.md`
+7. `.agent/deploymentGuide.md` if the task touches environments, secrets, deploys, VM, Docker, Caddy, PostgreSQL, or GitHub Actions
+8. `.agent/releaseExecutionChecklist.md` if preparing a rollout
 9. relevant ADRs under `docs/adr/` if present
 
 ## 3. Source-of-truth Files
@@ -42,7 +42,7 @@ For most implementation sessions, read in this order:
 - `releaseExecutionChecklist.md`: operator checklist for release windows.
 - `manualProvisioningChecklist.md`: external provisioning checklist.
 
-If code and docs disagree, do not silently pick one. Inspect the current repo state, identify the mismatch, and update the relevant `.agents` file as part of the same work when the change is intentional.
+If code and docs disagree, do not silently pick one. Inspect the current repo state, identify the mismatch, and update the relevant `.agent` file as part of the same work when the change is intentional.
 
 ## 4. Clinical Safety Rules
 
@@ -59,9 +59,9 @@ Future agents must preserve these decisions:
 
 If implementation changes any of these rules, update `PRD.md` and add or update an ADR.
 
-## 5. When To Update `.agents`
+## 5. When To Update `.agent`
 
-Update `.agents` when implementation changes:
+Update `.agent` when implementation changes:
 
 - product scope or hospital workflow
 - clinical safety behavior
@@ -73,11 +73,11 @@ Update `.agents` when implementation changes:
 - deployment topology, domains, secrets, VM paths, or scripts
 - test strategy, acceptance criteria, or release process
 
-Do not let `.agents` become stale after major implementation sessions.
+Do not let `.agent` become stale after major implementation sessions.
 
 ## 6. When To Add Files
 
-Add a new `.agents` file when:
+Add a new `.agent` file when:
 
 - a new phase needs a dedicated kickoff document
 - a major session needs handoff context
@@ -124,7 +124,7 @@ Subjects should be imperative, concise, and specific. Prefer one logical change 
 
 ## 9. Content Rules
 
-When updating `.agents`:
+When updating `.agent`:
 
 - write for future implementation sessions, not external marketing
 - separate locked product decisions from current repo status
@@ -137,10 +137,10 @@ When updating `.agents`:
 
 After a major implementation or deployment-prep session, usually update:
 
-1. `.agents/implementationPhases.md`
-2. `.agents/phaseBacklog.md`
+1. `.agent/implementationPhases.md`
+2. `.agent/phaseBacklog.md`
 3. newest handoff or a new `sessionHandoff-YYYY-MM-DD.md`
-4. `.agents/environmentMatrix.md` or `.agents/deploymentGuide.md` if environment assumptions changed
+4. `.agent/environmentMatrix.md` or `.agent/deploymentGuide.md` if environment assumptions changed
 5. ADRs if a durable technical decision changed
 
 If the session only makes small local edits, update only the docs that actually changed in meaning.
