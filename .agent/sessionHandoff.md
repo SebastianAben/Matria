@@ -7,76 +7,53 @@ Purpose: stable handoff for the latest substantive Matria task/session
 
 ## Current Objective
 
-Implement Matria through Phase 7: provider-routed medical evidence analysis, clinical file upload/storage, frame sampling, evidence handoffs, review-required evidence persistence, context re-entry, and compact frontend evidence visibility.
+Prepare Phase 8 frontend implementation by documenting Matria's UX-oriented page map, clinical workspace flows, screen contents, component responsibilities, brand-system UX guidance, and review boundaries before changing the frontend.
 
 ## Current Phase
 
 - Phase: 8 - Clinical Workspace Frontend
 - Subphase: 8.1 - Patient and encounter navigation
-- Status: `not_started`
+- Status: `not_started` for implementation; UX planning baseline completed in `.agent/pages.md`
 
 ## Files Changed This Session
 
-- Root/runtime: `.env.example`, `.gitignore`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`
-- API package/config: `apps/api/package.json`, `apps/api/.env.example`, `apps/api/src/config/env.ts`
-- API schema/migration: `apps/api/prisma/schema.prisma`, `apps/api/prisma/migrations/20260622110000_phase7_medical_evidence/`
-- API evidence implementation: `apps/api/src/evidence/`
-- API integration/context: `apps/api/src/app.ts`, `apps/api/src/clinical/routes.ts`, `apps/api/src/ai/context-builder.ts`, `apps/api/src/ai/orchestrator.ts`
-- API tests: `apps/api/src/tests/evidence.test.ts`, `apps/api/src/tests/test-utils.ts`
-- Shared contracts: `packages/shared/src/index.ts`
-- Web UI: `apps/web/lib/api.ts`, `apps/web/app/patients/page.tsx`
-- Agent docs: `.agent/PRD.md`, `.agent/implementationPhases.md`, `.agent/sessionHandoff.md`
-- ADRs: `docs/adr/0005-medical-evidence-provider-and-file-storage.md`
+- Agent docs: `.agent/pages.md`, `.agent/implementationPhases.md`, `.agent/sessionHandoff.md`
+- ADRs: `docs/adr/0006-clinical-workspace-ux-contract.md`
 
 ## Completed Work
 
-- Added provider-routed medical evidence configuration:
-  - `MEDICAL_EVIDENCE_PROVIDER=mock | gemini_flash | ollama_medgemma`
-  - tests/scripts default to `mock`
-  - local/hosted default to `gemini_flash`
-  - Ollama MedGemma 1.5 4B is local opt-in with `OLLAMA_BASE_URL` and `OLLAMA_MEDGEMMA_MODEL=medgemma1.5:4b`
-- Added local clinical file storage with safe storage keys, SHA-256 checksums, MIME/size validation, and `.local-data/` ignored by git.
-- Added multipart upload, file listing, and secure download routes.
-- Added evidence frame sample, handoff, handoff-file, handoff-frame, and finding persistence models.
-- Added image frame sampling through `sharp`; uploaded video files are sampled through bundled FFmpeg.
-- Added `MedicalEvidenceProvider` adapters for deterministic mock, Gemini 3.5 Flash, and Ollama MedGemma-compatible local vision calls.
-- Added handoff creation/run/list APIs and provider call audit via `AiToolCall` plus audit log events.
-- Connected Gemini `medgemma_handoff_request` artifacts to executable evidence handoff rows.
-- Extended context snapshots with frame samples and review-required medical evidence findings.
-- Added compact frontend controls for file upload, frame sampling, handoff creation, provider run, findings, uncertainty, and degraded states.
-- Updated PRD/provider policy, phase roadmap, and ADR documentation.
+- Created `.agent/pages.md` as the Phase 8 UX contract.
+- Added brand-system UX guidelines to `.agent/pages.md` using the `brandkit` skill as a strategy lens while preserving the document's non-style scope.
+- Documented frontend pages for login, workspace home, patient search/registration, patient detail, pregnancy episode setup, encounter setup, consent capture, clinical workspace, admin, audit, and encounter audit trail.
+- Documented clinical workspace sections for encounter context, activity summary, ambient controls, live transcript, observations, session note, deterministic rules, summary, highlights, suggestions, evidence, draft output review, artifact history, and closeout.
+- Documented end-to-end UX flows for routine ANC, high-risk findings, missing context, transcript correction, evidence review, suggestion resolution, and encounter review/approval.
+- Kept the document non-technical and excluded component styling, fonts, colors, spacing, and visual design prescriptions.
+- Defined Matria's brand behavior around protected clinical continuity, calm decision support, careful evidence handling, clinician authority, maternal safety without alarmism, and hospital-grade accountability.
+- Clarified Phase 8 versus Phase 9 boundaries so Phase 8 can show review-required states without falsely implementing final approval, memory writeback, referral finalization, or FHIR export.
+- Updated the Phase 8 roadmap deliverables and notes to point future implementation at `.agent/pages.md`.
+- Added ADR 0006 for the UX-first page contract decision.
 
 ## Decisions Made
 
-- Gemini 3.1 Pro remains the primary session orchestrator from Phase 6.
-- Gemini 3.5 Flash is the default Phase 7 medical evidence provider for local and hosted runtime.
-- Ollama MedGemma 1.5 4B is supported only as an explicit local development option.
-- Automated tests and scripts never call live models; they use the mock evidence provider.
-- Phase 7 evidence remains review-required and is not written to `StructuredObservation`, `PatientMemoryFact`, FHIR, or approvals.
-- Local filesystem storage is acceptable for Phase 7 and can map to a VM volume later; production object storage remains deferred.
-- Dedicated production OCR remains deferred; document extraction is represented as a medical evidence task type.
+- Phase 8 frontend implementation should begin from a UX/product page contract instead of a technical API map.
+- `.agent/pages.md` is intentionally non-design: it describes page purpose, screen contents, behaviors, states, flows, and component responsibilities, but not styles, fonts, colors, spacing, or visual treatment.
+- Brand guidance should influence product meaning, language, workflow consistency, review states, and asset restraint; it must not prescribe visual styles in `.agent/pages.md`.
+- Phase 8 can present review-required queues and disabled or future-facing controls for Phase 9 concepts, but final approval, durable memory writeback, referral finalization, and FHIR export remain Phase 9 responsibilities.
 
 ## Blockers And Open Questions
 
 - No active implementation blockers.
-- Hosted Gemini Flash evidence credentials, quotas, and provider terms still need deployment-time validation.
-- Production object storage and retention policy remain Phase 10/deployment work.
-- Video sampling uses bundled FFmpeg for uploaded video files; invalid or undecodable videos record degraded evidence samples without blocking manual workflow.
-- Clinical quality and prompts for Gemini Flash/MedGemma evidence need clinician validation before production use.
+- No open UX questions from the current docs; Phase 8 can start with patient and encounter navigation.
+- Approval persistence, memory writeback, referral finalization, and FHIR export remain Phase 9 boundaries.
 
 ## Next Recommended Action
 
-Begin Phase 8 by turning the compact patient page into the full clinical workspace:
+Begin Phase 8 implementation from `.agent/pages.md`:
 
-1. Strengthen patient/encounter navigation and workspace layout.
-2. Split transcript, session note, deterministic rules, Gemini drafts, evidence, and approvals into scannable panels.
-3. Add artifact history and approval/rejection workflows in coordination with Phase 9 boundaries.
+1. Start with patient search, patient detail, pregnancy episode setup, encounter setup, and active encounter re-entry.
+2. Turn the compact patient page into a full clinical workspace with distinct transcript, session note, observations, deterministic rules, Gemini drafts, suggestions, evidence, review queue, and artifact history areas.
+3. Keep final approval, durable memory writeback, referral finalization, and FHIR export as Phase 9 capabilities.
 
 ## Tests And Checks Run
 
-- `pnpm --filter @matria/api prisma:generate` passed.
-- `pnpm --filter @matria/api typecheck` passed.
-- `pnpm --filter @matria/web typecheck` passed.
-- `pnpm db:up` passed.
-- `pnpm --filter @matria/api prisma:migrate` passed.
-- `pnpm --filter @matria/api test` passed.
+- Documentation-only update; no application tests were run.

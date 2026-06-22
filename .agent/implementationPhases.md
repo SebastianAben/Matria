@@ -31,7 +31,7 @@ Progress maintenance rules:
 - Current subphase: 8.1 - Patient and encounter navigation
 - Last completed subphase: 7.11 - Medical evidence degraded mode
 - Active blockers: none
-- Next recommended task: begin Phase 8 by turning the compact encounter capture UI into the full clinical workspace with navigation, transcript, rules, Gemini drafts, evidence review, approvals, and artifact history.
+- Next recommended task: implement Phase 8 against `.agent/pages.md`, turning the compact encounter capture UI into the full clinical workspace with navigation, transcript, rules, Gemini drafts, evidence review, review queues, and artifact history.
 
 ## Phase Template
 
@@ -469,6 +469,7 @@ Dependencies: Phases 3 through 7
 
 ### Deliverables
 
+- `.agent/pages.md` frontend UX contract for Phase 8 pages, flows, screen contents, component responsibilities, brand-system UX guidance, and non-design interaction behavior.
 - Usable clinical workspace for ambient ANC sessions.
 - Clear separation of transcript, rules, Gemini outputs, MedGemma evidence, and clinician-approved facts.
 - Responsive and scannable UI for clinical workflows.
@@ -492,6 +493,7 @@ Dependencies: Phases 3 through 7
 ### Update Notes
 
 - Frontend must stay operational when AI/STT/media providers fail.
+- Phase 8 should implement from `.agent/pages.md`, which is intentionally UX/product-oriented and excludes styling, fonts, colors, and visual design prescriptions. Brand guidance in that document should shape product meaning, language, trust, and workflow coherence rather than visual style.
 
 ## Phase 9: Approvals, Memory, FHIR, And Referral Outputs
 
