@@ -27,11 +27,11 @@ Progress maintenance rules:
 
 ## Current Execution State
 
-- Current phase: Phase 6 - Stateful Context Engineering And Gemini Orchestrator
-- Current subphase: 6.1 - Vertex AI runtime config
-- Last completed subphase: 5.10 - Ambient transcript UI
+- Current phase: Phase 7 - MedGemma, Media, And Document Evidence
+- Current subphase: 7.1 - Clinical file upload pipeline
+- Last completed subphase: 6.11 - Gemini failure mode
 - Active blockers: none
-- Next recommended task: implement the Vertex AI Gemini adapter, context snapshot model, and context builder using the ambient transcript, session note, observations, rule results, and clinician edits as stateful inputs.
+- Next recommended task: begin Phase 7 by replacing metadata-only clinical file handling with upload/storage validation, then add frame sampling and the MedGemma evidence boundary.
 
 ## Phase Template
 
@@ -339,24 +339,24 @@ Dependencies: Phase 4
 ## Phase 6: Stateful Context Engineering And Gemini Orchestrator
 
 Objective: make Gemini a stateful session orchestrator that updates UI artifacts through validated JSON patches.  
-Status: `not_started`  
+Status: `done`  
 Dependencies: Phase 5
 
 ### Subphases
 
-| ID   | Name                                    | Status        | Expected output                                                                                                                          |
-| ---- | --------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 6.1  | Vertex AI runtime config                | `in_progress` | Provider config for `GEMINI_PROVIDER=vertex_ai`, `GOOGLE_CLOUD_PROJECT`, and `GOOGLE_CLOUD_LOCATION=global`.                             |
-| 6.2  | Gemini client adapter                   | `not_started` | Mockable adapter for `gemini-3.1-pro-preview` and structured output calls.                                                               |
-| 6.3  | Context snapshot entity                 | `not_started` | `ContextSnapshot` persistence with patient/pregnancy/encounter/session scope.                                                            |
-| 6.4  | Context builder                         | `not_started` | Builder assembles patient, pregnancy, transcript, session note, observations, rules, suggestions, memory, media, and artifact revisions. |
-| 6.5  | Patient-scoped memory retrieval         | `not_started` | pgvector-backed retrieval scoped by patient and pregnancy episode.                                                                       |
-| 6.6  | Gemini patch schema                     | `not_started` | Runtime validation for summary, highlights, suggestions, notes, referral drafts, and handoff requests.                                   |
-| 6.7  | Summary/highlight/suggestion generation | `not_started` | Orchestrator tick creates progressive artifacts from context snapshots.                                                                  |
-| 6.8  | Output validator                        | `not_started` | Ensures uncertainty, rule references, source references, and clinician review requirements are preserved.                                |
-| 6.9  | Artifact revision history               | `not_started` | `AiArtifactRevision` stores patch history and prevents stale patches from overwriting clinician edits.                                   |
-| 6.10 | Synthesis tick scheduling               | `not_started` | Debounced event-driven and periodic synthesis triggers.                                                                                  |
-| 6.11 | Gemini failure mode                     | `not_started` | Existing transcript, rules, notes, and structured data remain visible when AI fails.                                                     |
+| ID   | Name                                    | Status | Expected output                                                                                                                          |
+| ---- | --------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 6.1  | Vertex AI runtime config                | `done` | Provider config for `GEMINI_PROVIDER=vertex_ai`, `GOOGLE_CLOUD_PROJECT`, and `GOOGLE_CLOUD_LOCATION=global`.                             |
+| 6.2  | Gemini client adapter                   | `done` | Mockable adapter for `gemini-3.1-pro-preview` and structured output calls.                                                               |
+| 6.3  | Context snapshot entity                 | `done` | `ContextSnapshot` persistence with patient/pregnancy/encounter/session scope.                                                            |
+| 6.4  | Context builder                         | `done` | Builder assembles patient, pregnancy, transcript, session note, observations, rules, suggestions, memory, media, and artifact revisions. |
+| 6.5  | Patient-scoped memory retrieval         | `done` | pgvector-backed retrieval scoped by patient and pregnancy episode.                                                                       |
+| 6.6  | Gemini patch schema                     | `done` | Runtime validation for summary, highlights, suggestions, notes, referral drafts, and handoff requests.                                   |
+| 6.7  | Summary/highlight/suggestion generation | `done` | Orchestrator tick creates progressive artifacts from context snapshots.                                                                  |
+| 6.8  | Output validator                        | `done` | Ensures uncertainty, rule references, source references, and clinician review requirements are preserved.                                |
+| 6.9  | Artifact revision history               | `done` | `AiArtifactRevision` stores patch history and prevents stale patches from overwriting clinician edits.                                   |
+| 6.10 | Synthesis tick scheduling               | `done` | Debounced event-driven and periodic synthesis triggers.                                                                                  |
+| 6.11 | Gemini failure mode                     | `done` | Existing transcript, rules, notes, and structured data remain visible when AI fails.                                                     |
 
 ### Deliverables
 
@@ -385,7 +385,13 @@ Dependencies: Phase 5
 
 ### Update Notes
 
-- Do not use standalone Google AI Studio API keys for production Gemini calls.
+- Completed with a mock local/test Gemini provider and a configuration-gated Vertex AI provider using `@google/genai`, `gemini-3.1-pro-preview`, and `GOOGLE_CLOUD_LOCATION=global`.
+- Local development defaults to `GEMINI_PROVIDER=mock`; production Vertex mode requires `GOOGLE_CLOUD_PROJECT` and must not use standalone AI Studio API keys.
+- `ContextSnapshot`, `AiToolCall`, `AiArtifactRevision`, `SummaryRevision`, `HighlightCard`, `Suggestion`, `SuggestionResult`, `PatientMemoryFact`, and `SynthesisTick` are persisted.
+- Phase 6 reads patient memory scoped by patient and pregnancy episode, but approval-based memory writes remain Phase 9.
+- Gemini patches are stored as clinician-review drafts only. Phase 6 does not approve outputs, write durable memory, export FHIR, or execute MedGemma handoffs.
+- Synthesis ticks run advisory preflight first, audit provider calls and validation failures, reject unsafe/stale patches, and leave transcript, notes, rules, and observations usable when AI fails.
+- The encounter capture UI has a compact draft synthesis panel; the full ambient workspace remains Phase 8.
 
 ## Phase 7: MedGemma, Media, And Document Evidence
 

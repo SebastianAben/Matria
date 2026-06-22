@@ -112,6 +112,51 @@ export const transcriptClinicalCandidateTypes = [
   "unresolved_question"
 ] as const;
 
+export const geminiProviders = ["mock", "vertex_ai"] as const;
+export const aiToolCallStatuses = ["pending", "succeeded", "failed", "validation_failed"] as const;
+export const aiArtifactTypes = [
+  "summary_update",
+  "highlight_cards",
+  "suggestions",
+  "missing_questions",
+  "session_note_draft_sections",
+  "anc_note_draft",
+  "teleconsult_summary_draft",
+  "referral_summary_draft",
+  "fhir_export_draft_inputs",
+  "medgemma_handoff_request",
+  "requires_human_review"
+] as const;
+export const aiPatchOperations = ["create", "update", "replace", "archive", "no_change"] as const;
+export const aiValidationStatuses = ["valid", "invalid", "stale"] as const;
+export const aiReviewStatuses = ["draft", "review_required", "rejected", "stale"] as const;
+export const synthesisTickStatuses = [
+  "pending",
+  "running",
+  "completed",
+  "failed",
+  "validation_failed",
+  "stale",
+  "skipped"
+] as const;
+export const highlightTypes = [
+  "risk",
+  "missing_context",
+  "contradiction",
+  "uncertainty",
+  "memory",
+  "media_evidence",
+  "follow_up"
+] as const;
+export const suggestionPriorities = ["low", "medium", "high", "urgent"] as const;
+export const suggestionStatuses = [
+  "open",
+  "done",
+  "skipped",
+  "needs_follow_up",
+  "superseded"
+] as const;
+
 export const errorCodes = [
   "UNAUTHENTICATED",
   "FORBIDDEN",
@@ -140,6 +185,16 @@ export type AmbientSessionStatus = (typeof ambientSessionStatuses)[number];
 export type TranscriptCorrectionStatus = (typeof transcriptCorrectionStatuses)[number];
 export type SpeakerRoleGuess = (typeof speakerRoleGuesses)[number];
 export type TranscriptClinicalCandidateType = (typeof transcriptClinicalCandidateTypes)[number];
+export type GeminiProvider = (typeof geminiProviders)[number];
+export type AiToolCallStatus = (typeof aiToolCallStatuses)[number];
+export type AiArtifactType = (typeof aiArtifactTypes)[number];
+export type AiPatchOperation = (typeof aiPatchOperations)[number];
+export type AiValidationStatus = (typeof aiValidationStatuses)[number];
+export type AiReviewStatus = (typeof aiReviewStatuses)[number];
+export type SynthesisTickStatus = (typeof synthesisTickStatuses)[number];
+export type HighlightType = (typeof highlightTypes)[number];
+export type SuggestionPriority = (typeof suggestionPriorities)[number];
+export type SuggestionStatus = (typeof suggestionStatuses)[number];
 export type ErrorCode = (typeof errorCodes)[number];
 
 export type ApiSuccess<T> = {
@@ -264,6 +319,111 @@ export const transcriptTurnPatchSchema = z.object({
   speakerLabel: z.string().min(1).max(80).optional(),
   speakerRoleGuess: z.enum(speakerRoleGuesses).optional(),
   text: z.string().min(1).max(10000).optional()
+});
+
+export const contextSnapshotPayloadSchema = z.object({
+  safetyPosture: z.object({
+    decisionSupportOnly: z.literal(true),
+    clinicianReviewRequired: z.literal(true),
+    noDiagnosisPrescriptionOrFinalTriage: z.literal(true)
+  }),
+  patient: z.record(z.string(), z.unknown()),
+  pregnancyEpisode: z.record(z.string(), z.unknown()),
+  encounter: z.record(z.string(), z.unknown()),
+  ambientSession: z.record(z.string(), z.unknown()),
+  sessionNote: z.record(z.string(), z.unknown()).nullable(),
+  observations: z.array(z.record(z.string(), z.unknown())),
+  transcriptTurns: z.array(z.record(z.string(), z.unknown())),
+  transcriptCandidates: z.array(z.record(z.string(), z.unknown())),
+  ruleResults: z.array(z.record(z.string(), z.unknown())),
+  suggestions: z.array(z.record(z.string(), z.unknown())),
+  priorArtifacts: z.array(z.record(z.string(), z.unknown())),
+  clinicalFiles: z.array(z.record(z.string(), z.unknown())),
+  patientMemory: z.array(z.record(z.string(), z.unknown())),
+  outputContract: z.object({
+    artifactTypes: z.array(z.enum(aiArtifactTypes)),
+    patchOperations: z.array(z.enum(aiPatchOperations))
+  })
+});
+
+export const geminiPatchSourceReferenceSchema = z.string().min(1).max(200);
+
+export const geminiUiPatchSchema = z.object({
+  patchId: z.string().min(1).max(120),
+  contextSnapshotId: z.string().uuid(),
+  artifactType: z.enum(aiArtifactTypes),
+  operation: z.enum(aiPatchOperations),
+  artifactId: z.string().max(120).optional(),
+  content: z.record(z.string(), z.unknown()),
+  sourceReferences: z.array(geminiPatchSourceReferenceSchema),
+  confidence: z.number().min(0).max(1).optional(),
+  uncertaintyReasons: z.array(z.string().max(500)).default([]),
+  ruleResultReferences: z.array(z.string().max(120)).default([]),
+  memoryReferences: z.array(z.string().max(120)).default([]),
+  medGemmaReferences: z.array(z.string().max(120)).default([]),
+  clinicianActionRequired: z.boolean().default(true)
+});
+
+export const geminiSynthesisResponseSchema = z.object({
+  patches: z.array(geminiUiPatchSchema).max(40),
+  safetyNotes: z.array(z.string().max(500)).default([])
+});
+
+export const summaryRevisionSchema = z.object({
+  summaryRevisionId: z.string().uuid().optional(),
+  ambientSessionId: z.string().uuid(),
+  content: z.string().min(1).max(20000),
+  sections: z.record(z.string(), z.unknown()).optional(),
+  sourceReferences: z.array(geminiPatchSourceReferenceSchema),
+  confidence: z.number().min(0).max(1).optional()
+});
+
+export const highlightCardSchema = z.object({
+  highlightId: z.string().uuid().optional(),
+  ambientSessionId: z.string().uuid().optional(),
+  type: z.enum(highlightTypes),
+  severity: z.enum(ruleSeverities),
+  title: z.string().min(1).max(180),
+  body: z.string().min(1).max(2000),
+  sourceReferences: z.array(geminiPatchSourceReferenceSchema),
+  confidence: z.number().min(0).max(1),
+  requiresAcknowledgement: z.boolean().default(false)
+});
+
+export const suggestionSchema = z.object({
+  suggestionId: z.string().uuid().optional(),
+  ambientSessionId: z.string().uuid().optional(),
+  title: z.string().min(1).max(180),
+  rationale: z.string().min(1).max(2000),
+  priority: z.enum(suggestionPriorities),
+  status: z.enum(suggestionStatuses).default("open"),
+  sourceReferences: z.array(geminiPatchSourceReferenceSchema),
+  resultOptions: z
+    .array(
+      z.object({
+        value: z.string().min(1).max(120),
+        label: z.string().min(1).max(180)
+      })
+    )
+    .default([]),
+  freeTextAllowed: z.boolean().default(true),
+  clinicianActionRequired: z.boolean().default(true)
+});
+
+export const suggestionPatchSchema = z.object({
+  status: z.enum(["open", "done", "skipped", "needs_follow_up", "superseded"])
+});
+
+export const suggestionResultSchema = z.object({
+  selectedOptionValue: z.string().max(120).optional(),
+  selectedOptionLabel: z.string().max(180).optional(),
+  freeTextNote: z.string().max(2000).optional(),
+  contextImpact: z.record(z.string(), z.unknown()).optional()
+});
+
+export const synthesisTickCreateSchema = z.object({
+  triggerReason: z.string().min(1).max(160).default("manual"),
+  clientRequestId: z.string().max(120).optional()
 });
 
 export function ok<T>(data: T, requestId: string): ApiSuccess<T> {

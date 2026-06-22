@@ -34,6 +34,9 @@ importers:
       "@google-cloud/speech":
         specifier: ^7.2.1
         version: 7.4.0
+      "@google/genai":
+        specifier: ^2.9.0
+        version: 2.9.0
       "@matria/shared":
         specifier: workspace:*
         version: link:../../packages/shared
@@ -707,6 +710,18 @@ packages:
         integrity: sha512-+q+bwp4ApLyQ23oeMTAJy+mtzlMhWtemnTzF2awzJ4Z8qgAzujrhNFp+08+S5yVi0iNHlQwNsWK81oiqXwLWAw==
       }
     engines: { node: ">=18" }
+
+  "@google/genai@2.9.0":
+    resolution:
+      {
+        integrity: sha512-3DRdSJ0LaKFig3FNGeRDn9BQxtjZm2qr0hNH2d771LKcG0HvUYddlN0LPdSp8XU7Ekb04i9q3+tt64uYqavUdw==
+      }
+    engines: { node: ">=20.0.0" }
+    peerDependencies:
+      "@modelcontextprotocol/sdk": ^1.25.2
+    peerDependenciesMeta:
+      "@modelcontextprotocol/sdk":
+        optional: true
 
   "@grpc/grpc-js@1.14.4":
     resolution:
@@ -1567,6 +1582,12 @@ packages:
     resolution:
       {
         integrity: sha512-MXfmqaVPEVgkBT/aY0aGCkRWWtByiYQXo3xdQ8r5RzuFrPiRn8Gar2tQdXSUQ2GKV3bkXckek89V8wQBY2Q/Aw==
+      }
+
+  "@types/retry@0.12.0":
+    resolution:
+      {
+        integrity: sha512-wWKOClTTiizcZhXnPY4wikVAwmdYHp8q6DmC+EJUzAMsycb7HB32Kh9RN4+0gExjmPmZSAQjgURXIGATPegAvA==
       }
 
   "@types/send@1.2.1":
@@ -3232,6 +3253,13 @@ packages:
       }
     engines: { node: ">=10" }
 
+  p-retry@4.6.2:
+    resolution:
+      {
+        integrity: sha512-312Id396EbJdvRONlngUx0NydfrIQ5lsYu0znKVUzVvArzEIt08V1qhtyESbGVd1FGX7UKtiFp5uwKZdM8wIuQ==
+      }
+    engines: { node: ">=8" }
+
   package-json-from-dist@1.0.1:
     resolution:
       {
@@ -3497,6 +3525,13 @@ packages:
         integrity: sha512-qqoc4kkGgP9cmQDWELlOpAmfgJOg0Yi7MT82ZjiPWu451ayju4itwomjM4/dBEliify8C1b3tSaeCOldugtwPQ==
       }
     engines: { node: ">=18" }
+
+  retry@0.13.1:
+    resolution:
+      {
+        integrity: sha512-XQBQ3I8W1Cge0Seh+6gjj03LbmRFWuoszgK9ooCpwYIrhhoO80pfq4cUkU5DkknwfOfFteRwlZ56PYOGYyFWdg==
+      }
+    engines: { node: ">= 4" }
 
   rimraf@5.0.10:
     resolution:
@@ -4036,6 +4071,21 @@ packages:
         integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==
       }
 
+  ws@8.21.0:
+    resolution:
+      {
+        integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==
+      }
+    engines: { node: ">=10.0.0" }
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: ">=5.0.2"
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   y18n@5.0.8:
     resolution:
       {
@@ -4305,6 +4355,17 @@ snapshots:
       stream-events: 1.0.5
     transitivePeerDependencies:
       - supports-color
+
+  "@google/genai@2.9.0":
+    dependencies:
+      google-auth-library: 10.7.0
+      p-retry: 4.6.2
+      protobufjs: 7.6.4
+      ws: 8.21.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
 
   "@grpc/grpc-js@1.14.4":
     dependencies:
@@ -4690,6 +4751,8 @@ snapshots:
   "@types/react@19.2.17":
     dependencies:
       csstype: 3.2.3
+
+  "@types/retry@0.12.0": {}
 
   "@types/send@1.2.1":
     dependencies:
@@ -5768,6 +5831,11 @@ snapshots:
     dependencies:
       p-limit: 3.1.0
 
+  p-retry@4.6.2:
+    dependencies:
+      "@types/retry": 0.12.0
+      retry: 0.13.1
+
   package-json-from-dist@1.0.1: {}
 
   parent-module@1.0.1:
@@ -5917,6 +5985,8 @@ snapshots:
       teeny-request: 10.1.3
     transitivePeerDependencies:
       - supports-color
+
+  retry@0.13.1: {}
 
   rimraf@5.0.10:
     dependencies:
@@ -6322,6 +6392,8 @@ snapshots:
       strip-ansi: 7.2.0
 
   wrappy@1.0.2: {}
+
+  ws@8.21.0: {}
 
   y18n@5.0.8: {}
 

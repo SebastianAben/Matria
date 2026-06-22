@@ -136,6 +136,83 @@ enum TranscriptClinicalCandidateType {
   unresolved_question
 }
 
+enum AiToolCallStatus {
+  pending
+  succeeded
+  failed
+  validation_failed
+}
+
+enum AiArtifactType {
+  summary_update
+  highlight_cards
+  suggestions
+  missing_questions
+  session_note_draft_sections
+  anc_note_draft
+  teleconsult_summary_draft
+  referral_summary_draft
+  fhir_export_draft_inputs
+  medgemma_handoff_request
+  requires_human_review
+}
+
+enum AiPatchOperation {
+  create
+  update
+  replace
+  archive
+  no_change
+}
+
+enum AiValidationStatus {
+  valid
+  invalid
+  stale
+}
+
+enum AiReviewStatus {
+  draft
+  review_required
+  rejected
+  stale
+}
+
+enum SynthesisTickStatus {
+  pending
+  running
+  completed
+  failed
+  validation_failed
+  stale
+  skipped
+}
+
+enum HighlightType {
+  risk
+  missing_context
+  contradiction
+  uncertainty
+  memory
+  media_evidence
+  follow_up
+}
+
+enum SuggestionPriority {
+  low
+  medium
+  high
+  urgent
+}
+
+enum SuggestionStatus {
+  open
+  done
+  skipped
+  needs_follow_up
+  superseded
+}
+
 model User {
   id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email        String     @unique
@@ -155,6 +232,10 @@ model User {
   ruleAcknowledgements RuleResult[] @relation("RuleAcknowledgementActor")
   ambientSessions AmbientSessionState[] @relation("AmbientSessionCreator")
   transcriptCorrections TranscriptTurn[] @relation("TranscriptCorrectionActor")
+  contextSnapshots ContextSnapshot[] @relation("ContextSnapshotCreator")
+  synthesisTicks SynthesisTick[] @relation("SynthesisTickRequester")
+  suggestionResults SuggestionResult[] @relation("SuggestionResultActor")
+  patientMemoryFacts PatientMemoryFact[] @relation("PatientMemoryFactCreator")
 }
 
 model Role {
@@ -243,6 +324,8 @@ model Patient {
   createdBy User @relation("PatientCreator", fields: [createdById], references: [id])
   pregnancyEpisodes PregnancyEpisode[]
   encounters Encounter[]
+  contextSnapshots ContextSnapshot[]
+  patientMemoryFacts PatientMemoryFact[]
 }
 
 model PregnancyEpisode {
@@ -257,6 +340,8 @@ model PregnancyEpisode {
 
   patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
   encounters Encounter[]
+  contextSnapshots ContextSnapshot[]
+  patientMemoryFacts PatientMemoryFact[]
 
   @@index([patientId])
 }
@@ -282,6 +367,7 @@ model Encounter {
   ruleEvaluationRuns RuleEvaluationRun[]
   ruleResults RuleResult[]
   ambientSessions AmbientSessionState[]
+  contextSnapshots ContextSnapshot[]
 
   @@index([patientId])
   @@index([pregnancyEpisodeId])
@@ -415,6 +501,13 @@ model AmbientSessionState {
   transcriptTurns TranscriptTurn[]
   transcriptClinicalCandidates TranscriptClinicalCandidate[]
   ruleResults RuleResult[]
+  aiToolCalls AiToolCall[]
+  contextSnapshots ContextSnapshot[]
+  artifactRevisions AiArtifactRevision[]
+  summaryRevisions SummaryRevision[]
+  highlightCards HighlightCard[]
+  suggestions Suggestion[]
+  synthesisTicks SynthesisTick[]
 
   @@index([encounterId, status])
 }
@@ -481,4 +574,208 @@ model TranscriptClinicalCandidate {
   transcriptTurn TranscriptTurn? @relation(fields: [transcriptTurnId], references: [id], onDelete: SetNull)
 
   @@index([ambientSessionId, candidateType])
+}
+
+model AiToolCall {
+  id                String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ambientSessionId  String?          @db.Uuid
+  contextSnapshotId String?          @db.Uuid
+  provider          String
+  model             String
+  toolName          String
+  status            AiToolCallStatus @default(pending)
+  requestMetadata   Json?
+  responseMetadata  Json?
+  errorMessage      String?
+  latencyMs         Int?
+  createdAt         DateTime         @default(now())
+  completedAt       DateTime?
+
+  ambientSession AmbientSessionState? @relation(fields: [ambientSessionId], references: [id], onDelete: SetNull)
+  contextSnapshot ContextSnapshot? @relation(fields: [contextSnapshotId], references: [id], onDelete: SetNull)
+
+  @@index([ambientSessionId, createdAt])
+  @@index([contextSnapshotId])
+  @@index([status])
+}
+
+model ContextSnapshot {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId          String   @db.Uuid
+  pregnancyEpisodeId String   @db.Uuid
+  encounterId        String   @db.Uuid
+  ambientSessionId   String   @db.Uuid
+  sessionStateVersion Int
+  sessionNoteVersion Int
+  payload            Json
+  sourceManifest     Json
+  createdById        String?  @db.Uuid
+  createdAt          DateTime @default(now())
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  pregnancyEpisode PregnancyEpisode @relation(fields: [pregnancyEpisodeId], references: [id], onDelete: Restrict)
+  encounter Encounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  ambientSession AmbientSessionState @relation(fields: [ambientSessionId], references: [id], onDelete: Cascade)
+  createdBy User? @relation("ContextSnapshotCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  aiToolCalls AiToolCall[]
+  artifactRevisions AiArtifactRevision[]
+  synthesisTicks SynthesisTick[]
+
+  @@index([ambientSessionId, createdAt])
+  @@index([patientId, pregnancyEpisodeId])
+  @@index([encounterId])
+}
+
+model AiArtifactRevision {
+  id                         String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ambientSessionId           String             @db.Uuid
+  contextSnapshotId          String             @db.Uuid
+  artifactType               AiArtifactType
+  operation                  AiPatchOperation
+  artifactKey                String?
+  content                    Json
+  sourceReferences           Json
+  confidence                 Float?
+  uncertaintyReasons         Json
+  ruleResultReferences       Json
+  memoryReferences           Json
+  medGemmaReferences         Json
+  clinicianActionRequired    Boolean            @default(true)
+  validationStatus           AiValidationStatus @default(valid)
+  reviewStatus               AiReviewStatus     @default(review_required)
+  version                    Int                @default(1)
+  supersedesId               String?            @db.Uuid
+  createdAt                  DateTime           @default(now())
+
+  ambientSession AmbientSessionState @relation(fields: [ambientSessionId], references: [id], onDelete: Cascade)
+  contextSnapshot ContextSnapshot @relation(fields: [contextSnapshotId], references: [id], onDelete: Cascade)
+  supersedes AiArtifactRevision? @relation("ArtifactSupersession", fields: [supersedesId], references: [id], onDelete: SetNull)
+  supersededBy AiArtifactRevision[] @relation("ArtifactSupersession")
+  summaryRevisions SummaryRevision[]
+  highlightCards HighlightCard[]
+  suggestions Suggestion[]
+
+  @@index([ambientSessionId, artifactType, createdAt])
+  @@index([contextSnapshotId])
+  @@index([validationStatus, reviewStatus])
+}
+
+model SummaryRevision {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ambientSessionId   String   @db.Uuid
+  artifactRevisionId String?  @db.Uuid
+  content            String
+  sections           Json?
+  sourceReferences   Json
+  confidence         Float?
+  createdAt          DateTime @default(now())
+
+  ambientSession AmbientSessionState @relation(fields: [ambientSessionId], references: [id], onDelete: Cascade)
+  artifactRevision AiArtifactRevision? @relation(fields: [artifactRevisionId], references: [id], onDelete: SetNull)
+
+  @@index([ambientSessionId, createdAt])
+}
+
+model HighlightCard {
+  id                     String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ambientSessionId       String       @db.Uuid
+  artifactRevisionId     String?      @db.Uuid
+  type                   HighlightType
+  severity               RuleSeverity
+  title                  String
+  body                   String
+  sourceReferences       Json
+  confidence             Float
+  requiresAcknowledgement Boolean     @default(false)
+  status                 String       @default("active")
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+
+  ambientSession AmbientSessionState @relation(fields: [ambientSessionId], references: [id], onDelete: Cascade)
+  artifactRevision AiArtifactRevision? @relation(fields: [artifactRevisionId], references: [id], onDelete: SetNull)
+
+  @@index([ambientSessionId, status])
+  @@index([severity])
+}
+
+model Suggestion {
+  id                      String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ambientSessionId        String             @db.Uuid
+  artifactRevisionId      String?            @db.Uuid
+  title                   String
+  rationale               String
+  priority                SuggestionPriority
+  status                  SuggestionStatus   @default(open)
+  sourceReferences        Json
+  resultOptions           Json
+  freeTextAllowed         Boolean            @default(true)
+  clinicianActionRequired Boolean            @default(true)
+  createdAt               DateTime           @default(now())
+  updatedAt               DateTime           @updatedAt
+
+  ambientSession AmbientSessionState @relation(fields: [ambientSessionId], references: [id], onDelete: Cascade)
+  artifactRevision AiArtifactRevision? @relation(fields: [artifactRevisionId], references: [id], onDelete: SetNull)
+  results SuggestionResult[]
+
+  @@index([ambientSessionId, status])
+  @@index([priority])
+}
+
+model SuggestionResult {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  suggestionId        String   @db.Uuid
+  selectedOptionValue String?
+  selectedOptionLabel String?
+  freeTextNote        String?
+  actorId             String   @db.Uuid
+  contextImpact       Json?
+  createdAt           DateTime @default(now())
+
+  suggestion Suggestion @relation(fields: [suggestionId], references: [id], onDelete: Cascade)
+  actor User @relation("SuggestionResultActor", fields: [actorId], references: [id])
+
+  @@index([suggestionId, createdAt])
+}
+
+model PatientMemoryFact {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId          String   @db.Uuid
+  pregnancyEpisodeId String   @db.Uuid
+  content            String
+  sourceType         String
+  sourceId           String?
+  provenance         Json
+  embedding          Unsupported("vector")?
+  status             String   @default("approved")
+  createdById        String?  @db.Uuid
+  createdAt          DateTime @default(now())
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  pregnancyEpisode PregnancyEpisode @relation(fields: [pregnancyEpisodeId], references: [id], onDelete: Restrict)
+  createdBy User? @relation("PatientMemoryFactCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([patientId, pregnancyEpisodeId, status])
+}
+
+model SynthesisTick {
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ambientSessionId  String              @db.Uuid
+  contextSnapshotId String?             @db.Uuid
+  requestedById     String?             @db.Uuid
+  status            SynthesisTickStatus @default(pending)
+  triggerReason     String              @default("manual")
+  clientRequestId   String?
+  stateVersion      Int
+  startedAt         DateTime?
+  completedAt       DateTime?
+  failureReason     String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  ambientSession AmbientSessionState @relation(fields: [ambientSessionId], references: [id], onDelete: Cascade)
+  contextSnapshot ContextSnapshot? @relation(fields: [contextSnapshotId], references: [id], onDelete: SetNull)
+  requestedBy User? @relation("SynthesisTickRequester", fields: [requestedById], references: [id], onDelete: SetNull)
+
+  @@index([ambientSessionId, stateVersion, status])
+  @@index([clientRequestId])
 }

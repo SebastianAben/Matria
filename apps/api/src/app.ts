@@ -2,6 +2,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import { adminRouter } from "./admin/routes.js";
+import { aiRouter } from "./ai/routes.js";
 import { ambientRouter } from "./ambient/routes.js";
 import { authRouter } from "./auth/routes.js";
 import { optionalAuth } from "./auth/middleware.js";
@@ -53,6 +54,7 @@ export function createApp() {
   app.use("/", clinicalRouter);
   app.use("/", rulesRouter);
   app.use("/", ambientRouter);
+  app.use("/", aiRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

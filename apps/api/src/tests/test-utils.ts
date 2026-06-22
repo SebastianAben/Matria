@@ -10,6 +10,15 @@ export async function resetDatabase() {
   await prisma.$executeRawUnsafe(`
     TRUNCATE TABLE
       "AuditLog",
+      "SuggestionResult",
+      "Suggestion",
+      "HighlightCard",
+      "SummaryRevision",
+      "AiArtifactRevision",
+      "AiToolCall",
+      "SynthesisTick",
+      "ContextSnapshot",
+      "PatientMemoryFact",
       "TranscriptClinicalCandidate",
       "TranscriptTurn",
       "AudioSegment",

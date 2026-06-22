@@ -68,6 +68,34 @@ type TranscriptTurn = {
   correctionStatus: string;
 };
 
+type SummaryRevision = {
+  id: string;
+  content: string;
+  confidence?: number | null;
+  createdAt: string;
+};
+
+type HighlightCard = {
+  id: string;
+  type: string;
+  severity: string;
+  title: string;
+  body: string;
+  confidence: number;
+  requiresAcknowledgement: boolean;
+};
+
+type Suggestion = {
+  id: string;
+  title: string;
+  rationale: string;
+  priority: string;
+  status: string;
+  resultOptions: Array<{ value: string; label: string }>;
+  freeTextAllowed: boolean;
+  results: Array<{ id: string; selectedOptionLabel?: string | null; freeTextNote?: string | null }>;
+};
+
 export default function PatientsPage() {
   const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
@@ -81,6 +109,9 @@ export default function PatientsPage() {
   const [ambientSession, setAmbientSession] = useState<AmbientSession | null>(null);
   const [transcriptTurns, setTranscriptTurns] = useState<TranscriptTurn[]>([]);
   const [editingTurnId, setEditingTurnId] = useState<string | null>(null);
+  const [summaries, setSummaries] = useState<SummaryRevision[]>([]);
+  const [highlights, setHighlights] = useState<HighlightCard[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
   async function searchPatients(event?: FormEvent) {
     event?.preventDefault();
@@ -123,6 +154,9 @@ export default function PatientsPage() {
     setRuleResults([]);
     setAmbientSession(null);
     setTranscriptTurns([]);
+    setSummaries([]);
+    setHighlights([]);
+    setSuggestions([]);
     setMessage("Loading pregnancy episodes...");
     const response = await apiRequest<{ pregnancyEpisodes: PregnancyEpisode[] }>(
       `/patients/${patient.id}/pregnancy-episodes`
@@ -176,6 +210,9 @@ export default function PatientsPage() {
       setRuleResults([]);
       setAmbientSession(null);
       setTranscriptTurns([]);
+      setSummaries([]);
+      setHighlights([]);
+      setSuggestions([]);
       setMessage("Encounter created.");
     } else {
       setMessage(response.error.message);
@@ -334,6 +371,9 @@ export default function PatientsPage() {
     if (response.success) {
       setAmbientSession(response.data.ambientSession);
       setTranscriptTurns([]);
+      setSummaries([]);
+      setHighlights([]);
+      setSuggestions([]);
       setMessage("Ambient session created.");
     } else {
       setMessage(response.error.message);
@@ -429,8 +469,84 @@ export default function PatientsPage() {
     }
   }
 
+  async function runSynthesisTick() {
+    if (!ambientSession) return;
+    setMessage("Running Gemini synthesis tick...");
+    const response = await apiRequest(`/ambient-sessions/${ambientSession.id}/synthesis-ticks`, {
+      method: "POST",
+      body: JSON.stringify({ triggerReason: "manual_frontend" })
+    });
+    if (response.success) {
+      await loadAiOutputs(ambientSession.id);
+      setMessage("Synthesis tick completed. Draft artifacts are ready for review.");
+    } else {
+      setMessage(response.error.message);
+    }
+  }
+
+  async function loadAiOutputs(sessionId = ambientSession?.id) {
+    if (!sessionId) return;
+    const [artifactsResponse, highlightsResponse, suggestionsResponse] = await Promise.all([
+      apiRequest<{ summaries: SummaryRevision[] }>(`/ambient-sessions/${sessionId}/artifacts`),
+      apiRequest<{ highlightCards: HighlightCard[] }>(`/ambient-sessions/${sessionId}/highlights`),
+      apiRequest<{ suggestions: Suggestion[] }>(`/ambient-sessions/${sessionId}/suggestions`)
+    ]);
+    if (artifactsResponse.success) setSummaries(artifactsResponse.data.summaries);
+    if (highlightsResponse.success) setHighlights(highlightsResponse.data.highlightCards);
+    if (suggestionsResponse.success) setSuggestions(suggestionsResponse.data.suggestions);
+    const failure = [artifactsResponse, highlightsResponse, suggestionsResponse].find(
+      (response) => !response.success
+    );
+    if (failure && !failure.success) setMessage(failure.error.message);
+  }
+
+  async function updateSuggestion(suggestionId: string, status: string) {
+    const response = await apiRequest<{ suggestion: Suggestion }>(`/suggestions/${suggestionId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status })
+    });
+    if (response.success) {
+      setSuggestions((current) =>
+        current.map((suggestion) =>
+          suggestion.id === suggestionId
+            ? { ...suggestion, status: response.data.suggestion.status }
+            : suggestion
+        )
+      );
+      setMessage(`Suggestion marked ${status}.`);
+    } else {
+      setMessage(response.error.message);
+    }
+  }
+
+  async function recordSuggestionResult(event: FormEvent<HTMLFormElement>, suggestion: Suggestion) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const selectedValue = String(form.get("selectedOptionValue") ?? "");
+    const selectedOption = suggestion.resultOptions.find(
+      (option) => option.value === selectedValue
+    );
+    const response = await apiRequest(`/suggestions/${suggestion.id}/results`, {
+      method: "POST",
+      body: JSON.stringify({
+        selectedOptionValue: selectedOption?.value,
+        selectedOptionLabel: selectedOption?.label,
+        freeTextNote: form.get("freeTextNote") || undefined,
+        contextImpact: { recordedFrom: "encounter_capture_ui" }
+      })
+    });
+    if (response.success) {
+      await loadAiOutputs();
+      setMessage("Suggestion result recorded.");
+      event.currentTarget.reset();
+    } else {
+      setMessage(response.error.message);
+    }
+  }
+
   const audioConsent = latestConsentStatus(encounter, "audio");
   const transcriptConsent = latestConsentStatus(encounter, "transcript");
+  const aiConsent = latestConsentStatus(encounter, "ai");
 
   return (
     <div className="grid">
@@ -759,7 +875,8 @@ export default function PatientsPage() {
               <div>
                 <h2>Ambient Session</h2>
                 <p className="muted">
-                  Audio consent: {audioConsent}. Transcript consent: {transcriptConsent}.
+                  Audio consent: {audioConsent}. Transcript consent: {transcriptConsent}. AI
+                  consent: {aiConsent}.
                 </p>
               </div>
               <span className="status">{ambientSession?.status ?? "not created"}</span>
@@ -815,6 +932,130 @@ export default function PatientsPage() {
             </form>
           </section>
         </div>
+      ) : null}
+
+      {encounter ? (
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Gemini Draft Artifacts</h2>
+              <p className="muted">Draft synthesis requires AI consent and clinician review.</p>
+            </div>
+            <div className="button-row">
+              <button
+                className="button"
+                disabled={!ambientSession}
+                onClick={runSynthesisTick}
+                type="button"
+              >
+                Run synthesis
+              </button>
+              <button
+                className="button secondary"
+                disabled={!ambientSession}
+                onClick={() => loadAiOutputs()}
+                type="button"
+              >
+                Refresh drafts
+              </button>
+            </div>
+          </div>
+          <div className="grid two-col">
+            <div className="record-list">
+              <h3>Progressive Summary</h3>
+              {summaries.length === 0 ? (
+                <p className="muted">No summary draft yet.</p>
+              ) : (
+                summaries.slice(0, 1).map((summary) => (
+                  <article className="record" key={summary.id}>
+                    <p>{summary.content}</p>
+                    <p className="muted">
+                      Confidence{" "}
+                      {summary.confidence ? `${Math.round(summary.confidence * 100)}%` : "not set"}
+                    </p>
+                  </article>
+                ))
+              )}
+              <h3>Highlights</h3>
+              {highlights.length === 0 ? (
+                <p className="muted">No highlight cards yet.</p>
+              ) : (
+                highlights.map((highlight) => (
+                  <article className={`record severity-${highlight.severity}`} key={highlight.id}>
+                    <div className="record-topline">
+                      <strong>{highlight.title}</strong>
+                      <span className="status">{highlight.type}</span>
+                    </div>
+                    <p>{highlight.body}</p>
+                    <p className="muted">Confidence {Math.round(highlight.confidence * 100)}%</p>
+                  </article>
+                ))
+              )}
+            </div>
+            <div className="record-list">
+              <h3>Suggestions</h3>
+              {suggestions.length === 0 ? (
+                <p className="muted">No suggestions yet.</p>
+              ) : (
+                suggestions.map((suggestion) => (
+                  <article className="record" key={suggestion.id}>
+                    <div className="record-topline">
+                      <strong>{suggestion.title}</strong>
+                      <span className="status">{suggestion.status}</span>
+                    </div>
+                    <p>{suggestion.rationale}</p>
+                    <p className="muted">Priority {suggestion.priority}</p>
+                    <div className="button-row">
+                      <button
+                        className="button secondary"
+                        onClick={() => updateSuggestion(suggestion.id, "done")}
+                        type="button"
+                      >
+                        Done
+                      </button>
+                      <button
+                        className="button secondary"
+                        onClick={() => updateSuggestion(suggestion.id, "skipped")}
+                        type="button"
+                      >
+                        Skip
+                      </button>
+                      <button
+                        className="button secondary"
+                        onClick={() => updateSuggestion(suggestion.id, "needs_follow_up")}
+                        type="button"
+                      >
+                        Follow-up
+                      </button>
+                    </div>
+                    <form
+                      className="form-grid stacked-form"
+                      onSubmit={(event) => recordSuggestionResult(event, suggestion)}
+                    >
+                      <div className="field">
+                        <label htmlFor={`result-${suggestion.id}`}>Result</label>
+                        <select id={`result-${suggestion.id}`} name="selectedOptionValue">
+                          {suggestion.resultOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="field">
+                        <label htmlFor={`result-note-${suggestion.id}`}>Result note</label>
+                        <input id={`result-note-${suggestion.id}`} name="freeTextNote" />
+                      </div>
+                      <button className="button secondary" type="submit">
+                        Record result
+                      </button>
+                    </form>
+                  </article>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
       ) : null}
 
       {encounter ? (
