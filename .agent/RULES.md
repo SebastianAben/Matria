@@ -65,6 +65,15 @@ Future agents must preserve these development-environment decisions:
 - Automated tests may use isolated Docker databases, disposable schemas, transactions, or test containers, but must not depend on a manually configured host PostgreSQL instance.
 - Frontend clients must never connect directly to the database; all database access goes through the backend API.
 
+## 4.2 End-of-task Process And Container Cleanup
+
+Future agents must treat runtime cleanup as part of finishing a task:
+
+- Shut down dev servers, long-running shells, file watchers, background workers, and other processes started during the session after they are no longer needed.
+- Run `docker compose down` or the equivalent project-specific shutdown command after tasks that start Docker containers, unless the user explicitly asks to keep them running.
+- Before final response, confirm there are no agent-started long-running processes or containers still needed for the completed task.
+- If a process or container must remain running for the user to inspect the app, state that explicitly and include the URL or reason.
+
 ## 5. When To Update `.agent`
 
 Update `.agent` when implementation changes:
