@@ -156,6 +156,34 @@ export const suggestionStatuses = [
   "needs_follow_up",
   "superseded"
 ] as const;
+export const generatedOutputTypes = [
+  "summary",
+  "note_draft",
+  "risk_synthesis",
+  "missing_questions",
+  "referral_summary",
+  "teleconsult_summary",
+  "fhir_draft_input",
+  "medical_evidence",
+  "other"
+] as const;
+export const generatedOutputStatuses = [
+  "draft",
+  "review_required",
+  "approved",
+  "edited",
+  "rejected",
+  "uncertain",
+  "acknowledged",
+  "stale"
+] as const;
+export const clinicalApprovalActions = [
+  "approve",
+  "edit",
+  "reject",
+  "mark_uncertain",
+  "acknowledge"
+] as const;
 export const medicalEvidenceProviders = ["mock", "gemini_flash", "ollama_medgemma"] as const;
 export const clinicalFileStorageProviders = ["local"] as const;
 export const medicalEvidenceTaskTypes = [
@@ -214,6 +242,9 @@ export type SynthesisTickStatus = (typeof synthesisTickStatuses)[number];
 export type HighlightType = (typeof highlightTypes)[number];
 export type SuggestionPriority = (typeof suggestionPriorities)[number];
 export type SuggestionStatus = (typeof suggestionStatuses)[number];
+export type GeneratedOutputType = (typeof generatedOutputTypes)[number];
+export type GeneratedOutputStatus = (typeof generatedOutputStatuses)[number];
+export type ClinicalApprovalAction = (typeof clinicalApprovalActions)[number];
 export type MedicalEvidenceProvider = (typeof medicalEvidenceProviders)[number];
 export type ClinicalFileStorageProvider = (typeof clinicalFileStorageProviders)[number];
 export type MedicalEvidenceTaskType = (typeof medicalEvidenceTaskTypes)[number];
@@ -371,6 +402,7 @@ export const contextSnapshotPayloadSchema = z.object({
   clinicalFiles: z.array(z.record(z.string(), z.unknown())),
   mediaFrameSamples: z.array(z.record(z.string(), z.unknown())).default([]),
   medicalEvidenceFindings: z.array(z.record(z.string(), z.unknown())).default([]),
+  generatedOutputs: z.array(z.record(z.string(), z.unknown())).default([]),
   patientMemory: z.array(z.record(z.string(), z.unknown())),
   outputContract: z.object({
     artifactTypes: z.array(z.enum(aiArtifactTypes)),
@@ -451,6 +483,18 @@ export const suggestionResultSchema = z.object({
   selectedOptionLabel: z.string().max(180).optional(),
   freeTextNote: z.string().max(2000).optional(),
   contextImpact: z.record(z.string(), z.unknown()).optional()
+});
+
+export const generatedOutputReviewSchema = z.object({
+  note: z.string().max(2000).optional(),
+  editedContent: z.record(z.string(), z.unknown()).optional()
+});
+
+export const generatedOutputEditSchema = z.object({
+  note: z.string().max(2000).optional(),
+  editedContent: z
+    .record(z.string(), z.unknown())
+    .refine((value) => Object.keys(value).length > 0, "editedContent is required")
 });
 
 export const synthesisTickCreateSchema = z.object({

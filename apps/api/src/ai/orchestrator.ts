@@ -10,6 +10,7 @@ import { writeAudit } from "../audit.js";
 import { env } from "../config/env.js";
 import { prisma } from "../db/prisma.js";
 import { AppError, notFound } from "../http/errors.js";
+import { syncGeneratedOutputForArtifact } from "../outputs/routes.js";
 import { evaluateRules } from "../rules/rule-runner.js";
 import { buildAndPersistContextSnapshot } from "./context-builder.js";
 import { createGeminiProvider, type GeminiSynthesisResponse } from "./gemini-provider.js";
@@ -322,6 +323,17 @@ async function persistGeminiArtifacts(input: {
         }
       });
       created.push(artifact);
+      await syncGeneratedOutputForArtifact(tx, {
+        id: artifact.id,
+        ambientSessionId: artifact.ambientSessionId,
+        artifactType: artifact.artifactType,
+        content: artifact.content,
+        sourceReferences: artifact.sourceReferences,
+        confidence: artifact.confidence,
+        uncertaintyReasons: artifact.uncertaintyReasons,
+        validationStatus: artifact.validationStatus,
+        reviewStatus: artifact.reviewStatus
+      });
       if (!input.stale) {
         await persistPatchProjection(
           tx,

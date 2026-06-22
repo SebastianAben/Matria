@@ -7,53 +7,79 @@ Purpose: stable handoff for the latest substantive Matria task/session
 
 ## Current Objective
 
-Prepare Phase 8 frontend implementation by documenting Matria's UX-oriented page map, clinical workspace flows, screen contents, component responsibilities, brand-system UX guidance, and review boundaries before changing the frontend.
+Phase 8 frontend implementation from the six supplied reference images is complete, including the intentional pull-forward of generated-output review persistence and a final image-to-code fidelity pass against every reference image.
 
 ## Current Phase
 
-- Phase: 8 - Clinical Workspace Frontend
-- Subphase: 8.1 - Patient and encounter navigation
-- Status: `not_started` for implementation; UX planning baseline completed in `.agent/pages.md`
+- Phase: 9 - Memory, FHIR, And Referral Outputs
+- Subphase: 9.4 - Durable memory writeback
+- Status: Phase 8 implementation complete; Phase 9 not started
 
 ## Files Changed This Session
 
-- Agent docs: `.agent/pages.md`, `.agent/implementationPhases.md`, `.agent/sessionHandoff.md`
-- ADRs: `docs/adr/0006-clinical-workspace-ux-contract.md`
+- Frontend: `apps/web/app/globals.css`, `apps/web/app/layout.tsx`, `apps/web/app/page.tsx`, `apps/web/app/login/page.tsx`, `apps/web/app/patients/page.tsx`, `apps/web/app/workspace/page.tsx`, `apps/web/app/workspace/setup/page.tsx`, `apps/web/app/review/page.tsx`, `apps/web/app/admin/page.tsx`, `apps/web/app/audit/page.tsx`, `apps/web/app/components/clinical-ui.tsx`, `apps/web/app/components/demo-data.ts`
+- Frontend dependency: `apps/web/package.json`, `pnpm-lock.yaml`
+- Backend: `apps/api/prisma/schema.prisma`, `apps/api/prisma/migrations/20260622140000_phase8_frontend_approvals/migration.sql`, `apps/api/src/app.ts`, `apps/api/src/admin/routes.ts`, `apps/api/src/audit/routes.ts`, `apps/api/src/clinical/routes.ts`, `apps/api/src/outputs/routes.ts`, `apps/api/src/ai/orchestrator.ts`, `apps/api/src/ai/context-builder.ts`, `apps/api/src/evidence/routes.ts`
+- Shared: `packages/shared/src/index.ts`
+- Tests: `apps/e2e/tests/smoke.spec.ts`, `apps/api/src/tests/test-utils.ts`, `apps/api/src/tests/phase8-frontend-support.test.ts`
+- Docs: `.agent/PRD.md`, `.agent/implementationPhases.md`, `.agent/sessionHandoff.md`, `docs/adr/0007-reference-image-frontend-and-approval-pull-forward.md`
 
 ## Completed Work
 
-- Created `.agent/pages.md` as the Phase 8 UX contract.
-- Added brand-system UX guidelines to `.agent/pages.md` using the `brandkit` skill as a strategy lens while preserving the document's non-style scope.
-- Documented frontend pages for login, workspace home, patient search/registration, patient detail, pregnancy episode setup, encounter setup, consent capture, clinical workspace, admin, audit, and encounter audit trail.
-- Documented clinical workspace sections for encounter context, activity summary, ambient controls, live transcript, observations, session note, deterministic rules, summary, highlights, suggestions, evidence, draft output review, artifact history, and closeout.
-- Documented end-to-end UX flows for routine ANC, high-risk findings, missing context, transcript correction, evidence review, suggestion resolution, and encounter review/approval.
-- Kept the document non-technical and excluded component styling, fonts, colors, spacing, and visual design prescriptions.
-- Defined Matria's brand behavior around protected clinical continuity, calm decision support, careful evidence handling, clinician authority, maternal safety without alarmism, and hospital-grade accountability.
-- Clarified Phase 8 versus Phase 9 boundaries so Phase 8 can show review-required states without falsely implementing final approval, memory writeback, referral finalization, or FHIR export.
-- Updated the Phase 8 roadmap deliverables and notes to point future implementation at `.agent/pages.md`.
-- Added ADR 0006 for the UX-first page contract decision.
+- Rebuilt the web app around a shared clinical shell matching the six reference screens.
+- Implemented `/patients`, `/workspace/setup`, `/workspace`, `/review`, `/admin`, and `/audit` with hybrid demo/live behavior.
+- Completed a second exact-reference pass using the `image-to-code` workflow:
+  - aligned sidebar navigation to the reference order and labels
+  - moved route titles into the top bar
+  - compressed panel, table, button, typography, and grid density to better match the 1586x992 reference boards
+  - reworked `/patients` with selected-patient identity, state examples, and duplicate review surfaces
+  - reworked `/workspace` into the reference dashboard grid with patient facts, ambient controls, transcript, observations, rules, note, and activity in one board
+  - reworked `/review` into the reference three-column intelligence board with highlight cards, evidence, suggestions, source trace, review queues, closeout actions, and blockers
+  - replaced the admin metric row with the reference alert/action strip
+- Kept `/login` functional and redirected `/` to `/workspace`.
+- Added `lucide-react` for icon fidelity.
+- Added generated-output and clinical approval persistence models and migration.
+- Added generated-output review routes for approve, edit, reject, and mark uncertain.
+- Added audit log filtering, patient encounter list, encounter workspace-state aggregate, admin system health, and admin user patch routes.
+- Synced reviewable AI artifacts and medical evidence findings into generated outputs.
+- Included generated output review state in context snapshots.
+- Added API tests for the new Phase 8 support routes and approval behavior.
+- Updated Playwright smoke tests for the six critical reference pages and tablet width.
+- Captured final reference-viewport screenshots at 1586x992 in `.agent/phase8-screenshots-refined/`.
 
 ## Decisions Made
 
-- Phase 8 frontend implementation should begin from a UX/product page contract instead of a technical API map.
-- `.agent/pages.md` is intentionally non-design: it describes page purpose, screen contents, behaviors, states, flows, and component responsibilities, but not styles, fonts, colors, spacing, or visual treatment.
-- Brand guidance should influence product meaning, language, workflow consistency, review states, and asset restraint; it must not prescribe visual styles in `.agent/pages.md`.
-- Phase 8 can present review-required queues and disabled or future-facing controls for Phase 9 concepts, but final approval, durable memory writeback, referral finalization, and FHIR export remain Phase 9 responsibilities.
+- The six images in `.agent/design-reference-images/` are the visual source of truth for Phase 8.
+- Reference pages can render with realistic demo fixtures when no live API/database context is selected.
+- Refined screenshots in `.agent/phase8-screenshots-refined/` are the current visual QA artifacts for comparing implementation against the supplied images.
+- Approval/rejection persistence moved from Phase 9 into Phase 8.
+- Durable memory writeback, referral/teleconsult finalization, FHIR generation, FHIR provenance, export, and live SATUSEHAT/external submission remain deferred.
 
 ## Blockers And Open Questions
 
-- No active implementation blockers.
-- No open UX questions from the current docs; Phase 8 can start with patient and encounter navigation.
-- Approval persistence, memory writeback, referral finalization, and FHIR export remain Phase 9 boundaries.
+- DB-backed API tests could not run because the local PostgreSQL test database at `localhost:54329` was not reachable.
+- No product questions are open.
 
 ## Next Recommended Action
 
-Begin Phase 8 implementation from `.agent/pages.md`:
+Start Phase 9 from approved or clinician-edited generated outputs:
 
-1. Start with patient search, patient detail, pregnancy episode setup, encounter setup, and active encounter re-entry.
-2. Turn the compact patient page into a full clinical workspace with distinct transcript, session note, observations, deterministic rules, Gemini drafts, suggestions, evidence, review queue, and artifact history areas.
-3. Keep final approval, durable memory writeback, referral finalization, and FHIR export as Phase 9 capabilities.
+1. Implement durable patient memory writeback from approved generated outputs.
+2. Add deduplication and patient/pregnancy scoping tests.
+3. Finalize referral/teleconsult generation and FHIR R4 export artifacts from approved content only.
 
 ## Tests And Checks Run
 
-- Documentation-only update; no application tests were run.
+- `pnpm --filter @matria/api prisma:generate`
+- `pnpm --filter @matria/api typecheck`
+- `pnpm --filter @matria/web typecheck`
+- `pnpm --filter @matria/e2e typecheck`
+- `pnpm --filter @matria/web build`
+- `pnpm lint`
+- `pnpm e2e`
+- Playwright screenshots captured for all six Phase 8 pages at desktop and tablet sizes in `.agent/phase8-screenshots/`
+- Final exact-reference viewport screenshots captured for all six pages in `.agent/phase8-screenshots-refined/`
+
+## Tests Blocked
+
+- `pnpm --filter @matria/api test -- phase8-frontend-support` attempted to run the API suite but failed before tests executed because PostgreSQL was unavailable at `localhost:54329`.

@@ -1,12 +1,14 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { LogIn } from "lucide-react";
 import { apiRequest } from "../../lib/api";
+import { ActionButton, Field } from "../components/clinical-ui";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("admin@matriacare.site");
   const [password, setPassword] = useState("change-me-in-local-dev");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState("Use an authorized clinical or admin account.");
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -15,37 +17,34 @@ export default function LoginPage() {
       method: "POST",
       body: JSON.stringify({ email, password })
     });
-    setMessage(
-      response.success ? `Signed in as ${response.data.user.email}` : response.error.message
-    );
+    setMessage(response.success ? `Signed in as ${response.data.user.email}` : response.error.message);
   }
 
   return (
-    <div className="grid">
-      <div className="topbar">
-        <h1 className="page-title">Login</h1>
+    <section className="login-panel">
+      <div className="brand-mark" style={{ placeItems: "start", marginBottom: 18 }}>
+        <span className="brand-symbol">M</span>
+        <span>Matria</span>
       </div>
-      <section className="panel">
-        <form className="form-grid" onSubmit={onSubmit}>
-          <div className="field">
-            <label htmlFor="email">Email</label>
-            <input id="email" value={email} onChange={(event) => setEmail(event.target.value)} />
-          </div>
-          <div className="field">
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </div>
-          <button className="button" type="submit">
-            Sign in
-          </button>
-          {message ? <p className="muted">{message}</p> : null}
-        </form>
-      </section>
-    </div>
+      <h1>Clinical Sign In</h1>
+      <p>{message}</p>
+      <form onSubmit={onSubmit}>
+        <Field label="Email">
+          <input id="email" value={email} onChange={(event) => setEmail(event.target.value)} />
+        </Field>
+        <Field label="Password">
+          <input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+        </Field>
+        <ActionButton type="submit">
+          <LogIn size={15} />
+          Sign in
+        </ActionButton>
+      </form>
+    </section>
   );
 }

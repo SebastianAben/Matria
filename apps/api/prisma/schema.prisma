@@ -213,6 +213,37 @@ enum SuggestionStatus {
   superseded
 }
 
+enum GeneratedOutputType {
+  summary
+  note_draft
+  risk_synthesis
+  missing_questions
+  referral_summary
+  teleconsult_summary
+  fhir_draft_input
+  medical_evidence
+  other
+}
+
+enum GeneratedOutputStatus {
+  draft
+  review_required
+  approved
+  edited
+  rejected
+  uncertain
+  acknowledged
+  stale
+}
+
+enum ClinicalApprovalAction {
+  approve
+  edit
+  reject
+  mark_uncertain
+  acknowledge
+}
+
 model User {
   id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email        String     @unique
@@ -237,6 +268,7 @@ model User {
   suggestionResults SuggestionResult[] @relation("SuggestionResultActor")
   patientMemoryFacts PatientMemoryFact[] @relation("PatientMemoryFactCreator")
   medicalEvidenceHandoffs MedicalEvidenceHandoff[] @relation("MedicalEvidenceHandoffRequester")
+  clinicalApprovals ClinicalApproval[] @relation("ClinicalApprovalActor")
 }
 
 model Role {
@@ -521,6 +553,7 @@ model AmbientSessionState {
   evidenceHandoffs MedicalEvidenceHandoff[]
   evidenceFindings MedicalEvidenceFinding[]
   frameSamples MedicalEvidenceFrameSample[]
+  generatedOutputs GeneratedOutput[]
 
   @@index([encounterId, status])
 }
@@ -669,6 +702,7 @@ model AiArtifactRevision {
   highlightCards HighlightCard[]
   suggestions Suggestion[]
   evidenceHandoffs MedicalEvidenceHandoff[]
+  generatedOutputs GeneratedOutput[]
 
   @@index([ambientSessionId, artifactType, createdAt])
   @@index([contextSnapshotId])
@@ -898,8 +932,57 @@ model MedicalEvidenceFinding {
   handoff MedicalEvidenceHandoff? @relation(fields: [handoffId], references: [id], onDelete: SetNull)
   clinicalFile ClinicalFile? @relation(fields: [clinicalFileId], references: [id], onDelete: SetNull)
   frameSample MedicalEvidenceFrameSample? @relation(fields: [frameSampleId], references: [id], onDelete: SetNull)
+  generatedOutputs GeneratedOutput[]
 
   @@index([ambientSessionId, createdAt])
   @@index([handoffId])
   @@index([clinicalFileId])
+}
+
+model GeneratedOutput {
+  id                    String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ambientSessionId      String                @db.Uuid
+  artifactRevisionId    String?               @db.Uuid
+  evidenceFindingId     String?               @db.Uuid
+  outputType            GeneratedOutputType
+  title                 String
+  content               Json
+  status                GeneratedOutputStatus @default(review_required)
+  sourceReferences      Json
+  confidence            Float?
+  uncertaintyReasons    Json?
+  canonicalContent      Json?
+  reviewedAt            DateTime?
+  reviewedById          String?               @db.Uuid
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  ambientSession AmbientSessionState @relation(fields: [ambientSessionId], references: [id], onDelete: Cascade)
+  artifactRevision AiArtifactRevision? @relation(fields: [artifactRevisionId], references: [id], onDelete: SetNull)
+  evidenceFinding MedicalEvidenceFinding? @relation(fields: [evidenceFindingId], references: [id], onDelete: SetNull)
+  approvals ClinicalApproval[]
+
+  @@unique([artifactRevisionId])
+  @@unique([evidenceFindingId])
+  @@index([ambientSessionId, status])
+  @@index([outputType])
+}
+
+model ClinicalApproval {
+  id                String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  generatedOutputId String                 @db.Uuid
+  action            ClinicalApprovalAction
+  actorId           String                 @db.Uuid
+  note              String?
+  editedContent     Json?
+  previousStatus    GeneratedOutputStatus
+  nextStatus        GeneratedOutputStatus
+  provenance        Json?
+  createdAt         DateTime               @default(now())
+
+  generatedOutput GeneratedOutput @relation(fields: [generatedOutputId], references: [id], onDelete: Cascade)
+  actor User @relation("ClinicalApprovalActor", fields: [actorId], references: [id])
+
+  @@index([generatedOutputId, createdAt])
+  @@index([actorId, createdAt])
 }

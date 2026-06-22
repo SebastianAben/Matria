@@ -140,6 +140,30 @@ clinicalRouter.get(
   }
 );
 
+clinicalRouter.get(
+  "/patients/:patientId/encounters",
+  requirePermission("encounter:read"),
+  async (req, res, next) => {
+    try {
+      const patientId = requiredParam(req, "patientId");
+      const patient = await prisma.patient.findUnique({ where: { id: patientId } });
+      if (!patient) throw notFound("Patient");
+      const encounters = await prisma.encounter.findMany({
+        where: { patientId },
+        include: {
+          pregnancyEpisode: true,
+          createdBy: { select: { id: true, fullName: true, email: true } }
+        },
+        orderBy: { createdAt: "desc" },
+        take: 50
+      });
+      return sendOk(req, res, { encounters });
+    } catch (error) {
+      return next(error);
+    }
+  }
+);
+
 clinicalRouter.post("/encounters", requirePermission("encounter:write"), async (req, res, next) => {
   try {
     const input = encounterCreateSchema.parse(req.body);
@@ -197,6 +221,74 @@ clinicalRouter.get(
         throw new AppError("SCOPE_MISMATCH", "Encounter scope is inconsistent.", 409);
       }
       return sendOk(req, res, { encounter });
+    } catch (error) {
+      return next(error);
+    }
+  }
+);
+
+clinicalRouter.get(
+  "/encounters/:encounterId/workspace-state",
+  requirePermission("encounter:read"),
+  async (req, res, next) => {
+    try {
+      const encounterId = requiredParam(req, "encounterId");
+      const encounter = await prisma.encounter.findUnique({
+        where: { id: encounterId },
+        include: {
+          patient: true,
+          pregnancyEpisode: true,
+          consentRecords: { orderBy: { createdAt: "desc" } },
+          clinicalFiles: { orderBy: { createdAt: "desc" } },
+          observations: { orderBy: { createdAt: "desc" } },
+          sessionNote: true,
+          ruleResults: {
+            where: { status: { not: "superseded" } },
+            orderBy: { createdAt: "desc" }
+          },
+          ambientSessions: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            include: {
+              transcriptTurns: { orderBy: [{ startTimeMs: "asc" }, { createdAt: "asc" }] },
+              summaryRevisions: { orderBy: { createdAt: "desc" }, take: 10 },
+              highlightCards: { where: { status: "active" }, orderBy: { createdAt: "desc" } },
+              suggestions: {
+                where: { status: { not: "superseded" } },
+                include: { results: { orderBy: { createdAt: "desc" } } },
+                orderBy: { updatedAt: "desc" }
+              },
+              evidenceHandoffs: { orderBy: { createdAt: "desc" }, take: 20 },
+              evidenceFindings: { orderBy: { createdAt: "desc" }, take: 30 },
+              generatedOutputs: {
+                include: { approvals: { orderBy: { createdAt: "desc" }, take: 3 } },
+                orderBy: { updatedAt: "desc" },
+                take: 50
+              },
+              artifactRevisions: { orderBy: { createdAt: "desc" }, take: 30 }
+            }
+          }
+        }
+      });
+      if (!encounter) throw notFound("Encounter");
+      if (encounter.pregnancyEpisode.patientId !== encounter.patientId) {
+        throw new AppError("SCOPE_MISMATCH", "Encounter scope is inconsistent.", 409);
+      }
+      const auditLogs = await prisma.auditLog.findMany({
+        where: {
+          OR: [
+            { targetId: encounter.id },
+            { metadata: { path: ["encounterId"], equals: encounter.id } }
+          ]
+        },
+        orderBy: { createdAt: "desc" },
+        take: 20
+      });
+      return sendOk(req, res, {
+        encounter,
+        ambientSession: encounter.ambientSessions[0] ?? null,
+        recentActivity: auditLogs
+      });
     } catch (error) {
       return next(error);
     }

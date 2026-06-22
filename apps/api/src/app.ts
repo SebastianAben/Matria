@@ -4,12 +4,14 @@ import express from "express";
 import { adminRouter } from "./admin/routes.js";
 import { aiRouter } from "./ai/routes.js";
 import { ambientRouter } from "./ambient/routes.js";
+import { auditRouter } from "./audit/routes.js";
 import { authRouter } from "./auth/routes.js";
 import { optionalAuth } from "./auth/middleware.js";
 import { env } from "./config/env.js";
 import { prisma } from "./db/prisma.js";
 import { evidenceRouter } from "./evidence/routes.js";
 import { clinicalRouter } from "./clinical/routes.js";
+import { outputsRouter } from "./outputs/routes.js";
 import { requestContext } from "./http/request-context.js";
 import { errorHandler, notFoundHandler, sendOk } from "./http/responses.js";
 import { rulesRouter } from "./rules/routes.js";
@@ -55,11 +57,13 @@ export function createApp() {
 
   app.use("/auth", authRouter);
   app.use("/admin", adminRouter);
+  app.use("/", auditRouter);
   app.use("/", clinicalRouter);
   app.use("/", rulesRouter);
   app.use("/", ambientRouter);
   app.use("/", aiRouter);
   app.use("/", evidenceRouter);
+  app.use("/", outputsRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

@@ -104,6 +104,8 @@ Implementation must re-check provider model names, regional availability, quotas
 - Deterministic maternal safety rules are an advisory safety envelope, not the main reasoning engine.
 - Rule hits, missing fields, and uncertainty must be preserved in AI outputs.
 - FHIR scope is export-ready FHIR R4 artifacts, not live integration.
+- Phase 8 intentionally includes generated output persistence and review actions for approve, edit, reject, mark uncertain, and acknowledge. This pull-forward covers review status, clinician provenance, and audit retention for generated outputs only.
+- Durable patient memory writeback, referral/teleconsult finalization, FHIR generation, FHIR provenance, export, and live SATUSEHAT/external submission remain Phase 9 or later responsibilities.
 - Hosted production uses one VM with Docker Compose and Caddy.
 - Production web domain is `matriacare.site`; production API domain is `api.matriacare.site`.
 - PostgreSQL is self-hosted and pgvector is enabled for embeddings and scoped memory retrieval.

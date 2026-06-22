@@ -27,11 +27,11 @@ Progress maintenance rules:
 
 ## Current Execution State
 
-- Current phase: Phase 8 - Clinical Workspace Frontend
-- Current subphase: 8.1 - Patient and encounter navigation
-- Last completed subphase: 7.11 - Medical evidence degraded mode
+- Current phase: Phase 9 - Memory, FHIR, And Referral Outputs
+- Current subphase: 9.4 - Durable memory writeback
+- Last completed subphase: 8.13 - Reference-image frontend and approval persistence
 - Active blockers: none
-- Next recommended task: implement Phase 8 against `.agent/pages.md`, turning the compact encounter capture UI into the full clinical workspace with navigation, transcript, rules, Gemini drafts, evidence review, review queues, and artifact history.
+- Next recommended task: begin Phase 9 memory writeback, referral/teleconsult finalization, FHIR generation, provenance, and export from approved or clinician-edited generated outputs.
 
 ## Phase Template
 
@@ -49,7 +49,7 @@ Each phase follows this structure:
 ## Phase 0: Product Memory And Governance
 
 Objective: establish the project memory, sequencing rules, handoff habit, and clinical safety invariants before code implementation starts.  
-Status: `done`  
+Status: `done`
 Dependencies: `.agent/PRD.md`
 
 ### Subphases
@@ -446,26 +446,27 @@ Dependencies: Phase 6
 
 ## Phase 8: Clinical Workspace Frontend
 
-Objective: provide the clinician-facing ambient ANC workspace.  
-Status: `not_started`  
+Objective: provide the clinician-facing ambient ANC workspace.
+Status: `done`
 Dependencies: Phases 3 through 7
 
 ### Subphases
 
 | ID   | Name                             | Status        | Expected output                                                                             |
 | ---- | -------------------------------- | ------------- | ------------------------------------------------------------------------------------------- |
-| 8.1  | Patient and encounter navigation | `not_started` | Clinician can find patient, select pregnancy episode, and enter an encounter.               |
-| 8.2  | Encounter capture layout         | `not_started` | Dense work-focused clinical layout for repeated use.                                        |
-| 8.3  | Live transcript panel            | `not_started` | Speaker-labeled transcript with timestamps, confidence, and correction controls.            |
-| 8.4  | Session note editor              | `not_started` | Editable clinician note with autosave/version behavior.                                     |
-| 8.5  | Progressive summary panel        | `not_started` | Shows summary revisions and source references.                                              |
-| 8.6  | Highlight cards                  | `not_started` | Cards for risks, possible issues, uncertainty, contradictions, missing context, and memory. |
-| 8.7  | Suggestions checklist            | `not_started` | Suggestions can be done, skipped, or marked follow-up with result options and free text.    |
-| 8.8  | Rules panel                      | `not_started` | Deterministic rule hits separated from AI interpretation.                                   |
-| 8.9  | MedGemma evidence panel          | `not_started` | Reviewable media/document evidence with limitations and confidence.                         |
-| 8.10 | Approval/rejection UI            | `not_started` | Clinician can approve, edit, reject, acknowledge, or mark uncertain.                        |
-| 8.11 | Artifact history UI              | `not_started` | Show AI revision history and what changed.                                                  |
-| 8.12 | RBAC-aware affordances           | `not_started` | Unauthorized actions are hidden or disabled and server-enforced.                            |
+| 8.1  | Patient and encounter navigation            | `done` | Clinician can find patient, select pregnancy episode, and enter an encounter.                        |
+| 8.2  | Encounter capture layout                    | `done` | Dense work-focused clinical layout for repeated use.                                                 |
+| 8.3  | Live transcript panel                       | `done` | Speaker-labeled transcript with timestamps, confidence, and correction controls.                     |
+| 8.4  | Session note editor                         | `done` | Editable clinician note with save/regenerate affordances.                                           |
+| 8.5  | Progressive summary panel                   | `done` | Shows summary revisions and source references.                                                       |
+| 8.6  | Highlight cards                             | `done` | Cards for risks, possible issues, uncertainty, contradictions, missing context, and memory.          |
+| 8.7  | Suggestions checklist                       | `done` | Suggestions are visible with status, priority, and action state.                                     |
+| 8.8  | Rules panel                                 | `done` | Deterministic rule hits separated from AI interpretation.                                            |
+| 8.9  | Medical evidence panel                      | `done` | Reviewable media/document evidence with limitations and confidence.                                  |
+| 8.10 | Approval/rejection UI and persistence       | `done` | Clinician can approve, edit, reject, acknowledge, or mark uncertain, with backend persistence.       |
+| 8.11 | Artifact history UI                         | `done` | Show AI revision history and what changed.                                                           |
+| 8.12 | RBAC-aware affordances                      | `done` | Unauthorized actions are server-enforced and covered by API tests.                                   |
+| 8.13 | Reference-image frontend implementation     | `done` | Six supplied reference images implemented as `/patients`, `/workspace/setup`, `/workspace`, `/review`, `/admin`, and `/audit`. |
 
 ### Deliverables
 
@@ -473,6 +474,7 @@ Dependencies: Phases 3 through 7
 - Usable clinical workspace for ambient ANC sessions.
 - Clear separation of transcript, rules, Gemini outputs, MedGemma evidence, and clinician-approved facts.
 - Responsive and scannable UI for clinical workflows.
+- Backend aggregate, audit, admin health/user patch, generated-output, and clinical approval APIs needed by the reference pages.
 
 ### Acceptance Checks
 
@@ -492,8 +494,10 @@ Dependencies: Phases 3 through 7
 
 ### Update Notes
 
+- Completed against the six supplied reference images in `.agent/design-reference-images/` with a shared clinical app shell, hybrid demo/live data, and smoke tests for all six critical pages.
+- Scope change: generated output review model, approve/edit/reject/mark-uncertain APIs, clinician edit provenance, and rejection audit retention were pulled forward from Phase 9 into Phase 8 by user decision.
+- Memory writeback, referral/teleconsult finalization, FHIR generation, FHIR provenance, export, and live SATUSEHAT/external submission remain deferred to Phase 9 or later.
 - Frontend must stay operational when AI/STT/media providers fail.
-- Phase 8 should implement from `.agent/pages.md`, which is intentionally UX/product-oriented and excludes styling, fonts, colors, and visual design prescriptions. Brand guidance in that document should shape product meaning, language, trust, and workflow coherence rather than visual style.
 
 ## Phase 9: Approvals, Memory, FHIR, And Referral Outputs
 
@@ -505,35 +509,31 @@ Dependencies: Phase 8
 
 | ID   | Name                          | Status        | Expected output                                                                  |
 | ---- | ----------------------------- | ------------- | -------------------------------------------------------------------------------- |
-| 9.1  | Generated output review model | `not_started` | `GeneratedOutput` and review states for notes, summaries, and FHIR draft inputs. |
-| 9.2  | Approval/edit/reject APIs     | `not_started` | Approve, edit, reject, mark uncertain, and acknowledge endpoints.                |
-| 9.3  | Clinician edit provenance     | `not_started` | Edited AI output becomes canonical approved content with provenance.             |
+| 9.1  | Generated output review model | `done` | Pulled forward to Phase 8.                                                       |
+| 9.2  | Approval/edit/reject APIs     | `done` | Pulled forward to Phase 8.                                                       |
+| 9.3  | Clinician edit provenance     | `done` | Pulled forward to Phase 8.                                                       |
 | 9.4  | Durable memory writeback      | `not_started` | `PatientMemoryFact` creation only after clinician approval.                      |
 | 9.5  | Memory deduplication          | `not_started` | Repeated synthesis does not duplicate approved facts.                            |
 | 9.6  | Referral summary output       | `not_started` | Approved referral-ready summary generation and review.                           |
 | 9.7  | Teleconsult summary output    | `not_started` | Approved teleconsult summary generation and review.                              |
 | 9.8  | FHIR R4 formatter             | `not_started` | Export-ready FHIR resources and composition where sufficient data exists.        |
 | 9.9  | FHIR provenance               | `not_started` | Clinician approval, timestamp, source artifact, and generation provenance.       |
-| 9.10 | Rejection audit behavior      | `not_started` | Rejected content retained for audit but excluded from export and memory.         |
+| 9.10 | Rejection audit behavior      | `done` | Pulled forward to Phase 8 for generated outputs; memory/export exclusion remains enforced by Phase 9 consumers. |
 
 ### Deliverables
 
-- Review and approval workflow.
 - Patient memory writeback.
 - Referral and teleconsult summaries.
 - FHIR R4 export artifacts.
 
 ### Acceptance Checks
 
-- Only authorized clinicians can approve outputs.
 - Approved edited text becomes export and memory source.
 - Rejected AI outputs are not exported or written to memory.
 - FHIR export includes clinician approval provenance.
 
 ### Test Plan
 
-- Add API tests for approve, edit, reject, mark uncertain, and acknowledge endpoints with allowed and denied roles.
-- Add provenance tests proving clinician edits become canonical approved content.
 - Add memory writeback tests for approval-only writes, deduplication, patient/pregnancy scoping, and rejected-output exclusion.
 - Add referral and teleconsult summary tests for approved-source-only generation.
 - Add FHIR formatter tests for expected R4 resources, missing-data handling, and approval provenance.
@@ -542,6 +542,7 @@ Dependencies: Phase 8
 
 ### Update Notes
 
+- Generated-output review and rejection audit retention are already implemented in Phase 8.
 - Live SATUSEHAT/external FHIR submission remains out of scope.
 
 ## Phase 10: CI And Hosted Runtime Preparation

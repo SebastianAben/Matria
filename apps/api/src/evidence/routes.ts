@@ -14,6 +14,7 @@ import { prisma } from "../db/prisma.js";
 import { AppError, notFound } from "../http/errors.js";
 import { requiredParam } from "../http/params.js";
 import { sendOk } from "../http/responses.js";
+import { syncGeneratedOutputForEvidenceFinding } from "../outputs/routes.js";
 import { getEncounterOrThrow, requireConsent } from "../clinical/scope.js";
 import { assertAllowedClinicalFile } from "./file-validation.js";
 import { sampleClinicalFileFrames } from "./frame-sampler.js";
@@ -341,6 +342,7 @@ async function runEvidenceHandoff(
       }
     });
     const [updatedHandoff] = await Promise.all([
+      syncGeneratedOutputForEvidenceFinding(finding.id),
       prisma.medicalEvidenceHandoff.update({
         where: { id: handoff.id },
         data: { status: "succeeded", completedAt: new Date(), failureReason: null }

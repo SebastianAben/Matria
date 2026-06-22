@@ -1,6 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import Link from "next/link";
+import { AppChrome } from "./components/clinical-ui";
 
 export const metadata: Metadata = {
   title: "Matria",
@@ -11,18 +11,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <div className="app-shell">
-          <aside className="sidebar">
-            <p className="brand">Matria</p>
-            <nav className="nav" aria-label="Primary">
-              <Link href="/workspace">Workspace</Link>
-              <Link href="/patients">Patients</Link>
-              <Link href="/admin">Admin</Link>
-              <Link href="/login">Login</Link>
-            </nav>
-          </aside>
-          <main className="main">{children}</main>
-        </div>
+        <AppChrome>{children}</AppChrome>
       </body>
     </html>
   );

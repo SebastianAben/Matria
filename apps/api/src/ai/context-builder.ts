@@ -38,6 +38,8 @@ export async function buildAndPersistContextSnapshot(
       },
       frameSamples: { orderBy: { createdAt: "desc" }, take: 30 },
       evidenceFindings: { orderBy: { createdAt: "desc" }, take: 30 }
+      ,
+      generatedOutputs: { orderBy: { updatedAt: "desc" }, take: 50 }
     }
   });
   if (!ambientSession) throw notFound("Ambient session");
@@ -219,6 +221,19 @@ export async function buildAndPersistContextSnapshot(
       reviewStatus: finding.reviewStatus,
       createdAt: finding.createdAt.toISOString()
     })),
+    generatedOutputs: ambientSession.generatedOutputs.map((output) => ({
+      id: output.id,
+      outputType: output.outputType,
+      title: output.title,
+      status: output.status,
+      content: output.content,
+      canonicalContent: output.canonicalContent,
+      sourceReferences: output.sourceReferences,
+      confidence: output.confidence,
+      uncertaintyReasons: output.uncertaintyReasons,
+      reviewedAt: output.reviewedAt?.toISOString() ?? null,
+      reviewedById: output.reviewedById
+    })),
     patientMemory: patientMemory.map((memory) => ({
       id: memory.id,
       content: memory.content,
@@ -257,6 +272,7 @@ export async function buildAndPersistContextSnapshot(
     clinicalFileIds: encounter.clinicalFiles.map((file) => file.id),
     mediaFrameSampleIds: ambientSession.frameSamples.map((sample) => sample.id),
     medicalEvidenceFindingIds: ambientSession.evidenceFindings.map((finding) => finding.id),
+    generatedOutputIds: ambientSession.generatedOutputs.map((output) => output.id),
     patientMemoryFactIds: patientMemory.map((memory) => memory.id)
   };
 
