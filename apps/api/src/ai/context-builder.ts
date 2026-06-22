@@ -35,7 +35,9 @@ export async function buildAndPersistContextSnapshot(
         where: { validationStatus: "valid", reviewStatus: { not: "stale" } },
         orderBy: { createdAt: "desc" },
         take: 12
-      }
+      },
+      frameSamples: { orderBy: { createdAt: "desc" }, take: 30 },
+      evidenceFindings: { orderBy: { createdAt: "desc" }, take: 30 }
     }
   });
   if (!ambientSession) throw notFound("Ambient session");
@@ -179,7 +181,43 @@ export async function buildAndPersistContextSnapshot(
       mimeType: file.mimeType,
       sizeBytes: file.sizeBytes,
       storageUri: file.storageUri,
+      storageProvider: file.storageProvider,
+      checksumSha256: file.checksumSha256,
+      metadata: file.metadata,
       createdAt: file.createdAt.toISOString()
+    })),
+    mediaFrameSamples: ambientSession.frameSamples.map((sample) => ({
+      id: sample.id,
+      clinicalFileId: sample.clinicalFileId,
+      sourceTimestampMs: sample.sourceTimestampMs,
+      frameIndex: sample.frameIndex,
+      mimeType: sample.mimeType,
+      width: sample.width,
+      height: sample.height,
+      checksumSha256: sample.checksumSha256,
+      qualityMetadata: sample.qualityMetadata,
+      processingStatus: sample.processingStatus,
+      failureReason: sample.failureReason,
+      createdAt: sample.createdAt.toISOString()
+    })),
+    medicalEvidenceFindings: ambientSession.evidenceFindings.map((finding) => ({
+      id: finding.id,
+      handoffId: finding.handoffId,
+      clinicalFileId: finding.clinicalFileId,
+      frameSampleId: finding.frameSampleId,
+      provider: finding.provider,
+      model: finding.model,
+      taskType: finding.taskType,
+      findings: finding.findings,
+      extractedValues: finding.extractedValues,
+      frameReferences: finding.frameReferences,
+      sourceEvidence: finding.sourceEvidence,
+      confidence: finding.confidence,
+      uncertaintyReasons: finding.uncertaintyReasons,
+      qualityLimitations: finding.qualityLimitations,
+      clinicianReviewRequired: finding.clinicianReviewRequired,
+      reviewStatus: finding.reviewStatus,
+      createdAt: finding.createdAt.toISOString()
     })),
     patientMemory: patientMemory.map((memory) => ({
       id: memory.id,
@@ -217,6 +255,8 @@ export async function buildAndPersistContextSnapshot(
     suggestionIds: ambientSession.suggestions.map((suggestion) => suggestion.id),
     artifactRevisionIds: ambientSession.artifactRevisions.map((artifact) => artifact.id),
     clinicalFileIds: encounter.clinicalFiles.map((file) => file.id),
+    mediaFrameSampleIds: ambientSession.frameSamples.map((sample) => sample.id),
+    medicalEvidenceFindingIds: ambientSession.evidenceFindings.map((finding) => finding.id),
     patientMemoryFactIds: patientMemory.map((memory) => memory.id)
   };
 

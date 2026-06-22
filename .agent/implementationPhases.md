@@ -27,11 +27,11 @@ Progress maintenance rules:
 
 ## Current Execution State
 
-- Current phase: Phase 7 - MedGemma, Media, And Document Evidence
-- Current subphase: 7.1 - Clinical file upload pipeline
-- Last completed subphase: 6.11 - Gemini failure mode
+- Current phase: Phase 8 - Clinical Workspace Frontend
+- Current subphase: 8.1 - Patient and encounter navigation
+- Last completed subphase: 7.11 - Medical evidence degraded mode
 - Active blockers: none
-- Next recommended task: begin Phase 7 by replacing metadata-only clinical file handling with upload/storage validation, then add frame sampling and the MedGemma evidence boundary.
+- Next recommended task: begin Phase 8 by turning the compact encounter capture UI into the full clinical workspace with navigation, transcript, rules, Gemini drafts, evidence review, approvals, and artifact history.
 
 ## Phase Template
 
@@ -393,46 +393,47 @@ Dependencies: Phase 5
 - Synthesis ticks run advisory preflight first, audit provider calls and validation failures, reject unsafe/stale patches, and leave transcript, notes, rules, and observations usable when AI fails.
 - The encounter capture UI has a compact draft synthesis panel; the full ambient workspace remains Phase 8.
 
-## Phase 7: MedGemma, Media, And Document Evidence
+## Phase 7: Medical Evidence, Media, And Document Analysis
 
 Objective: integrate clinical media/document evidence as reviewable support for Gemini and clinicians.  
-Status: `not_started`  
+Status: `done`  
 Dependencies: Phase 6
 
 ### Subphases
 
-| ID   | Name                             | Status        | Expected output                                                                                   |
-| ---- | -------------------------------- | ------------- | ------------------------------------------------------------------------------------------------- |
-| 7.1  | Clinical file upload pipeline    | `not_started` | Upload handling, metadata persistence, type/size validation, and storage abstraction.             |
-| 7.2  | Media quality metadata           | `not_started` | Store frame/video quality signals and source references.                                          |
-| 7.3  | Frame sampler                    | `not_started` | Sample ultrasound/video frames every 5-10 seconds when media analysis is active.                  |
-| 7.4  | MedGemma hosting boundary        | `not_started` | Mockable client/service boundary for MedGemma 4B/1.5 4B.                                          |
-| 7.5  | MedGemma handoff packets         | `not_started` | `MedGemmaHandoff` schema and Gemini handoff executor.                                             |
-| 7.6  | MedGemma response schema         | `not_started` | Findings, extracted values, frame references, confidence, limitations, and clinician review flag. |
-| 7.7  | OCR/document extraction boundary | `not_started` | Adapter boundary for lab and maternal record image extraction.                                    |
-| 7.8  | Evidence persistence             | `not_started` | Store media/document evidence separately from approved clinical facts.                            |
-| 7.9  | Evidence UI                      | `not_started` | Display MedGemma/OCR findings with uncertainty and clinician review requirement.                  |
-| 7.10 | Media failure/degraded mode      | `not_started` | Poor media quality and provider failures remain visible without blocking manual workflow.         |
+| ID   | Name                               | Status | Expected output                                                                                                                      |
+| ---- | ---------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 7.1  | Clinical file upload pipeline      | `done` | Multipart upload handling, metadata persistence, type/size validation, checksums, and local storage abstraction.                     |
+| 7.2  | Media quality metadata             | `done` | Store frame/video quality signals, dimensions, hashes, degraded states, and source references.                                       |
+| 7.3  | Frame sampler                      | `done` | Image sampling and FFmpeg-based 5-second frame extraction from uploaded video files, with degraded fallback on extraction failure.   |
+| 7.4  | Medical evidence provider modes    | `done` | Mock for tests/scripts, Gemini 3.5 Flash default for local/hosted, Ollama MedGemma opt-in for local dev.                             |
+| 7.5  | Medical evidence provider boundary | `done` | Mockable client/service boundary for Gemini Flash and Ollama MedGemma-compatible evidence calls.                                     |
+| 7.6  | Evidence handoff packets           | `done` | Handoff schema and Gemini `medgemma_handoff_request` artifact-to-job executor glue.                                                  |
+| 7.7  | Evidence response schema           | `done` | Findings, extracted values, frame references, confidence, limitations, and clinician review flag.                                    |
+| 7.8  | OCR/document extraction boundary   | `done` | Document extraction modeled as evidence-provider task type without a separate production OCR engine yet.                             |
+| 7.9  | Evidence persistence               | `done` | Store media/document evidence separately from approved observations, memory, FHIR, and approvals.                                    |
+| 7.10 | Evidence UI                        | `done` | Compact encounter UI displays uploads, samples, handoffs, findings, uncertainty, and review requirement.                             |
+| 7.11 | Medical evidence degraded mode     | `done` | Poor media quality, invalid uploaded videos, FFmpeg failures, and provider failures remain visible without blocking manual workflow. |
 
 ### Deliverables
 
-- Clinical file upload and metadata handling.
-- Frame sampling pipeline.
-- MedGemma handoff and response handling.
+- Clinical file upload and metadata handling with local filesystem storage.
+- Frame sampling pipeline with image sampling and FFmpeg extraction from uploaded video files.
+- Provider-routed medical evidence handoff and response handling.
 - Reviewable media/document evidence UI.
 
 ### Acceptance Checks
 
-- MedGemma receives current consultation context with frame samples.
-- Gemini can request a targeted MedGemma handoff.
-- MedGemma output is never stored as approved fact without clinician approval.
+- The configured medical evidence provider receives current consultation context with frame samples.
+- Gemini can request a targeted evidence handoff through `medgemma_handoff_request` artifacts.
+- Evidence-provider output is never stored as approved fact without clinician approval.
 - Low-confidence or poor-quality media is marked uncertain.
 
 ### Test Plan
 
 - Add upload tests for allowed/denied file types, size limits, metadata persistence, and RBAC.
 - Add frame sampler unit tests for 5-10 second sampling cadence, deduplication hooks, timestamps, and quality metadata.
-- Add MedGemma client boundary tests with mocked successful, low-confidence, and failed responses.
+- Add medical evidence client boundary tests with mocked successful, low-confidence, and failed responses.
 - Add handoff packet tests proving exact question, context, transcript snippets, session note excerpt, rule results, prior findings, and frame IDs are included.
 - Add response schema tests for findings, extracted values, frame references, confidence, uncertainty, limitations, and `clinicianReviewRequired`.
 - Add evidence persistence tests proving media/document findings stay separate from approved clinical facts.
@@ -440,7 +441,8 @@ Dependencies: Phase 6
 
 ### Update Notes
 
-- Exact MedGemma hosting remains deferred until implementation reaches this phase.
+- Completed with local filesystem storage, deterministic mock evidence tests, Gemini Flash evidence default, Ollama MedGemma 1.5 local opt-in, image frame sampling, bundled FFmpeg video file frame extraction, degraded fallback for invalid video extraction, review-required evidence persistence, context snapshot re-entry, and compact frontend evidence controls.
+- Production object storage and specialized production OCR remain deferred to hosted runtime and future evidence-provider hardening.
 
 ## Phase 8: Clinical Workspace Frontend
 

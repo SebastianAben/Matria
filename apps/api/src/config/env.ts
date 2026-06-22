@@ -1,9 +1,11 @@
 import "dotenv/config";
 import { z } from "zod";
 
+const nodeEnv = process.env.NODE_ENV ?? "development";
+
 export const envSchema = z
   .object({
-    NODE_ENV: z.string().default("development"),
+    NODE_ENV: z.string().default(nodeEnv),
     DATABASE_URL: z
       .string()
       .url()
@@ -24,7 +26,23 @@ export const envSchema = z
     GOOGLE_STT_LANGUAGE_CODE: z.string().default("en-US"),
     GOOGLE_STT_MODEL: z.string().default("latest_long"),
     GOOGLE_STT_ENABLE_DIARIZATION: z.coerce.boolean().default(true),
-    GOOGLE_STT_SPEAKER_COUNT: z.coerce.number().int().positive().default(2)
+    GOOGLE_STT_SPEAKER_COUNT: z.coerce.number().int().positive().default(2),
+    MEDICAL_EVIDENCE_PROVIDER: z
+      .enum(["mock", "gemini_flash", "ollama_medgemma"])
+      .default(nodeEnv === "test" ? "mock" : "gemini_flash"),
+    MEDICAL_EVIDENCE_MODEL: z.string().default("gemini-3.5-flash"),
+    OLLAMA_BASE_URL: z.string().url().default("http://127.0.0.1:11434"),
+    OLLAMA_MEDGEMMA_MODEL: z.string().default("medgemma1.5:4b"),
+    CLINICAL_FILE_STORAGE_PROVIDER: z.enum(["local"]).default("local"),
+    CLINICAL_FILE_STORAGE_DIR: z.string().min(1).default(".local-data/clinical-files"),
+    CLINICAL_FILE_MAX_BYTES: z.coerce
+      .number()
+      .int()
+      .positive()
+      .default(25 * 1024 * 1024),
+    MEDIA_FRAME_SAMPLE_INTERVAL_SECONDS: z.coerce.number().int().min(5).max(10).default(5),
+    MEDIA_FRAME_MAX_SAMPLES: z.coerce.number().int().min(1).max(60).default(12),
+    FFMPEG_PATH: z.string().min(1).optional()
   })
   .superRefine((value, context) => {
     if (value.GEMINI_PROVIDER === "vertex_ai" && !value.GOOGLE_CLOUD_PROJECT) {
@@ -32,6 +50,20 @@ export const envSchema = z
         code: "custom",
         path: ["GOOGLE_CLOUD_PROJECT"],
         message: "GOOGLE_CLOUD_PROJECT is required when GEMINI_PROVIDER=vertex_ai."
+      });
+    }
+    if (value.MEDICAL_EVIDENCE_PROVIDER === "gemini_flash" && !value.GOOGLE_CLOUD_PROJECT) {
+      context.addIssue({
+        code: "custom",
+        path: ["GOOGLE_CLOUD_PROJECT"],
+        message: "GOOGLE_CLOUD_PROJECT is required when MEDICAL_EVIDENCE_PROVIDER=gemini_flash."
+      });
+    }
+    if (value.MEDICAL_EVIDENCE_PROVIDER === "ollama_medgemma" && !value.OLLAMA_BASE_URL) {
+      context.addIssue({
+        code: "custom",
+        path: ["OLLAMA_BASE_URL"],
+        message: "OLLAMA_BASE_URL is required when MEDICAL_EVIDENCE_PROVIDER=ollama_medgemma."
       });
     }
   });

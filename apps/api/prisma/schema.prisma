@@ -236,6 +236,7 @@ model User {
   synthesisTicks SynthesisTick[] @relation("SynthesisTickRequester")
   suggestionResults SuggestionResult[] @relation("SuggestionResultActor")
   patientMemoryFacts PatientMemoryFact[] @relation("PatientMemoryFactCreator")
+  medicalEvidenceHandoffs MedicalEvidenceHandoff[] @relation("MedicalEvidenceHandoffRequester")
 }
 
 model Role {
@@ -388,19 +389,28 @@ model ConsentRecord {
 }
 
 model ClinicalFile {
-  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  encounterId String           @db.Uuid
-  kind        ClinicalFileKind
-  fileName    String
-  mimeType    String
-  sizeBytes   Int
-  storageUri  String?
-  createdById String           @db.Uuid
-  createdAt   DateTime         @default(now())
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  encounterId     String           @db.Uuid
+  kind            ClinicalFileKind
+  fileName        String
+  mimeType        String
+  sizeBytes       Int
+  storageUri      String?
+  storageProvider String           @default("local")
+  storageKey      String?
+  checksumSha256  String?
+  metadata        Json?
+  createdById     String           @db.Uuid
+  createdAt       DateTime         @default(now())
 
   encounter Encounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  frameSamples MedicalEvidenceFrameSample[]
+  handoffs MedicalEvidenceHandoffFile[]
+  findings MedicalEvidenceFinding[]
 
   @@index([encounterId])
+  @@index([storageKey])
+  @@index([checksumSha256])
 }
 
 model StructuredObservation {
@@ -508,6 +518,9 @@ model AmbientSessionState {
   highlightCards HighlightCard[]
   suggestions Suggestion[]
   synthesisTicks SynthesisTick[]
+  evidenceHandoffs MedicalEvidenceHandoff[]
+  evidenceFindings MedicalEvidenceFinding[]
+  frameSamples MedicalEvidenceFrameSample[]
 
   @@index([encounterId, status])
 }
@@ -620,6 +633,7 @@ model ContextSnapshot {
   aiToolCalls AiToolCall[]
   artifactRevisions AiArtifactRevision[]
   synthesisTicks SynthesisTick[]
+  evidenceHandoffs MedicalEvidenceHandoff[]
 
   @@index([ambientSessionId, createdAt])
   @@index([patientId, pregnancyEpisodeId])
@@ -654,6 +668,7 @@ model AiArtifactRevision {
   summaryRevisions SummaryRevision[]
   highlightCards HighlightCard[]
   suggestions Suggestion[]
+  evidenceHandoffs MedicalEvidenceHandoff[]
 
   @@index([ambientSessionId, artifactType, createdAt])
   @@index([contextSnapshotId])
@@ -778,4 +793,113 @@ model SynthesisTick {
 
   @@index([ambientSessionId, stateVersion, status])
   @@index([clientRequestId])
+}
+
+model MedicalEvidenceFrameSample {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ambientSessionId  String?  @db.Uuid
+  clinicalFileId    String   @db.Uuid
+  sourceTimestampMs Int?
+  frameIndex        Int      @default(0)
+  storageProvider   String   @default("local")
+  storageKey        String?
+  storageUri        String?
+  checksumSha256    String?
+  mimeType          String
+  width             Int?
+  height            Int?
+  qualityMetadata   Json?
+  processingStatus  String   @default("sampled")
+  failureReason     String?
+  createdAt         DateTime @default(now())
+
+  ambientSession AmbientSessionState? @relation(fields: [ambientSessionId], references: [id], onDelete: SetNull)
+  clinicalFile ClinicalFile @relation(fields: [clinicalFileId], references: [id], onDelete: Cascade)
+  handoffs MedicalEvidenceHandoffFrameSample[]
+  findings MedicalEvidenceFinding[]
+
+  @@index([clinicalFileId, createdAt])
+  @@index([ambientSessionId, createdAt])
+  @@unique([clinicalFileId, frameIndex, sourceTimestampMs])
+}
+
+model MedicalEvidenceHandoff {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ambientSessionId      String   @db.Uuid
+  contextSnapshotId     String?  @db.Uuid
+  requestingArtifactId  String?  @db.Uuid
+  taskType              String
+  exactQuestion         String
+  clinicalContext       Json
+  expectedOutputSchema  Json?
+  safetyInstructions    String
+  provider              String   @default("mock")
+  model                 String
+  status                String   @default("pending")
+  failureReason         String?
+  requestedById         String?  @db.Uuid
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  completedAt           DateTime?
+
+  ambientSession AmbientSessionState @relation(fields: [ambientSessionId], references: [id], onDelete: Cascade)
+  contextSnapshot ContextSnapshot? @relation(fields: [contextSnapshotId], references: [id], onDelete: SetNull)
+  requestingArtifact AiArtifactRevision? @relation(fields: [requestingArtifactId], references: [id], onDelete: SetNull)
+  requestedBy User? @relation("MedicalEvidenceHandoffRequester", fields: [requestedById], references: [id], onDelete: SetNull)
+  clinicalFiles MedicalEvidenceHandoffFile[]
+  frameSamples MedicalEvidenceHandoffFrameSample[]
+  findings MedicalEvidenceFinding[]
+
+  @@index([ambientSessionId, status])
+  @@index([contextSnapshotId])
+}
+
+model MedicalEvidenceHandoffFile {
+  handoffId      String @db.Uuid
+  clinicalFileId String @db.Uuid
+
+  handoff MedicalEvidenceHandoff @relation(fields: [handoffId], references: [id], onDelete: Cascade)
+  clinicalFile ClinicalFile @relation(fields: [clinicalFileId], references: [id], onDelete: Cascade)
+
+  @@id([handoffId, clinicalFileId])
+}
+
+model MedicalEvidenceHandoffFrameSample {
+  handoffId     String @db.Uuid
+  frameSampleId String @db.Uuid
+
+  handoff MedicalEvidenceHandoff @relation(fields: [handoffId], references: [id], onDelete: Cascade)
+  frameSample MedicalEvidenceFrameSample @relation(fields: [frameSampleId], references: [id], onDelete: Cascade)
+
+  @@id([handoffId, frameSampleId])
+}
+
+model MedicalEvidenceFinding {
+  id                      String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ambientSessionId        String   @db.Uuid
+  handoffId               String?  @db.Uuid
+  clinicalFileId          String?  @db.Uuid
+  frameSampleId           String?  @db.Uuid
+  provider                String
+  model                   String
+  taskType                String
+  findings                Json
+  extractedValues         Json
+  frameReferences         Json
+  sourceEvidence          Json
+  confidence              Float
+  uncertaintyReasons      Json
+  qualityLimitations      Json
+  clinicianReviewRequired Boolean  @default(true)
+  reviewStatus            String   @default("review_required")
+  createdAt               DateTime @default(now())
+
+  ambientSession AmbientSessionState @relation(fields: [ambientSessionId], references: [id], onDelete: Cascade)
+  handoff MedicalEvidenceHandoff? @relation(fields: [handoffId], references: [id], onDelete: SetNull)
+  clinicalFile ClinicalFile? @relation(fields: [clinicalFileId], references: [id], onDelete: SetNull)
+  frameSample MedicalEvidenceFrameSample? @relation(fields: [frameSampleId], references: [id], onDelete: SetNull)
+
+  @@index([ambientSessionId, createdAt])
+  @@index([handoffId])
+  @@index([clinicalFileId])
 }

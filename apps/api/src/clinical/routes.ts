@@ -16,6 +16,7 @@ import { prisma } from "../db/prisma.js";
 import { AppError, notFound } from "../http/errors.js";
 import { requiredParam } from "../http/params.js";
 import { sendOk } from "../http/responses.js";
+import { assertAllowedClinicalFile } from "../evidence/file-validation.js";
 import {
   assertEncounterTransition,
   assertPregnancyBelongsToPatient,
@@ -290,6 +291,11 @@ clinicalRouter.post(
       if (input.kind === "image" || input.kind === "document" || input.kind === "ultrasound") {
         await requireConsent(encounter.id, "media");
       }
+      assertAllowedClinicalFile({
+        kind: input.kind,
+        mimeType: input.mimeType,
+        sizeBytes: input.sizeBytes
+      });
       const clinicalFile = await prisma.clinicalFile.create({
         data: {
           encounterId: encounter.id,
@@ -298,6 +304,8 @@ clinicalRouter.post(
           mimeType: input.mimeType,
           sizeBytes: input.sizeBytes,
           storageUri: input.storageUri,
+          checksumSha256: input.checksumSha256,
+          metadata: (input.metadata ?? {}) as Prisma.InputJsonValue,
           createdById: req.currentUser!.id
         }
       });

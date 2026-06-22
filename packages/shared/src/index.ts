@@ -156,6 +156,25 @@ export const suggestionStatuses = [
   "needs_follow_up",
   "superseded"
 ] as const;
+export const medicalEvidenceProviders = ["mock", "gemini_flash", "ollama_medgemma"] as const;
+export const clinicalFileStorageProviders = ["local"] as const;
+export const medicalEvidenceTaskTypes = [
+  "lab_value_extraction",
+  "document_extraction",
+  "ultrasound_frame_adequacy",
+  "visible_finding_description",
+  "media_summary",
+  "other"
+] as const;
+export const evidenceProcessingStatuses = [
+  "pending",
+  "sampled",
+  "running",
+  "succeeded",
+  "failed",
+  "degraded",
+  "validation_failed"
+] as const;
 
 export const errorCodes = [
   "UNAUTHENTICATED",
@@ -195,6 +214,10 @@ export type SynthesisTickStatus = (typeof synthesisTickStatuses)[number];
 export type HighlightType = (typeof highlightTypes)[number];
 export type SuggestionPriority = (typeof suggestionPriorities)[number];
 export type SuggestionStatus = (typeof suggestionStatuses)[number];
+export type MedicalEvidenceProvider = (typeof medicalEvidenceProviders)[number];
+export type ClinicalFileStorageProvider = (typeof clinicalFileStorageProviders)[number];
+export type MedicalEvidenceTaskType = (typeof medicalEvidenceTaskTypes)[number];
+export type EvidenceProcessingStatus = (typeof evidenceProcessingStatuses)[number];
 export type ErrorCode = (typeof errorCodes)[number];
 
 export type ApiSuccess<T> = {
@@ -248,7 +271,14 @@ export const clinicalFileCreateSchema = z.object({
   fileName: z.string().min(1).max(255),
   mimeType: z.string().min(1).max(120),
   sizeBytes: z.number().int().nonnegative(),
-  storageUri: z.string().max(500).optional()
+  storageUri: z.string().max(500).optional(),
+  checksumSha256: z.string().length(64).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional()
+});
+
+export const clinicalFileUploadFieldsSchema = z.object({
+  kind: z.enum(clinicalFileKinds),
+  sourceLabel: z.string().max(160).optional()
 });
 
 export const observationCreateSchema = z.object({
@@ -339,6 +369,8 @@ export const contextSnapshotPayloadSchema = z.object({
   suggestions: z.array(z.record(z.string(), z.unknown())),
   priorArtifacts: z.array(z.record(z.string(), z.unknown())),
   clinicalFiles: z.array(z.record(z.string(), z.unknown())),
+  mediaFrameSamples: z.array(z.record(z.string(), z.unknown())).default([]),
+  medicalEvidenceFindings: z.array(z.record(z.string(), z.unknown())).default([]),
   patientMemory: z.array(z.record(z.string(), z.unknown())),
   outputContract: z.object({
     artifactTypes: z.array(z.enum(aiArtifactTypes)),
@@ -424,6 +456,39 @@ export const suggestionResultSchema = z.object({
 export const synthesisTickCreateSchema = z.object({
   triggerReason: z.string().min(1).max(160).default("manual"),
   clientRequestId: z.string().max(120).optional()
+});
+
+export const frameSampleCreateSchema = z.object({
+  ambientSessionId: z.string().uuid().optional(),
+  intervalSeconds: z.number().int().min(5).max(10).optional()
+});
+
+export const evidenceHandoffCreateSchema = z.object({
+  requestingArtifactId: z.string().uuid().optional(),
+  taskType: z.enum(medicalEvidenceTaskTypes),
+  exactQuestion: z.string().min(1).max(2000),
+  clinicalFileIds: z.array(z.string().uuid()).default([]),
+  frameSampleIds: z.array(z.string().uuid()).default([]),
+  expectedOutputSchema: z.record(z.string(), z.unknown()).optional()
+});
+
+export const medicalEvidenceExtractedValueSchema = z.object({
+  label: z.string().min(1).max(160),
+  value: z.string().min(1).max(500),
+  unit: z.string().max(80).optional(),
+  sourceReference: z.string().max(200).optional(),
+  confidence: z.number().min(0).max(1).optional()
+});
+
+export const medicalEvidenceFindingSchema = z.object({
+  findings: z.array(z.string().min(1).max(2000)).default([]),
+  extractedValues: z.array(medicalEvidenceExtractedValueSchema).default([]),
+  frameReferences: z.array(z.string().max(120)).default([]),
+  sourceEvidence: z.array(z.string().max(500)).default([]),
+  confidence: z.number().min(0).max(1),
+  uncertaintyReasons: z.array(z.string().max(500)).default([]),
+  qualityLimitations: z.array(z.string().max(500)).default([]),
+  clinicianReviewRequired: z.literal(true)
 });
 
 export function ok<T>(data: T, requestId: string): ApiSuccess<T> {

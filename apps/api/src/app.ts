@@ -8,6 +8,7 @@ import { authRouter } from "./auth/routes.js";
 import { optionalAuth } from "./auth/middleware.js";
 import { env } from "./config/env.js";
 import { prisma } from "./db/prisma.js";
+import { evidenceRouter } from "./evidence/routes.js";
 import { clinicalRouter } from "./clinical/routes.js";
 import { requestContext } from "./http/request-context.js";
 import { errorHandler, notFoundHandler, sendOk } from "./http/responses.js";
@@ -40,6 +41,9 @@ export function createApp() {
           app: "ok",
           database: db[0]?.ok === 1 ? "ok" : "unknown",
           geminiProvider: env.GEMINI_PROVIDER,
+          medicalEvidenceProvider: env.MEDICAL_EVIDENCE_PROVIDER,
+          medicalEvidenceModel: env.MEDICAL_EVIDENCE_MODEL,
+          clinicalFileStorageProvider: env.CLINICAL_FILE_STORAGE_PROVIDER,
           googleCloudLocation: env.GOOGLE_CLOUD_LOCATION,
           sttProvider: env.STT_PROVIDER
         }
@@ -55,6 +59,7 @@ export function createApp() {
   app.use("/", rulesRouter);
   app.use("/", ambientRouter);
   app.use("/", aiRouter);
+  app.use("/", evidenceRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

@@ -1,4 +1,9 @@
-import { highlightCardSchema, suggestionSchema, type AiArtifactType } from "@matria/shared";
+import {
+  evidenceHandoffCreateSchema,
+  highlightCardSchema,
+  suggestionSchema,
+  type AiArtifactType
+} from "@matria/shared";
 import type { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 import { writeAudit } from "../audit.js";
@@ -318,7 +323,13 @@ async function persistGeminiArtifacts(input: {
       });
       created.push(artifact);
       if (!input.stale) {
-        await persistPatchProjection(tx, input.ambientSessionId, artifact.id, patch);
+        await persistPatchProjection(
+          tx,
+          input.ambientSessionId,
+          input.contextSnapshotId,
+          artifact.id,
+          patch
+        );
       }
     }
     return created;
@@ -328,6 +339,7 @@ async function persistGeminiArtifacts(input: {
 async function persistPatchProjection(
   tx: Prisma.TransactionClient,
   ambientSessionId: string,
+  contextSnapshotId: string,
   artifactRevisionId: string,
   patch: GeminiSynthesisResponse["patches"][number]
 ) {
@@ -392,6 +404,56 @@ async function persistPatchProjection(
         }
       });
     }
+  }
+  if (patch.artifactType === "medgemma_handoff_request") {
+    const parsed = evidenceHandoffCreateSchema.safeParse({
+      taskType: patch.content.taskType ?? "other",
+      exactQuestion: patch.content.exactQuestion ?? patch.content.question,
+      clinicalFileIds: patch.content.clinicalFileIds ?? [],
+      frameSampleIds: patch.content.frameSampleIds ?? [],
+      expectedOutputSchema: patch.content.expectedOutputSchema ?? {}
+    });
+    if (!parsed.success) return;
+    const [clinicalFiles, frameSamples] = await Promise.all([
+      tx.clinicalFile.findMany({
+        where: { id: { in: parsed.data.clinicalFileIds } },
+        select: { id: true }
+      }),
+      tx.medicalEvidenceFrameSample.findMany({
+        where: { id: { in: parsed.data.frameSampleIds } },
+        select: { id: true }
+      })
+    ]);
+    await tx.medicalEvidenceHandoff.create({
+      data: {
+        ambientSessionId,
+        contextSnapshotId,
+        requestingArtifactId: artifactRevisionId,
+        taskType: parsed.data.taskType,
+        exactQuestion: parsed.data.exactQuestion,
+        clinicalContext: {
+          source: "gemini_handoff_request",
+          content: patch.content,
+          sourceReferences: patch.sourceReferences
+        } as Prisma.InputJsonValue,
+        expectedOutputSchema: (parsed.data.expectedOutputSchema ?? {}) as Prisma.InputJsonValue,
+        safetyInstructions:
+          "Decision support only. Medical evidence output requires clinician review and must not be treated as an approved fact.",
+        provider: env.MEDICAL_EVIDENCE_PROVIDER,
+        model:
+          env.MEDICAL_EVIDENCE_PROVIDER === "ollama_medgemma"
+            ? env.OLLAMA_MEDGEMMA_MODEL
+            : env.MEDICAL_EVIDENCE_PROVIDER === "gemini_flash"
+              ? env.MEDICAL_EVIDENCE_MODEL
+              : "mock-medical-evidence",
+        clinicalFiles: {
+          create: clinicalFiles.map((file) => ({ clinicalFileId: file.id }))
+        },
+        frameSamples: {
+          create: frameSamples.map((sample) => ({ frameSampleId: sample.id }))
+        }
+      }
+    });
   }
 }
 

@@ -22,7 +22,7 @@ The first hospital-ready release targets a single-hospital deployment:
 - Speech transcription: Google Cloud Speech-to-Text.
 - AI orchestration: Gemini 3.1 Pro Preview as stateful session orchestrator and planner.
 - Lightweight diarization post-processing for future multilingual support: `gemini-flash-lite-latest`.
-- Medical image/text evidence: MedGemma 4B/MedGemma 1.5 4B as a clinical evidence tool.
+- Medical image/text evidence: provider-routed clinical evidence analysis; tests use a mock provider, local and hosted deployments default to Gemini 3.5 Flash, and local development can opt into Ollama-hosted MedGemma 1.5 4B.
 - Deployment: one VM with Docker Compose, Caddy reverse proxy/TLS, GitHub Actions CI/CD.
 - Production domains: `matriacare.site` for web and `api.matriacare.site` for API.
 - Tests: Vitest for backend and Playwright for end-to-end workflows.
@@ -66,7 +66,7 @@ Implementation must re-check provider model names, regional availability, quotas
 - Deterministic maternal rules surface critical findings without unnecessarily blocking LLM reasoning.
 - Hard safety blocks are narrow, auditable, and limited to consent, scope, authorization, unsafe write/export, and unacknowledged critical safety warnings.
 - Gemini-generated UI patches preserve rule hits, uncertainty, source evidence, and clinician authority.
-- MedGemma analysis runs periodically on active ultrasound/video frame samples every 5-10 seconds where feasible and returns evidence for clinician review.
+- Medical evidence analysis runs periodically on active ultrasound/video frame samples every 5-10 seconds where feasible and returns evidence for clinician review.
 - No durable memory write or FHIR export occurs without clinician approval.
 - RBAC prevents unauthorized users from viewing, editing, approving, exporting, or administering patient data.
 - Audit logs record sensitive access, audio processing, diarization, model/tool calls, rule evaluations, suggestions, approvals, edits, exports, and rejected AI outputs.
@@ -83,7 +83,7 @@ Implementation must re-check provider model names, regional availability, quotas
 - No direct database access from frontend clients.
 - No use of AI outputs in clinical records without clinician approval.
 - No guarantee that ultrasound media analysis detects all abnormalities.
-- No claim that MedGemma output is clinically validated for standalone use.
+- No claim that medical evidence model output is clinically validated for standalone use.
 - No unreviewed text-to-speech patient advice.
 
 ## 4. Confirmed Decisions
@@ -100,7 +100,7 @@ Implementation must re-check provider model names, regional availability, quotas
 - Gemini must be accessed through Google Cloud Vertex AI / Gemini Enterprise Agent Platform using the configured GCP project, not through a standalone Gemini API key.
 - The Gemini/Vertex AI location for the first production release is `global`.
 - Gemini must operate from context snapshots and structured outputs; it is not the real-time audio transport.
-- MedGemma 4B/MedGemma 1.5 4B is used as a medical multimodal evidence tool.
+- Medical multimodal evidence analysis is provider-routed. Automated tests/scripts use a deterministic mock, local and hosted deployments default to Gemini 3.5 Flash, and local development can opt into Ollama-hosted MedGemma 1.5 4B.
 - Deterministic maternal safety rules are an advisory safety envelope, not the main reasoning engine.
 - Rule hits, missing fields, and uncertainty must be preserved in AI outputs.
 - FHIR scope is export-ready FHIR R4 artifacts, not live integration.
@@ -400,27 +400,34 @@ The backend tool router exposes controlled tools to Gemini:
 
 Tools must enforce RBAC, patient scope, pregnancy scope, consent, and audit logging. Gemini cannot bypass backend authorization.
 
-## 10. MedGemma Clinical Evidence Architecture
+## 10. Medical Evidence Provider Architecture
 
 ### 10.1 Role and Limits
 
-MedGemma 4B/MedGemma 1.5 4B is a medical multimodal evidence tool for image-grounded and document-grounded support. It can help extract visible lab values, summarize clinical media, review ultrasound frame adequacy for clinician review, identify visible non-standard findings for attention, and process medical document content.
+Medical evidence analysis is a provider-routed multimodal evidence tool for image-grounded and document-grounded support. It can help extract visible lab values, summarize clinical media, review ultrasound frame adequacy for clinician review, identify visible non-standard findings for attention, and process medical document content.
 
-MedGemma output is evidence, not a diagnosis. It must always be labeled as requiring clinician review. The implementation must not present MedGemma output as independently authoritative or clinically validated for final decisions.
+Evidence-provider output is evidence, not a diagnosis. It must always be labeled as requiring clinician review. The implementation must not present Gemini Flash, MedGemma, OCR, or any evidence-provider output as independently authoritative or clinically validated for final decisions.
+
+Runtime provider policy:
+
+- Automated tests and scripts: `MEDICAL_EVIDENCE_PROVIDER=mock`; no live model calls.
+- Local development default: `MEDICAL_EVIDENCE_PROVIDER=gemini_flash` with `MEDICAL_EVIDENCE_MODEL=gemini-3.5-flash`.
+- Local development opt-in: `MEDICAL_EVIDENCE_PROVIDER=ollama_medgemma` with `OLLAMA_BASE_URL=http://127.0.0.1:11434` and `OLLAMA_MEDGEMMA_MODEL=medgemma1.5:4b`.
+- Hosted deployment: `MEDICAL_EVIDENCE_PROVIDER=gemini_flash` with Vertex AI / Gemini Enterprise Agent Platform credentials.
 
 ### 10.2 Periodic Frame Sampling
 
 When ultrasound video or active media capture is enabled:
 
-- The media sampler should extract frames every 5-10 seconds, subject to client capability, network constraints, and system load.
+- The media sampler should extract frames from uploaded video files every 5-10 seconds with FFmpeg, subject to file quality, runtime limits, and system load. Live camera capture is not part of the first implementation.
 - The sampler should prioritize nonduplicate, focused, nonblurred, and clinically useful frames where possible.
 - Each frame sample must preserve timestamp, media source, frame hash, quality metadata, and processing state.
-- MedGemma receives the frame sample plus current consultation context so analysis is progressive and stateful.
-- Prior MedGemma findings for the same media session should be included to reduce repetition and support longitudinal interpretation.
+- The medical evidence provider receives the frame sample plus current consultation context so analysis is progressive and stateful.
+- Prior medical evidence findings for the same media session should be included to reduce repetition and support longitudinal interpretation.
 
-### 10.3 Gemini-to-MedGemma Handoff
+### 10.3 Gemini-to-Evidence Handoff
 
-Gemini may request a MedGemma handoff when an image-grounded question matters. A handoff packet must include:
+Gemini may request a medical evidence handoff when an image-grounded question matters. The implementation may preserve PRD-compatible `medgemma_handoff_request` artifact naming while executing it through the configured evidence provider. A handoff packet must include:
 
 - `handoffId`
 - `ambientSessionId`
@@ -437,7 +444,7 @@ Gemini may request a MedGemma handoff when an image-grounded question matters. A
 - `expectedOutputSchema`
 - `safetyInstructions`
 
-MedGemma response must include:
+Medical evidence provider response must include:
 
 - `handoffId`
 - `taskType`
@@ -450,7 +457,7 @@ MedGemma response must include:
 - `qualityLimitations`
 - `clinicianReviewRequired: true`
 
-Gemini must inspect MedGemma output before writing clinician-facing synthesis and must preserve source references and uncertainty.
+Gemini must inspect medical evidence output before writing clinician-facing synthesis and must preserve source references and uncertainty.
 
 ## 11. Rule-based Safety Envelope
 
@@ -761,7 +768,7 @@ Production runs on one VM:
 - `postgres`: self-hosted PostgreSQL with pgvector.
 - `api`: Express.js backend.
 - `web`: Next.js frontend.
-- Optional worker process: background synthesis, STT event handling, MedGemma frame analysis, OCR/document extraction, and FHIR generation.
+- Optional worker process: background synthesis, STT event handling, medical evidence frame analysis, OCR/document extraction, and FHIR generation.
 
 Production network and release layout:
 
@@ -830,7 +837,7 @@ Production deployment requirements:
 ### 20.3 Web
 
 - Clinician can complete an ANC encounter with ambient transcript, vitals, file/media inputs, session note, summary, highlights, and suggestions.
-- Clinician can see rule hits, missing fields, uncertainty, MedGemma evidence, and draft outputs.
+- Clinician can see rule hits, missing fields, uncertainty, review-required medical evidence, and draft outputs.
 - Clinician can mark suggestions done, skipped, or needing follow-up with result options and optional text.
 - Clinician can approve, edit, reject, or mark generated outputs uncertain.
 - Admin can manage users, roles, and permissions.
@@ -852,8 +859,8 @@ Production deployment requirements:
 - Severe hypertension vital signs trigger a deterministic high-risk flag before AI synthesis and remain visible even if Gemini summary is uncertain.
 - Missing gestational age creates a nonblocking prompt unless it is required for a specific export or finalization action.
 - Lab photo OCR with low confidence is marked uncertain and requires clinician verification.
-- MedGemma receives ultrasound frames every 5-10 seconds plus current consultation context.
-- Gemini hands off a specific ultrasound question to MedGemma and incorporates the returned evidence with uncertainty.
+- The configured medical evidence provider receives ultrasound frames every 5-10 seconds plus current consultation context where runtime support allows.
+- Gemini hands off a specific ultrasound question to the configured medical evidence provider and incorporates the returned evidence with uncertainty.
 - Ultrasound media evidence is referenced as review support, not autonomous diagnosis.
 - Unauthorized nurse or lab role cannot approve final outputs.
 - Clinician edits AI summary and approved edited text becomes the export source.
@@ -868,9 +875,9 @@ Production deployment requirements:
 - Exact Google STT model/region/language configuration for the first hospital deployment.
 - Exact ASEAN language rollout order and validation plan.
 - Exact prompt and validation strategy for `gemini-flash-lite-latest` diarization post-processing.
-- Exact OCR/document extraction provider.
-- Exact MedGemma hosting strategy and hardware requirements.
-- File object storage location for production uploads.
+- Production OCR/document extraction specialization beyond the configured medical evidence provider.
+- Production MedGemma hosting strategy and hardware requirements if the hospital chooses MedGemma instead of hosted Gemini Flash.
+- Production object storage location for uploads beyond local VM filesystem storage.
 - Raw audio retention period.
 - Hospital identity provider integration.
 - SATUSEHAT or external FHIR server live submission.

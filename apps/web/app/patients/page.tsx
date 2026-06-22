@@ -30,8 +30,18 @@ type Encounter = {
   pregnancyEpisode: PregnancyEpisode;
   consentRecords: Array<{ id: string; mode: string; status: string; createdAt: string }>;
   observations: Array<{ id: string; type: string; value: unknown; createdAt: string }>;
-  clinicalFiles: Array<{ id: string; kind: string; fileName: string; mimeType: string }>;
+  clinicalFiles: ClinicalFile[];
   sessionNote: { id: string; content: string; version: number } | null;
+};
+
+type ClinicalFile = {
+  id: string;
+  kind: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes?: number;
+  checksumSha256?: string | null;
+  frameSamples?: FrameSample[];
 };
 
 type RuleResult = {
@@ -96,6 +106,39 @@ type Suggestion = {
   results: Array<{ id: string; selectedOptionLabel?: string | null; freeTextNote?: string | null }>;
 };
 
+type FrameSample = {
+  id: string;
+  clinicalFileId: string;
+  processingStatus: string;
+  failureReason?: string | null;
+  sourceTimestampMs?: number | null;
+  width?: number | null;
+  height?: number | null;
+};
+
+type EvidenceHandoff = {
+  id: string;
+  taskType: string;
+  exactQuestion: string;
+  provider: string;
+  model: string;
+  status: string;
+  failureReason?: string | null;
+};
+
+type EvidenceFinding = {
+  id: string;
+  taskType: string;
+  findings: string[];
+  extractedValues: Array<{ label: string; value: string; unit?: string; confidence?: number }>;
+  confidence: number;
+  uncertaintyReasons: string[];
+  qualityLimitations: string[];
+  clinicianReviewRequired: boolean;
+  provider: string;
+  model: string;
+};
+
 export default function PatientsPage() {
   const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
@@ -112,6 +155,10 @@ export default function PatientsPage() {
   const [summaries, setSummaries] = useState<SummaryRevision[]>([]);
   const [highlights, setHighlights] = useState<HighlightCard[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [clinicalFiles, setClinicalFiles] = useState<ClinicalFile[]>([]);
+  const [evidenceHandoffs, setEvidenceHandoffs] = useState<EvidenceHandoff[]>([]);
+  const [evidenceFindings, setEvidenceFindings] = useState<EvidenceFinding[]>([]);
+  const [frameSamples, setFrameSamples] = useState<FrameSample[]>([]);
 
   async function searchPatients(event?: FormEvent) {
     event?.preventDefault();
@@ -157,6 +204,10 @@ export default function PatientsPage() {
     setSummaries([]);
     setHighlights([]);
     setSuggestions([]);
+    setClinicalFiles([]);
+    setEvidenceHandoffs([]);
+    setEvidenceFindings([]);
+    setFrameSamples([]);
     setMessage("Loading pregnancy episodes...");
     const response = await apiRequest<{ pregnancyEpisodes: PregnancyEpisode[] }>(
       `/patients/${patient.id}/pregnancy-episodes`
@@ -213,6 +264,10 @@ export default function PatientsPage() {
       setSummaries([]);
       setHighlights([]);
       setSuggestions([]);
+      setClinicalFiles([]);
+      setEvidenceHandoffs([]);
+      setEvidenceFindings([]);
+      setFrameSamples([]);
       setMessage("Encounter created.");
     } else {
       setMessage(response.error.message);
@@ -225,6 +280,7 @@ export default function PatientsPage() {
     if (response.success) {
       setEncounter(response.data.encounter);
       setNote(response.data.encounter.sessionNote?.content ?? "");
+      setClinicalFiles(response.data.encounter.clinicalFiles ?? []);
     } else {
       setMessage(response.error.message);
     }
@@ -311,6 +367,124 @@ export default function PatientsPage() {
     }
   }
 
+  async function uploadClinicalFile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!encounter) return;
+    const form = new FormData(event.currentTarget);
+    const response = await apiRequest<{ clinicalFile: ClinicalFile }>(
+      `/encounters/${encounter.id}/files/upload`,
+      {
+        method: "POST",
+        body: form
+      }
+    );
+    if (response.success) {
+      await refreshEncounter();
+      await loadClinicalFiles();
+      setMessage("Clinical file uploaded for review.");
+      event.currentTarget.reset();
+    } else {
+      setMessage(response.error.message);
+    }
+  }
+
+  async function loadClinicalFiles(encounterId = encounter?.id) {
+    if (!encounterId) return;
+    const response = await apiRequest<{ clinicalFiles: ClinicalFile[] }>(
+      `/encounters/${encounterId}/files`
+    );
+    if (response.success) {
+      setClinicalFiles(response.data.clinicalFiles);
+    } else {
+      setMessage(response.error.message);
+    }
+  }
+
+  async function sampleFrames(clinicalFileId: string) {
+    const response = await apiRequest<{ frameSamples: FrameSample[] }>(
+      `/clinical-files/${clinicalFileId}/frame-samples`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          ambientSessionId: ambientSession?.id,
+          intervalSeconds: 5
+        })
+      }
+    );
+    if (response.success) {
+      await loadClinicalFiles();
+      await loadEvidence();
+      setMessage(`Created ${response.data.frameSamples.length} frame sample(s).`);
+    } else {
+      setMessage(response.error.message);
+    }
+  }
+
+  async function createEvidenceHandoff(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!ambientSession) return;
+    const form = new FormData(event.currentTarget);
+    const clinicalFileId = String(form.get("clinicalFileId") ?? "");
+    const taskType = String(form.get("taskType") ?? "visible_finding_description");
+    const exactQuestion = String(form.get("exactQuestion") ?? "").trim();
+    const selectedSamples = frameSamples.filter(
+      (sample) => sample.clinicalFileId === clinicalFileId
+    );
+    const response = await apiRequest<{ handoff: EvidenceHandoff }>(
+      `/ambient-sessions/${ambientSession.id}/evidence-handoffs`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          taskType,
+          exactQuestion,
+          clinicalFileIds: clinicalFileId ? [clinicalFileId] : [],
+          frameSampleIds: selectedSamples.map((sample) => sample.id),
+          expectedOutputSchema: { clinicianReviewRequired: true }
+        })
+      }
+    );
+    if (response.success) {
+      await loadEvidence();
+      setMessage("Evidence handoff created.");
+      event.currentTarget.reset();
+    } else {
+      setMessage(response.error.message);
+    }
+  }
+
+  async function runEvidenceHandoff(handoffId: string) {
+    const response = await apiRequest<{
+      handoff: EvidenceHandoff;
+      finding: EvidenceFinding | null;
+    }>(`/evidence-handoffs/${handoffId}/run`, { method: "POST" });
+    if (response.success) {
+      await loadEvidence();
+      setMessage(
+        response.data.finding
+          ? "Evidence analysis completed for clinician review."
+          : "Evidence analysis failed safely; workflow remains available."
+      );
+    } else {
+      setMessage(response.error.message);
+    }
+  }
+
+  async function loadEvidence(sessionId = ambientSession?.id) {
+    if (!sessionId) return;
+    const response = await apiRequest<{
+      handoffs: EvidenceHandoff[];
+      findings: EvidenceFinding[];
+      frameSamples: FrameSample[];
+    }>(`/ambient-sessions/${sessionId}/evidence`);
+    if (response.success) {
+      setEvidenceHandoffs(response.data.handoffs);
+      setEvidenceFindings(response.data.findings);
+      setFrameSamples(response.data.frameSamples);
+    } else {
+      setMessage(response.error.message);
+    }
+  }
+
   async function saveNote() {
     if (!encounter) return;
     const response = await apiRequest<{ sessionNote: { version: number } }>(
@@ -374,6 +548,9 @@ export default function PatientsPage() {
       setSummaries([]);
       setHighlights([]);
       setSuggestions([]);
+      setEvidenceHandoffs([]);
+      setEvidenceFindings([]);
+      setFrameSamples([]);
       setMessage("Ambient session created.");
     } else {
       setMessage(response.error.message);
@@ -547,6 +724,7 @@ export default function PatientsPage() {
   const audioConsent = latestConsentStatus(encounter, "audio");
   const transcriptConsent = latestConsentStatus(encounter, "transcript");
   const aiConsent = latestConsentStatus(encounter, "ai");
+  const mediaConsent = latestConsentStatus(encounter, "media");
 
   return (
     <div className="grid">
@@ -779,6 +957,207 @@ export default function PatientsPage() {
             </div>
           </section>
         </div>
+      ) : null}
+
+      {encounter ? (
+        <section className="panel">
+          <div className="panel-heading">
+            <div>
+              <h2>Medical Evidence</h2>
+              <p className="muted">
+                Media consent: {mediaConsent}. AI consent: {aiConsent}. Evidence remains
+                review-required; video evidence is processed from uploaded files, not live camera
+                capture.
+              </p>
+            </div>
+            <div className="button-row">
+              <button
+                className="button secondary"
+                onClick={() => loadClinicalFiles()}
+                type="button"
+              >
+                Refresh files
+              </button>
+              <button
+                className="button secondary"
+                disabled={!ambientSession}
+                onClick={() => loadEvidence()}
+                type="button"
+              >
+                Refresh evidence
+              </button>
+            </div>
+          </div>
+          <div className="grid two-col">
+            <div className="record-list">
+              <form className="form-grid" onSubmit={uploadClinicalFile}>
+                <div className="form-grid inline-grid">
+                  <div className="field">
+                    <label htmlFor="upload-kind">File kind</label>
+                    <select id="upload-kind" name="kind">
+                      {clinicalFileKinds.map((kind) => (
+                        <option key={kind} value={kind}>
+                          {kind}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label htmlFor="sourceLabel">Source label</label>
+                    <input
+                      id="sourceLabel"
+                      name="sourceLabel"
+                      placeholder="Lab page, uploaded ultrasound video"
+                    />
+                  </div>
+                </div>
+                <div className="field">
+                  <label htmlFor="clinicalUpload">Upload evidence file</label>
+                  <input id="clinicalUpload" name="file" type="file" required />
+                </div>
+                <button className="button" type="submit">
+                  Upload file
+                </button>
+              </form>
+              <div className="record-list">
+                {clinicalFiles.length === 0 ? (
+                  <p className="muted">No uploaded evidence files.</p>
+                ) : (
+                  clinicalFiles.map((file) => (
+                    <article className="record" key={file.id}>
+                      <div className="record-topline">
+                        <strong>{file.fileName}</strong>
+                        <span className="status">{file.kind}</span>
+                      </div>
+                      <p className="muted">
+                        {file.mimeType}
+                        {file.sizeBytes ? ` | ${file.sizeBytes} bytes` : ""}
+                      </p>
+                      {file.checksumSha256 ? (
+                        <p className="muted">sha256 {file.checksumSha256.slice(0, 12)}</p>
+                      ) : null}
+                      <div className="button-row">
+                        <button
+                          className="button secondary"
+                          onClick={() => sampleFrames(file.id)}
+                          type="button"
+                        >
+                          Sample frames
+                        </button>
+                      </div>
+                      {file.frameSamples?.length ? (
+                        <p className="muted">
+                          {file.frameSamples.length} sample(s), latest{" "}
+                          {file.frameSamples[0]?.processingStatus}
+                        </p>
+                      ) : null}
+                    </article>
+                  ))
+                )}
+              </div>
+            </div>
+            <div className="record-list">
+              <form className="form-grid" onSubmit={createEvidenceHandoff}>
+                <div className="field">
+                  <label htmlFor="clinicalFileId">Evidence file</label>
+                  <select id="clinicalFileId" name="clinicalFileId">
+                    <option value="">No file selected</option>
+                    {clinicalFiles.map((file) => (
+                      <option key={file.id} value={file.id}>
+                        {file.fileName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="taskType">Task</label>
+                  <select id="taskType" name="taskType" defaultValue="visible_finding_description">
+                    <option value="visible_finding_description">visible finding</option>
+                    <option value="lab_value_extraction">lab extraction</option>
+                    <option value="document_extraction">document extraction</option>
+                    <option value="ultrasound_frame_adequacy">ultrasound adequacy</option>
+                    <option value="media_summary">media summary</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="exactQuestion">Question</label>
+                  <textarea
+                    id="exactQuestion"
+                    name="exactQuestion"
+                    defaultValue="Describe visible evidence and limitations for clinician review."
+                    required
+                  />
+                </div>
+                <button className="button" disabled={!ambientSession} type="submit">
+                  Create handoff
+                </button>
+              </form>
+              <h3>Handoffs</h3>
+              {evidenceHandoffs.length === 0 ? (
+                <p className="muted">No evidence handoffs yet.</p>
+              ) : (
+                evidenceHandoffs.map((handoff) => (
+                  <article className="record" key={handoff.id}>
+                    <div className="record-topline">
+                      <strong>{handoff.taskType}</strong>
+                      <span className="status">{handoff.status}</span>
+                    </div>
+                    <p>{handoff.exactQuestion}</p>
+                    <p className="muted">
+                      {handoff.provider} | {handoff.model}
+                    </p>
+                    {handoff.failureReason ? (
+                      <p className="error">{handoff.failureReason}</p>
+                    ) : null}
+                    <button
+                      className="button secondary"
+                      disabled={handoff.status === "running"}
+                      onClick={() => runEvidenceHandoff(handoff.id)}
+                      type="button"
+                    >
+                      Run analysis
+                    </button>
+                  </article>
+                ))
+              )}
+              <h3>Findings</h3>
+              {evidenceFindings.length === 0 ? (
+                <p className="muted">No evidence findings yet.</p>
+              ) : (
+                evidenceFindings.map((finding) => (
+                  <article className="record" key={finding.id}>
+                    <div className="record-topline">
+                      <strong>{finding.taskType}</strong>
+                      <span className="status">review required</span>
+                    </div>
+                    {finding.findings.map((text) => (
+                      <p key={text}>{text}</p>
+                    ))}
+                    {finding.extractedValues.length ? (
+                      <dl className="compact-facts">
+                        {finding.extractedValues.slice(0, 3).map((value) => (
+                          <div key={`${value.label}-${value.value}`}>
+                            <dt>{value.label}</dt>
+                            <dd>
+                              {value.value}
+                              {value.unit ? ` ${value.unit}` : ""}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    ) : null}
+                    <p className="muted">Confidence {Math.round(finding.confidence * 100)}%</p>
+                    {finding.uncertaintyReasons.concat(finding.qualityLimitations).map((reason) => (
+                      <p className="status warning-status" key={reason}>
+                        {reason}
+                      </p>
+                    ))}
+                  </article>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
       ) : null}
 
       {encounter ? (

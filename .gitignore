@@ -10,3 +10,4 @@ test-results/
 apps/api/prisma/dev.db
 *.log
 *.tsbuildinfo
+.local-data/
