@@ -7,10 +7,12 @@ onlyBuiltDependencies:
   - "@prisma/engines"
   - "esbuild"
   - "prisma"
+  - "protobufjs"
   - "sharp"
 allowBuilds:
   "@prisma/client": true
   "@prisma/engines": true
   esbuild: true
   prisma: true
+  protobufjs: true
   sharp: true

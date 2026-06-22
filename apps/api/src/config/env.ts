@@ -17,7 +17,12 @@ const envSchema = z.object({
   GEMINI_PRIMARY_MODEL: z.string().default("gemini-3.1-pro-preview"),
   GEMINI_DIARIZATION_MODEL: z.string().default("gemini-flash-lite-latest"),
   GOOGLE_CLOUD_PROJECT: z.string().optional(),
-  GOOGLE_CLOUD_LOCATION: z.string().default("global")
+  GOOGLE_CLOUD_LOCATION: z.string().default("global"),
+  STT_PROVIDER: z.enum(["mock", "google"]).default("mock"),
+  GOOGLE_STT_LANGUAGE_CODE: z.string().default("en-US"),
+  GOOGLE_STT_MODEL: z.string().default("latest_long"),
+  GOOGLE_STT_ENABLE_DIARIZATION: z.coerce.boolean().default(true),
+  GOOGLE_STT_SPEAKER_COUNT: z.coerce.number().int().positive().default(2)
 });
 
 export const env = envSchema.parse(process.env);

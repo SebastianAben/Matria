@@ -11,6 +11,8 @@ const allClinicalPermissions: PermissionKey[] = [
   "clinical_file:write",
   "observation:write",
   "session_note:write",
+  "rule:evaluate",
+  "rule:acknowledge",
   "ambient_session:start",
   "audio:process",
   "transcript:correct",
@@ -37,6 +39,8 @@ export const defaultRolePermissions: Record<RoleKey, PermissionKey[]> = {
     "patient:read",
     "encounter:read",
     "session_note:write",
+    "rule:evaluate",
+    "rule:acknowledge",
     "suggestion:resolve",
     "output:approve",
     "fhir:export"
@@ -51,6 +55,7 @@ export const defaultRolePermissions: Record<RoleKey, PermissionKey[]> = {
     "clinical_file:write",
     "observation:write",
     "session_note:write",
+    "rule:evaluate",
     "ambient_session:start"
   ],
   lab_staff: ["patient:read", "encounter:read", "clinical_file:write", "observation:write"],

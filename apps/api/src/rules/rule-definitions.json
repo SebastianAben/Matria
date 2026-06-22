@@ -1,0 +1,110 @@
+[
+  {
+    "id": "severe-hypertension-vitals",
+    "version": "0.1.0",
+    "family": "maternal_safety",
+    "condition": "severe_hypertension",
+    "severity": "critical",
+    "blockingLevel": "ack_required",
+    "actionType": "escalation_review",
+    "suggestedAction": "Review blood pressure urgently, repeat measurement if appropriate, and follow local severe hypertension protocol.",
+    "thresholdDescription": "Systolic blood pressure >= 160 mmHg or diastolic blood pressure >= 110 mmHg.",
+    "needsLocalGuidelineValidation": true
+  },
+  {
+    "id": "bleeding-mention-note",
+    "version": "0.1.0",
+    "family": "danger_signs",
+    "condition": "keyword_bleeding",
+    "severity": "warning",
+    "blockingLevel": "soft",
+    "actionType": "review",
+    "suggestedAction": "Clarify bleeding timing, amount, pain, fetal movement, and whether urgent review is needed.",
+    "thresholdDescription": "Keyword match in session note or transcript candidate text.",
+    "needsLocalGuidelineValidation": true
+  },
+  {
+    "id": "reduced-fetal-movement-mention",
+    "version": "0.1.0",
+    "family": "danger_signs",
+    "condition": "keyword_reduced_fetal_movement",
+    "severity": "warning",
+    "blockingLevel": "soft",
+    "actionType": "review",
+    "suggestedAction": "Clarify fetal movement pattern, gestational age, and whether escalation is needed.",
+    "thresholdDescription": "Keyword match for reduced fetal movement in session note or transcript candidate text.",
+    "needsLocalGuidelineValidation": true
+  },
+  {
+    "id": "anemia-lab-indicator",
+    "version": "0.1.0",
+    "family": "labs",
+    "condition": "anemia_indicator",
+    "severity": "watch",
+    "blockingLevel": "none",
+    "actionType": "suggestion",
+    "suggestedAction": "Review hemoglobin result and local anemia management guidance.",
+    "thresholdDescription": "Hemoglobin < 11 g/dL.",
+    "needsLocalGuidelineValidation": true
+  },
+  {
+    "id": "infection-fever-indicator",
+    "version": "0.1.0",
+    "family": "infection",
+    "condition": "fever_indicator",
+    "severity": "warning",
+    "blockingLevel": "soft",
+    "actionType": "review",
+    "suggestedAction": "Review fever context, infection symptoms, and relevant investigations.",
+    "thresholdDescription": "Temperature >= 38 C or fever mention.",
+    "needsLocalGuidelineValidation": true
+  },
+  {
+    "id": "abnormal-urine-indicator",
+    "version": "0.1.0",
+    "family": "labs",
+    "condition": "abnormal_urine_indicator",
+    "severity": "watch",
+    "blockingLevel": "none",
+    "actionType": "suggestion",
+    "suggestedAction": "Review urine protein or glucose result and correlate with symptoms, blood pressure, and labs.",
+    "thresholdDescription": "Urine protein or glucose is recorded as positive, trace, 1+, 2+, 3+, or 4+.",
+    "needsLocalGuidelineValidation": true
+  },
+  {
+    "id": "missing-gestational-age",
+    "version": "0.1.0",
+    "family": "missing_context",
+    "condition": "missing_gestational_age",
+    "severity": "info",
+    "blockingLevel": "soft",
+    "actionType": "missing_question",
+    "suggestedAction": "Record gestational age before relying on gestation-specific recommendations or exports.",
+    "thresholdDescription": "No gestational age found in pregnancy episode or structured observations.",
+    "needsLocalGuidelineValidation": false
+  },
+  {
+    "id": "gestational-age-inconsistency",
+    "version": "0.1.0",
+    "family": "contradictions",
+    "condition": "gestational_age_inconsistency",
+    "severity": "watch",
+    "blockingLevel": "soft",
+    "actionType": "review",
+    "suggestedAction": "Resolve conflicting gestational age values before finalizing encounter outputs.",
+    "thresholdDescription": "Pregnancy episode gestational age differs from structured observation by more than 2 weeks.",
+    "needsLocalGuidelineValidation": false
+  },
+  {
+    "id": "session-note-contradiction",
+    "version": "0.1.0",
+    "family": "contradictions",
+    "condition": "basic_note_contradiction",
+    "severity": "watch",
+    "blockingLevel": "soft",
+    "actionType": "review",
+    "suggestedAction": "Review contradictory wording in the session note before using it as AI context.",
+    "thresholdDescription": "Basic phrase contradiction in free-text session note.",
+    "needsLocalGuidelineValidation": false
+  }
+]

@@ -34,6 +34,40 @@ type Encounter = {
   sessionNote: { id: string; content: string; version: number } | null;
 };
 
+type RuleResult = {
+  id: string;
+  ruleId: string;
+  severity: string;
+  blockingLevel: string;
+  actionType: string;
+  evidence: Record<string, unknown>;
+  sourceReferences: Array<{ type: string; id?: string; label?: string }>;
+  confidence: number;
+  suggestedAction: string;
+  thresholdDescription?: string;
+  needsLocalGuidelineValidation: boolean;
+  status: string;
+};
+
+type AmbientSession = {
+  id: string;
+  status: string;
+  provider: string;
+  failureReason?: string | null;
+};
+
+type TranscriptTurn = {
+  id: string;
+  speakerLabel: string;
+  speakerRoleGuess: string;
+  startTimeMs: number;
+  endTimeMs: number;
+  text: string;
+  sttConfidence?: number | null;
+  diarizationConfidence?: number | null;
+  correctionStatus: string;
+};
+
 export default function PatientsPage() {
   const [message, setMessage] = useState("");
   const [search, setSearch] = useState("");
@@ -43,6 +77,10 @@ export default function PatientsPage() {
   const [selectedEpisode, setSelectedEpisode] = useState<PregnancyEpisode | null>(null);
   const [encounter, setEncounter] = useState<Encounter | null>(null);
   const [note, setNote] = useState("");
+  const [ruleResults, setRuleResults] = useState<RuleResult[]>([]);
+  const [ambientSession, setAmbientSession] = useState<AmbientSession | null>(null);
+  const [transcriptTurns, setTranscriptTurns] = useState<TranscriptTurn[]>([]);
+  const [editingTurnId, setEditingTurnId] = useState<string | null>(null);
 
   async function searchPatients(event?: FormEvent) {
     event?.preventDefault();
@@ -82,6 +120,9 @@ export default function PatientsPage() {
     setSelectedPatient(patient);
     setSelectedEpisode(null);
     setEncounter(null);
+    setRuleResults([]);
+    setAmbientSession(null);
+    setTranscriptTurns([]);
     setMessage("Loading pregnancy episodes...");
     const response = await apiRequest<{ pregnancyEpisodes: PregnancyEpisode[] }>(
       `/patients/${patient.id}/pregnancy-episodes`
@@ -132,6 +173,9 @@ export default function PatientsPage() {
     if (response.success) {
       setEncounter(response.data.encounter);
       setNote(response.data.encounter.sessionNote?.content ?? "");
+      setRuleResults([]);
+      setAmbientSession(null);
+      setTranscriptTurns([]);
       setMessage("Encounter created.");
     } else {
       setMessage(response.error.message);
@@ -190,14 +234,13 @@ export default function PatientsPage() {
     event.preventDefault();
     if (!encounter) return;
     const form = new FormData(event.currentTarget);
+    const label = String(form.get("label") ?? "").trim();
+    const value = String(form.get("value") ?? "").trim();
     const response = await apiRequest(`/encounters/${encounter.id}/observations`, {
       method: "POST",
       body: JSON.stringify({
         type: form.get("type"),
-        value: {
-          label: form.get("label"),
-          value: form.get("value")
-        },
+        value: { [label]: numericOrString(value) },
         verificationStatus: "clinician_entered",
         source: "manual_entry"
       })
@@ -247,6 +290,147 @@ export default function PatientsPage() {
       setMessage(response.error.message);
     }
   }
+
+  async function runPreflight() {
+    if (!encounter) return;
+    setMessage("Running deterministic preflight...");
+    const response = await apiRequest<{ ruleResults: RuleResult[] }>(
+      `/encounters/${encounter.id}/preflight`,
+      { method: "POST" }
+    );
+    if (response.success) {
+      setRuleResults(response.data.ruleResults);
+      setMessage(
+        response.data.ruleResults.length
+          ? "Preflight completed with active findings."
+          : "Preflight completed with no active findings."
+      );
+    } else {
+      setMessage(response.error.message);
+    }
+  }
+
+  async function updateRuleResult(ruleResultId: string, status: string) {
+    const response = await apiRequest<{ ruleResult: RuleResult }>(`/rule-results/${ruleResultId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status })
+    });
+    if (response.success) {
+      setRuleResults((current) =>
+        current.map((rule) => (rule.id === ruleResultId ? response.data.ruleResult : rule))
+      );
+      setMessage(`Rule result marked ${status}.`);
+    } else {
+      setMessage(response.error.message);
+    }
+  }
+
+  async function createAmbientSession() {
+    if (!encounter) return;
+    const response = await apiRequest<{ ambientSession: AmbientSession }>(
+      `/encounters/${encounter.id}/ambient-sessions`,
+      { method: "POST", body: JSON.stringify({}) }
+    );
+    if (response.success) {
+      setAmbientSession(response.data.ambientSession);
+      setTranscriptTurns([]);
+      setMessage("Ambient session created.");
+    } else {
+      setMessage(response.error.message);
+    }
+  }
+
+  async function startAmbientSession() {
+    if (!ambientSession) return;
+    const response = await apiRequest<{ ambientSession: AmbientSession }>(
+      `/ambient-sessions/${ambientSession.id}/start`,
+      { method: "POST" }
+    );
+    if (response.success) {
+      setAmbientSession(response.data.ambientSession);
+      setMessage("Ambient session listening.");
+    } else {
+      setMessage(response.error.message);
+    }
+  }
+
+  async function stopAmbientSession() {
+    if (!ambientSession) return;
+    const response = await apiRequest<{ ambientSession: AmbientSession }>(
+      `/ambient-sessions/${ambientSession.id}/stop`,
+      { method: "POST" }
+    );
+    if (response.success) {
+      setAmbientSession(response.data.ambientSession);
+      setMessage("Ambient session closed.");
+    } else {
+      setMessage(response.error.message);
+    }
+  }
+
+  async function submitMockAudioEvent(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!ambientSession) return;
+    const form = new FormData(event.currentTarget);
+    const response = await apiRequest<{
+      transcriptTurns: TranscriptTurn[];
+    }>(`/ambient-sessions/${ambientSession.id}/audio-events`, {
+      method: "POST",
+      body: JSON.stringify({
+        sequence: Number(form.get("sequence")) || Date.now(),
+        mimeType: "audio/wav",
+        durationMs: 5000,
+        transcriptText: form.get("transcriptText")
+      })
+    });
+    if (response.success) {
+      await loadTranscriptTurns(ambientSession.id);
+      setMessage(`Transcript event created ${response.data.transcriptTurns.length} turn(s).`);
+      event.currentTarget.reset();
+    } else {
+      setMessage(response.error.message);
+    }
+  }
+
+  async function loadTranscriptTurns(sessionId = ambientSession?.id) {
+    if (!sessionId) return;
+    const response = await apiRequest<{ transcriptTurns: TranscriptTurn[] }>(
+      `/ambient-sessions/${sessionId}/transcript-turns`
+    );
+    if (response.success) {
+      setTranscriptTurns(response.data.transcriptTurns);
+    } else {
+      setMessage(response.error.message);
+    }
+  }
+
+  async function correctTranscriptTurn(event: FormEvent<HTMLFormElement>, turnId: string) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const response = await apiRequest<{ transcriptTurn: TranscriptTurn }>(
+      `/transcript-turns/${turnId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          speakerLabel: form.get("speakerLabel"),
+          speakerRoleGuess: form.get("speakerRoleGuess"),
+          text: form.get("text")
+        })
+      }
+    );
+    if (response.success) {
+      setTranscriptTurns((current) =>
+        current.map((turn) => (turn.id === turnId ? response.data.transcriptTurn : turn))
+      );
+      setEditingTurnId(null);
+      setMessage("Transcript turn corrected.");
+    } else {
+      setMessage(response.error.message);
+    }
+  }
+
+  const audioConsent = latestConsentStatus(encounter, "audio");
+  const transcriptConsent = latestConsentStatus(encounter, "transcript");
 
   return (
     <div className="grid">
@@ -504,6 +688,231 @@ export default function PatientsPage() {
           </div>
         </section>
       ) : null}
+
+      {encounter ? (
+        <div className="grid two-col">
+          <section className="panel">
+            <div className="panel-heading">
+              <div>
+                <h2>Deterministic Rules</h2>
+                <p className="muted">Advisory preflight is separate from ambient AI synthesis.</p>
+              </div>
+              <button className="button" onClick={runPreflight} type="button">
+                Run preflight
+              </button>
+            </div>
+            <div className="record-list">
+              {ruleResults.length === 0 ? (
+                <p className="muted">No rule results loaded for this encounter.</p>
+              ) : (
+                ruleResults.map((rule) => (
+                  <article className={`record severity-${rule.severity}`} key={rule.id}>
+                    <div className="record-topline">
+                      <strong>{rule.ruleId}</strong>
+                      <span className="status">{rule.status}</span>
+                    </div>
+                    <p>{rule.suggestedAction}</p>
+                    <dl className="compact-facts">
+                      <div>
+                        <dt>Severity</dt>
+                        <dd>{rule.severity}</dd>
+                      </div>
+                      <div>
+                        <dt>Blocking</dt>
+                        <dd>{rule.blockingLevel}</dd>
+                      </div>
+                      <div>
+                        <dt>Confidence</dt>
+                        <dd>{Math.round(rule.confidence * 100)}%</dd>
+                      </div>
+                    </dl>
+                    <p className="muted">{rule.thresholdDescription}</p>
+                    {rule.needsLocalGuidelineValidation ? (
+                      <p className="status warning-status">Needs local guideline validation</p>
+                    ) : null}
+                    <div className="button-row">
+                      <button
+                        className="button secondary"
+                        disabled={rule.status !== "active"}
+                        onClick={() => updateRuleResult(rule.id, "acknowledged")}
+                        type="button"
+                      >
+                        Acknowledge
+                      </button>
+                      <button
+                        className="button secondary"
+                        disabled={rule.status !== "active"}
+                        onClick={() => updateRuleResult(rule.id, "resolved")}
+                        type="button"
+                      >
+                        Resolve
+                      </button>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section className="panel">
+            <div className="panel-heading">
+              <div>
+                <h2>Ambient Session</h2>
+                <p className="muted">
+                  Audio consent: {audioConsent}. Transcript consent: {transcriptConsent}.
+                </p>
+              </div>
+              <span className="status">{ambientSession?.status ?? "not created"}</span>
+            </div>
+            <div className="button-row">
+              <button className="button" onClick={createAmbientSession} type="button">
+                Create session
+              </button>
+              <button
+                className="button secondary"
+                disabled={!ambientSession}
+                onClick={startAmbientSession}
+                type="button"
+              >
+                Start
+              </button>
+              <button
+                className="button secondary"
+                disabled={!ambientSession}
+                onClick={stopAmbientSession}
+                type="button"
+              >
+                Stop
+              </button>
+              <button
+                className="button secondary"
+                disabled={!ambientSession}
+                onClick={() => loadTranscriptTurns()}
+                type="button"
+              >
+                Refresh transcript
+              </button>
+            </div>
+            {ambientSession?.failureReason ? (
+              <p className="error">STT degraded: {ambientSession.failureReason}</p>
+            ) : null}
+            <form className="form-grid stacked-form" onSubmit={submitMockAudioEvent}>
+              <div className="field">
+                <label htmlFor="sequence">Audio event sequence</label>
+                <input id="sequence" name="sequence" type="number" min="1" defaultValue="1" />
+              </div>
+              <div className="field">
+                <label htmlFor="transcriptText">Mock transcript text</label>
+                <textarea
+                  id="transcriptText"
+                  name="transcriptText"
+                  defaultValue="Clinician: Any bleeding today? Patient: No bleeding, I am 24 weeks."
+                />
+              </div>
+              <button className="button" disabled={!ambientSession} type="submit">
+                Submit mock audio event
+              </button>
+            </form>
+          </section>
+        </div>
+      ) : null}
+
+      {encounter ? (
+        <section className="panel">
+          <h2>Live Transcript</h2>
+          <div className="record-list">
+            {transcriptTurns.length === 0 ? (
+              <p className="muted">No transcript turns recorded yet.</p>
+            ) : (
+              transcriptTurns.map((turn) => (
+                <article className="record transcript-turn" key={turn.id}>
+                  {editingTurnId === turn.id ? (
+                    <form
+                      className="form-grid"
+                      onSubmit={(event) => correctTranscriptTurn(event, turn.id)}
+                    >
+                      <div className="form-grid inline-grid">
+                        <div className="field">
+                          <label htmlFor={`speaker-${turn.id}`}>Speaker label</label>
+                          <input
+                            id={`speaker-${turn.id}`}
+                            name="speakerLabel"
+                            defaultValue={turn.speakerLabel}
+                          />
+                        </div>
+                        <div className="field">
+                          <label htmlFor={`role-${turn.id}`}>Speaker role</label>
+                          <select
+                            id={`role-${turn.id}`}
+                            name="speakerRoleGuess"
+                            defaultValue={turn.speakerRoleGuess}
+                          >
+                            <option value="clinician">clinician</option>
+                            <option value="patient">patient</option>
+                            <option value="companion">companion</option>
+                            <option value="unknown">unknown</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="field">
+                        <label htmlFor={`text-${turn.id}`}>Transcript text</label>
+                        <textarea id={`text-${turn.id}`} name="text" defaultValue={turn.text} />
+                      </div>
+                      <div className="button-row">
+                        <button className="button" type="submit">
+                          Save correction
+                        </button>
+                        <button
+                          className="button secondary"
+                          onClick={() => setEditingTurnId(null)}
+                          type="button"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <>
+                      <div className="record-topline">
+                        <strong>
+                          {turn.speakerLabel} | {turn.speakerRoleGuess}
+                        </strong>
+                        <span className="status">{turn.correctionStatus}</span>
+                      </div>
+                      <p>{turn.text}</p>
+                      <p className="muted">
+                        {formatMs(turn.startTimeMs)} to {formatMs(turn.endTimeMs)}
+                        {turn.sttConfidence
+                          ? ` | STT ${Math.round(turn.sttConfidence * 100)}%`
+                          : ""}
+                      </p>
+                      <button
+                        className="button secondary"
+                        onClick={() => setEditingTurnId(turn.id)}
+                        type="button"
+                      >
+                        Correct turn
+                      </button>
+                    </>
+                  )}
+                </article>
+              ))
+            )}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
+}
+
+function numericOrString(value: string) {
+  return value !== "" && Number.isFinite(Number(value)) ? Number(value) : value;
+}
+
+function latestConsentStatus(encounter: Encounter | null, mode: string) {
+  return encounter?.consentRecords.find((record) => record.mode === mode)?.status ?? "missing";
+}
+
+function formatMs(value: number) {
+  return `${(value / 1000).toFixed(1)}s`;
 }

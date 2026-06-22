@@ -226,6 +226,8 @@ function roleKeyPermissions(roleKey: (typeof roleKeys)[number]) {
       "clinical_file:write",
       "observation:write",
       "session_note:write",
+      "rule:evaluate",
+      "rule:acknowledge",
       "ambient_session:start",
       "audio:process",
       "transcript:correct",
@@ -238,6 +240,8 @@ function roleKeyPermissions(roleKey: (typeof roleKeys)[number]) {
       "patient:read",
       "encounter:read",
       "session_note:write",
+      "rule:evaluate",
+      "rule:acknowledge",
       "suggestion:resolve",
       "output:approve",
       "fhir:export"
@@ -252,6 +256,7 @@ function roleKeyPermissions(roleKey: (typeof roleKeys)[number]) {
       "clinical_file:write",
       "observation:write",
       "session_note:write",
+      "rule:evaluate",
       "ambient_session:start"
     ],
     lab_staff: ["patient:read", "encounter:read", "clinical_file:write", "observation:write"],

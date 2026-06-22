@@ -115,9 +115,26 @@ textarea {
   font-size: 16px;
 }
 
+.panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.panel-heading h2,
+.panel-heading p {
+  margin-top: 0;
+}
+
 .form-grid {
   display: grid;
   gap: 10px;
+}
+
+.inline-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .field {
@@ -221,6 +238,53 @@ textarea {
   display: block;
 }
 
+.record-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.compact-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.compact-facts div {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.compact-facts dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.compact-facts dd {
+  margin: 2px 0 0;
+}
+
+.severity-critical {
+  border-color: var(--danger);
+}
+
+.severity-warning,
+.warning-status {
+  border-color: var(--warning);
+}
+
+.severity-watch {
+  border-color: #786018;
+}
+
+.transcript-turn p {
+  margin-bottom: 8px;
+}
+
 .muted {
   color: var(--muted);
 }
@@ -280,6 +344,16 @@ textarea {
   }
 
   .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-heading,
+  .record-topline {
+    display: grid;
+  }
+
+  .compact-facts,
+  .inline-grid {
     grid-template-columns: 1fr;
   }
 }

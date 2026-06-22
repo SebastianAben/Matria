@@ -10,12 +10,13 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate deploy",
-    "prisma:reset": "prisma migrate reset --force",
-    "seed": "tsx src/seed.ts"
+    "prisma:migrate": "DATABASE_URL=${DATABASE_URL:-postgresql://matria:matria@localhost:54329/matria?schema=public} prisma migrate deploy",
+    "prisma:reset": "DATABASE_URL=${DATABASE_URL:-postgresql://matria:matria@localhost:54329/matria?schema=public} prisma migrate reset --force",
+    "seed": "DATABASE_URL=${DATABASE_URL:-postgresql://matria:matria@localhost:54329/matria?schema=public} tsx src/seed.ts"
   },
   "dependencies": {
     "@matria/shared": "workspace:*",
+    "@google-cloud/speech": "^7.2.1",
     "@prisma/client": "^6.14.0",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",

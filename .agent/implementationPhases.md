@@ -27,11 +27,11 @@ Progress maintenance rules:
 
 ## Current Execution State
 
-- Current phase: Phase 2 - Database, Auth, RBAC, And Audit Core
-- Current subphase: 2.1 - Docker PostgreSQL and pgvector setup
-- Last completed subphase: 1.10 - Add env examples
-- Active blockers: local Docker/OrbStack daemon is not running, so Docker PostgreSQL, migrations, pgvector, and DB-backed API tests could not be validated.
-- Next recommended task: start the local Docker runtime, run `pnpm db:up`, apply migrations, seed roles/admin, and rerun the full API test suite.
+- Current phase: Phase 6 - Stateful Context Engineering And Gemini Orchestrator
+- Current subphase: 6.1 - Vertex AI runtime config
+- Last completed subphase: 5.10 - Ambient transcript UI
+- Active blockers: none
+- Next recommended task: implement the Vertex AI Gemini adapter, context snapshot model, and context builder using the ambient transcript, session note, observations, rule results, and clinician edits as stateful inputs.
 
 ## Phase Template
 
@@ -147,22 +147,22 @@ Dependencies: Phase 0
 ## Phase 2: Database, Auth, RBAC, And Audit Core
 
 Objective: build the secure clinical data foundation.  
-Status: `blocked`  
+Status: `done`  
 Dependencies: Phase 1
 
 ### Subphases
 
-| ID  | Name                                 | Status    | Expected output                                                                                   |
-| --- | ------------------------------------ | --------- | ------------------------------------------------------------------------------------------------- |
-| 2.1 | Docker PostgreSQL and pgvector setup | `blocked` | Compose config exists, but local Docker/OrbStack daemon is unavailable for runtime validation.    |
-| 2.2 | Migration framework                  | `done`    | Prisma schema and initial SQL migration exist, including `CREATE EXTENSION IF NOT EXISTS vector`. |
-| 2.3 | Base identity entities               | `done`    | `User`, auth metadata, account status, password hashing, and seed/bootstrap admin path exist.     |
-| 2.4 | Session authentication               | `done`    | Secure cookie session creation, read, and revocation are implemented.                             |
-| 2.5 | Role and permission model            | `done`    | `Role`, `Permission`, `UserRole`, default roles, and permission constants are implemented.        |
-| 2.6 | RBAC middleware                      | `done`    | Permission checks protect routes and write audit-visible denials.                                 |
-| 2.7 | Audit log writer                     | `done`    | Immutable `AuditLog` entity and helper are implemented for sensitive actions.                     |
-| 2.8 | Admin user management APIs           | `done`    | Initial admin users, roles, and role assignment routes exist.                                     |
-| 2.9 | Security tests                       | `blocked` | Tests exist, but DB-backed assertions cannot run until Docker PostgreSQL is available.            |
+| ID  | Name                                 | Status | Expected output                                                                                   |
+| --- | ------------------------------------ | ------ | ------------------------------------------------------------------------------------------------- |
+| 2.1 | Docker PostgreSQL and pgvector setup | `done` | Compose config starts local Docker PostgreSQL with pgvector and Prisma validates against it.      |
+| 2.2 | Migration framework                  | `done` | Prisma schema and initial SQL migration exist, including `CREATE EXTENSION IF NOT EXISTS vector`. |
+| 2.3 | Base identity entities               | `done` | `User`, auth metadata, account status, password hashing, and seed/bootstrap admin path exist.     |
+| 2.4 | Session authentication               | `done` | Secure cookie session creation, read, and revocation are implemented.                             |
+| 2.5 | Role and permission model            | `done` | `Role`, `Permission`, `UserRole`, default roles, and permission constants are implemented.        |
+| 2.6 | RBAC middleware                      | `done` | Permission checks protect routes and write audit-visible denials.                                 |
+| 2.7 | Audit log writer                     | `done` | Immutable `AuditLog` entity and helper are implemented for sensitive actions.                     |
+| 2.8 | Admin user management APIs           | `done` | Initial admin users, roles, and role assignment routes exist.                                     |
+| 2.9 | Security tests                       | `done` | DB-backed auth, RBAC, audit, and denial tests pass against the Docker database.                   |
 
 ### Deliverables
 
@@ -191,27 +191,27 @@ Dependencies: Phase 1
 
 ### Update Notes
 
-- Code for the phase is present, but completion is blocked until Docker PostgreSQL/pgvector starts, migrations apply, seed succeeds, and DB-backed auth/RBAC/audit tests pass.
+- Completed after Docker PostgreSQL started successfully, migrations applied, seed completed, and the API auth/RBAC/audit tests passed. Prisma scripts now default to the local Docker database URL when `DATABASE_URL` is not set.
 
 ## Phase 3: ANC Domain Model And Encounter Workflow
 
 Objective: implement the core ANC data model and encounter capture workflow.  
-Status: `blocked`  
+Status: `done`  
 Dependencies: Phase 2
 
 ### Subphases
 
-| ID  | Name                    | Status    | Expected output                                                                                                                             |
-| --- | ----------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| 3.1 | Patient records         | `done`    | `Patient` entity, create/read/search APIs, RBAC, and audit logging are implemented.                                                         |
-| 3.2 | Pregnancy episodes      | `done`    | `PregnancyEpisode` entity and patient-scoped episode APIs are implemented.                                                                  |
-| 3.3 | Encounter lifecycle     | `done`    | `Encounter` entity and draft/active/reviewing/closed/approved/archived transition policy are implemented.                                   |
-| 3.4 | Consent records         | `done`    | `ConsentRecord` entity and processing-mode checks for audio/media/AI placeholders are implemented.                                          |
-| 3.5 | Clinical file metadata  | `done`    | `ClinicalFile` metadata route exists for audio, image, document, and ultrasound media.                                                      |
-| 3.6 | Structured observations | `done`    | Vitals, labs, symptoms, history, medications, allergies, and gestational-age observation contracts are implemented.                         |
-| 3.7 | Session notes           | `done`    | Clinician-editable session note entity and APIs are implemented and modeled as future LLM context.                                          |
-| 3.8 | Encounter capture UI    | `done`    | Web screens exist for patient lookup/create, episode selection/create, encounter creation, consent, observations, file metadata, and notes. |
-| 3.9 | Scoping tests           | `blocked` | Scoping tests exist, but DB-backed execution is blocked until Docker PostgreSQL is available.                                               |
+| ID  | Name                    | Status | Expected output                                                                                                                             |
+| --- | ----------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| 3.1 | Patient records         | `done` | `Patient` entity, create/read/search APIs, RBAC, and audit logging are implemented.                                                         |
+| 3.2 | Pregnancy episodes      | `done` | `PregnancyEpisode` entity and patient-scoped episode APIs are implemented.                                                                  |
+| 3.3 | Encounter lifecycle     | `done` | `Encounter` entity and draft/active/reviewing/closed/approved/archived transition policy are implemented.                                   |
+| 3.4 | Consent records         | `done` | `ConsentRecord` entity and processing-mode checks for audio/media/AI placeholders are implemented.                                          |
+| 3.5 | Clinical file metadata  | `done` | `ClinicalFile` metadata route exists for audio, image, document, and ultrasound media.                                                      |
+| 3.6 | Structured observations | `done` | Vitals, labs, symptoms, history, medications, allergies, and gestational-age observation contracts are implemented.                         |
+| 3.7 | Session notes           | `done` | Clinician-editable session note entity and APIs are implemented and modeled as future LLM context.                                          |
+| 3.8 | Encounter capture UI    | `done` | Web screens exist for patient lookup/create, episode selection/create, encounter creation, consent, observations, file metadata, and notes. |
+| 3.9 | Scoping tests           | `done` | DB-backed cross-patient, cross-pregnancy, consent, lifecycle, observation, and note tests pass.                                             |
 
 ### Deliverables
 
@@ -237,28 +237,28 @@ Dependencies: Phase 2
 
 ### Update Notes
 
-- Raw clinical media storage remains metadata-only. Phase completion is blocked until Docker PostgreSQL validation proves migrations, consent checks, scoping tests, and audit writes.
+- Raw clinical media storage remains metadata-only. Phase completion was validated with Docker PostgreSQL migrations, seed, consent checks, scoping tests, lifecycle tests, observations, and session note persistence.
 
 ## Phase 4: Advisory Rule Engine And Clinical Preflight
 
 Objective: build the maternal safety envelope without turning rules into an overblocking gatekeeper.  
-Status: `not_started`  
+Status: `done`  
 Dependencies: Phase 3
 
 ### Subphases
 
-| ID   | Name                           | Status        | Expected output                                                                                                                     |
-| ---- | ------------------------------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 4.1  | Rule schema                    | `not_started` | Versioned YAML/JSON or database-backed rule definition shape.                                                                       |
-| 4.2  | Rule runner                    | `not_started` | Deterministic evaluator over structured observations, transcript candidates, and notes.                                             |
-| 4.3  | Rule result persistence        | `not_started` | `RuleResult` entity with severity, evidence, confidence, blocking level, and status.                                                |
-| 4.4  | Blocking policy implementation | `not_started` | Hard blocks only for consent, scope, authorization, unsafe write/export, and critical acknowledgement cases.                        |
-| 4.5  | Maternal safety rule family    | `not_started` | Initial rules for severe hypertension, bleeding, fetal movement, anemia, infection, urine values, history, and gestational context. |
-| 4.6  | Missing-field checks           | `not_started` | Missing context produces prompts/suggestions instead of global synthesis blocks.                                                    |
-| 4.7  | Contradiction checks           | `not_started` | Detect contradictions among manual inputs, transcript candidates, session notes, OCR, and media evidence.                           |
-| 4.8  | Preflight APIs                 | `not_started` | `POST /encounters/:encounterId/preflight` and internal rule evaluation hooks.                                                       |
-| 4.9  | Rule UI panel                  | `not_started` | Frontend displays deterministic rules separately from AI synthesis.                                                                 |
-| 4.10 | Rule tests                     | `not_started` | Unit tests for severity, blocking level, evidence references, and nonblocking missing fields.                                       |
+| ID   | Name                           | Status | Expected output                                                                                                                                    |
+| ---- | ------------------------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 4.1  | Rule schema                    | `done` | Versioned JSON rule definitions and shared rule enums/contracts are implemented.                                                                   |
+| 4.2  | Rule runner                    | `done` | Typed deterministic evaluator runs over structured observations, transcript candidates, and session notes.                                         |
+| 4.3  | Rule result persistence        | `done` | `RuleEvaluationRun` and `RuleResult` persist severity, evidence, confidence, blocking level, suggested action, and status.                         |
+| 4.4  | Blocking policy implementation | `done` | Rules are advisory-first; severe BP is `ack_required`, missing gestational age is `soft`, and hard blocks remain reserved for narrow safety gates. |
+| 4.5  | Maternal safety rule family    | `done` | Initial rules cover severe hypertension, bleeding, reduced fetal movement, anemia, fever/infection, abnormal urine, and gestational context.       |
+| 4.6  | Missing-field checks           | `done` | Missing gestational age produces a nonblocking missing-question style result.                                                                      |
+| 4.7  | Contradiction checks           | `done` | Basic session-note and gestational-age contradiction checks are implemented as advisory review findings.                                           |
+| 4.8  | Preflight APIs                 | `done` | `POST /encounters/:encounterId/preflight`, `GET /encounters/:encounterId/rule-results`, and `PATCH /rule-results/:id` exist.                       |
+| 4.9  | Rule UI panel                  | `done` | Frontend displays deterministic rule findings separately from ambient transcript and manual notes.                                                 |
+| 4.10 | Rule tests                     | `done` | Unit and API tests cover severe BP, missing gestational age, persistence, acknowledgement, and audit behavior.                                     |
 
 ### Deliverables
 
@@ -285,28 +285,28 @@ Dependencies: Phase 3
 
 ### Update Notes
 
-- Clinical thresholds must remain implementation placeholders until validated against local clinical guidance.
+- Clinical thresholds are implementation placeholders and are marked as requiring local guideline validation where relevant. Rule results are deterministic evidence for clinician review, not autonomous triage.
 
 ## Phase 5: Ambient Session, Audio, STT, And Diarization
 
 Objective: implement consented ambient session capture and editable two-person transcript turns.  
-Status: `not_started`  
+Status: `done`  
 Dependencies: Phase 4
 
 ### Subphases
 
-| ID   | Name                                      | Status        | Expected output                                                                        |
-| ---- | ----------------------------------------- | ------------- | -------------------------------------------------------------------------------------- |
-| 5.1  | Ambient session lifecycle                 | `not_started` | `AmbientSessionState` entity and start/stop APIs.                                      |
-| 5.2  | Audio event ingestion                     | `not_started` | Backend endpoint or stream boundary for audio/transcript events.                       |
-| 5.3  | Google STT integration boundary           | `not_started` | Provider adapter for Google Cloud Speech-to-Text with mockable interface.              |
-| 5.4  | Native diarization path                   | `not_started` | Two-speaker native STT diarization for supported English-centered model/region combos. |
-| 5.5  | Transcript turn persistence               | `not_started` | `TranscriptTurn` entity and APIs for list/create/update.                               |
-| 5.6  | Speaker role correction                   | `not_started` | Clinician-correctable speaker labels and role guesses.                                 |
-| 5.7  | Transcript clinical extraction candidates | `not_started` | Lightweight extraction of candidate facts, symptoms, questions, and danger signs.      |
-| 5.8  | Future multilingual diarization boundary  | `not_started` | Interface reserved for `gemini-flash-lite-latest` post-STT diarization.                |
-| 5.9  | Failure/degraded mode                     | `not_started` | Manual notes and structured observations remain usable when STT fails.                 |
-| 5.10 | Ambient transcript UI                     | `not_started` | Live transcript panel with timestamps, confidence, and corrections.                    |
+| ID   | Name                                      | Status | Expected output                                                                                                            |
+| ---- | ----------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------- |
+| 5.1  | Ambient session lifecycle                 | `done` | `AmbientSessionState` entity plus create, start, stop, and read APIs are implemented.                                      |
+| 5.2  | Audio event ingestion                     | `done` | Audio event ingestion endpoint stores `AudioSegment` rows and routes events through the STT boundary.                      |
+| 5.3  | Google STT integration boundary           | `done` | Mockable `SpeechToTextProvider` interface exists with mock and Google Cloud Speech adapters.                               |
+| 5.4  | Native diarization path                   | `done` | Word-level speaker tags map into two-person transcript turns by speaker, punctuation, and time gap.                        |
+| 5.5  | Transcript turn persistence               | `done` | `TranscriptTurn` model and list/create/update APIs are implemented.                                                        |
+| 5.6  | Speaker role correction                   | `done` | Clinicians can correct speaker label, role guess, and transcript text.                                                     |
+| 5.7  | Transcript clinical extraction candidates | `done` | Lightweight unverified candidates are extracted for symptoms, danger signs, medication, history, GA, plans, and questions. |
+| 5.8  | Future multilingual diarization boundary  | `done` | STT provider and diarization interfaces leave room for future `gemini-flash-lite-latest` post-processing.                  |
+| 5.9  | Failure/degraded mode                     | `done` | STT failures mark the ambient session failed while preserving manual notes and structured data.                            |
+| 5.10 | Ambient transcript UI                     | `done` | Encounter UI includes ambient controls, mock transcript submission, transcript list, confidence, and correction controls.  |
 
 ### Deliverables
 
@@ -334,7 +334,7 @@ Dependencies: Phase 4
 
 ### Update Notes
 
-- Do not depend on real Google STT in unit tests; use provider mocks and integration boundaries.
+- Real Google STT is configuration-gated behind `STT_PROVIDER=google`; tests use the mock provider and mocked normalized contracts. Browser microphone streaming remains deferred to a later real-time capture slice.
 
 ## Phase 6: Stateful Context Engineering And Gemini Orchestrator
 
@@ -346,7 +346,7 @@ Dependencies: Phase 5
 
 | ID   | Name                                    | Status        | Expected output                                                                                                                          |
 | ---- | --------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| 6.1  | Vertex AI runtime config                | `not_started` | Provider config for `GEMINI_PROVIDER=vertex_ai`, `GOOGLE_CLOUD_PROJECT`, and `GOOGLE_CLOUD_LOCATION=global`.                             |
+| 6.1  | Vertex AI runtime config                | `in_progress` | Provider config for `GEMINI_PROVIDER=vertex_ai`, `GOOGLE_CLOUD_PROJECT`, and `GOOGLE_CLOUD_LOCATION=global`.                             |
 | 6.2  | Gemini client adapter                   | `not_started` | Mockable adapter for `gemini-3.1-pro-preview` and structured output calls.                                                               |
 | 6.3  | Context snapshot entity                 | `not_started` | `ContextSnapshot` persistence with patient/pregnancy/encounter/session scope.                                                            |
 | 6.4  | Context builder                         | `not_started` | Builder assembles patient, pregnancy, transcript, session note, observations, rules, suggestions, memory, media, and artifact revisions. |

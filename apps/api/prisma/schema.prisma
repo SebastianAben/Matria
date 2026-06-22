@@ -66,8 +66,78 @@ enum ObservationVerificationStatus {
   rejected
 }
 
+enum RuleSeverity {
+  info
+  watch
+  warning
+  critical
+}
+
+enum RuleBlockingLevel {
+  none
+  soft
+  ack_required
+  hard
+}
+
+enum RuleResultStatus {
+  active
+  acknowledged
+  resolved
+  overridden
+  superseded
+}
+
+enum RuleActionType {
+  suggestion
+  missing_question
+  acknowledge
+  review
+  escalation_review
+}
+
+enum RuleEvaluationRunStatus {
+  completed
+  failed
+}
+
+enum AmbientSessionStatus {
+  initialized
+  consent_pending
+  listening
+  transcribing
+  diarizing
+  normalizing
+  closed
+  failed
+}
+
+enum TranscriptCorrectionStatus {
+  raw
+  auto_diarized
+  clinician_corrected
+  system_revised
+}
+
+enum SpeakerRoleGuess {
+  clinician
+  patient
+  companion
+  unknown
+}
+
+enum TranscriptClinicalCandidateType {
+  symptom_mention
+  danger_sign_mention
+  medication_mention
+  history_mention
+  gestational_age_mention
+  clinician_plan
+  unresolved_question
+}
+
 model User {
-  id           String     @id @default(uuid()) @db.Uuid
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email        String     @unique
   fullName     String
   passwordHash String
@@ -82,10 +152,13 @@ model User {
   encounters   Encounter[]            @relation("EncounterCreator")
   observations StructuredObservation[]
   sessionNotes SessionNote[]
+  ruleAcknowledgements RuleResult[] @relation("RuleAcknowledgementActor")
+  ambientSessions AmbientSessionState[] @relation("AmbientSessionCreator")
+  transcriptCorrections TranscriptTurn[] @relation("TranscriptCorrectionActor")
 }
 
 model Role {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   key         String   @unique
   name        String
   description String
@@ -97,7 +170,7 @@ model Role {
 }
 
 model Permission {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   key         String   @unique
   description String
   createdAt   DateTime @default(now())
@@ -128,7 +201,7 @@ model RolePermission {
 }
 
 model Session {
-  id        String   @id @default(uuid()) @db.Uuid
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tokenHash String   @unique
   userId    String   @db.Uuid
   expiresAt DateTime
@@ -139,7 +212,7 @@ model Session {
 }
 
 model AuditLog {
-  id         String       @id @default(uuid()) @db.Uuid
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   actorId    String?      @db.Uuid
   action     String
   targetType String
@@ -157,7 +230,7 @@ model AuditLog {
 }
 
 model Patient {
-  id             String   @id @default(uuid()) @db.Uuid
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   hospitalNumber String   @unique
   fullName       String
   dateOfBirth    DateTime?
@@ -173,7 +246,7 @@ model Patient {
 }
 
 model PregnancyEpisode {
-  id                  String   @id @default(uuid()) @db.Uuid
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   patientId           String   @db.Uuid
   label               String
   estimatedDueDate    DateTime?
@@ -189,7 +262,7 @@ model PregnancyEpisode {
 }
 
 model Encounter {
-  id                 String          @id @default(uuid()) @db.Uuid
+  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   patientId          String          @db.Uuid
   pregnancyEpisodeId String          @db.Uuid
   status             EncounterStatus @default(draft)
@@ -206,13 +279,16 @@ model Encounter {
   clinicalFiles ClinicalFile[]
   observations StructuredObservation[]
   sessionNote SessionNote?
+  ruleEvaluationRuns RuleEvaluationRun[]
+  ruleResults RuleResult[]
+  ambientSessions AmbientSessionState[]
 
   @@index([patientId])
   @@index([pregnancyEpisodeId])
 }
 
 model ConsentRecord {
-  id          String        @id @default(uuid()) @db.Uuid
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   encounterId String        @db.Uuid
   mode        ConsentMode
   status      ConsentStatus
@@ -226,7 +302,7 @@ model ConsentRecord {
 }
 
 model ClinicalFile {
-  id          String           @id @default(uuid()) @db.Uuid
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   encounterId String           @db.Uuid
   kind        ClinicalFileKind
   fileName    String
@@ -242,7 +318,7 @@ model ClinicalFile {
 }
 
 model StructuredObservation {
-  id                 String                        @id @default(uuid()) @db.Uuid
+  id                 String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   encounterId        String                        @db.Uuid
   type               ObservationType
   value              Json
@@ -259,7 +335,7 @@ model StructuredObservation {
 }
 
 model SessionNote {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   encounterId String   @unique @db.Uuid
   content     String   @default("")
   version     Int      @default(1)
@@ -271,3 +347,138 @@ model SessionNote {
   updatedBy User @relation(fields: [updatedById], references: [id])
 }
 
+model RuleEvaluationRun {
+  id             String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  encounterId    String                  @db.Uuid
+  triggeredById  String?                 @db.Uuid
+  status         RuleEvaluationRunStatus @default(completed)
+  metadata       Json?
+  createdAt      DateTime                @default(now())
+  completedAt    DateTime?
+
+  encounter Encounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  results   RuleResult[]
+
+  @@index([encounterId, createdAt])
+}
+
+model RuleResult {
+  id                            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  evaluationRunId               String?            @db.Uuid
+  encounterId                   String             @db.Uuid
+  ambientSessionId              String?            @db.Uuid
+  ruleId                        String
+  ruleVersion                   String
+  severity                      RuleSeverity
+  blockingLevel                 RuleBlockingLevel
+  actionType                    RuleActionType
+  evidence                      Json
+  sourceReferences              Json
+  confidence                    Float
+  suggestedAction               String
+  needsLocalGuidelineValidation Boolean            @default(false)
+  thresholdDescription          String?
+  status                        RuleResultStatus   @default(active)
+  acknowledgementNote           String?
+  acknowledgedAt                DateTime?
+  acknowledgedById              String?            @db.Uuid
+  createdAt                     DateTime           @default(now())
+  updatedAt                     DateTime           @updatedAt
+
+  evaluationRun  RuleEvaluationRun? @relation(fields: [evaluationRunId], references: [id], onDelete: SetNull)
+  encounter      Encounter          @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  ambientSession AmbientSessionState? @relation(fields: [ambientSessionId], references: [id], onDelete: SetNull)
+  acknowledgedBy User?              @relation("RuleAcknowledgementActor", fields: [acknowledgedById], references: [id], onDelete: SetNull)
+
+  @@index([encounterId, status])
+  @@index([ruleId, ruleVersion])
+}
+
+model AmbientSessionState {
+  id             String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  encounterId    String               @db.Uuid
+  status         AmbientSessionStatus @default(initialized)
+  stateVersion   Int                  @default(1)
+  provider       String               @default("mock")
+  providerState  Json?
+  startedAt      DateTime?
+  stoppedAt      DateTime?
+  failedAt       DateTime?
+  failureReason  String?
+  createdById    String               @db.Uuid
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  encounter Encounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  createdBy User @relation("AmbientSessionCreator", fields: [createdById], references: [id])
+  audioSegments AudioSegment[]
+  transcriptTurns TranscriptTurn[]
+  transcriptClinicalCandidates TranscriptClinicalCandidate[]
+  ruleResults RuleResult[]
+
+  @@index([encounterId, status])
+}
+
+model AudioSegment {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ambientSessionId String   @db.Uuid
+  sequence         Int
+  mimeType         String
+  durationMs       Int?
+  byteLength       Int?
+  storageUri       String?
+  transcriptText   String?
+  providerStatus   String?
+  createdAt        DateTime @default(now())
+
+  ambientSession AmbientSessionState @relation(fields: [ambientSessionId], references: [id], onDelete: Cascade)
+  transcriptTurns TranscriptTurn[]
+
+  @@unique([ambientSessionId, sequence])
+  @@index([ambientSessionId, createdAt])
+}
+
+model TranscriptTurn {
+  id                      String                     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ambientSessionId        String                     @db.Uuid
+  sourceAudioSegmentId    String?                    @db.Uuid
+  speakerLabel            String
+  speakerRoleGuess        SpeakerRoleGuess           @default(unknown)
+  roleConfidence          Float?
+  startTimeMs             Int
+  endTimeMs               Int
+  text                    String
+  languageCode            String                     @default("en-US")
+  sttConfidence           Float?
+  diarizationConfidence   Float?
+  correctionStatus        TranscriptCorrectionStatus @default(raw)
+  correctedById           String?                    @db.Uuid
+  correctedAt             DateTime?
+  createdAt               DateTime                   @default(now())
+  updatedAt               DateTime                   @updatedAt
+
+  ambientSession AmbientSessionState @relation(fields: [ambientSessionId], references: [id], onDelete: Cascade)
+  sourceAudioSegment AudioSegment? @relation(fields: [sourceAudioSegmentId], references: [id], onDelete: SetNull)
+  correctedBy User? @relation("TranscriptCorrectionActor", fields: [correctedById], references: [id], onDelete: SetNull)
+  clinicalCandidates TranscriptClinicalCandidate[]
+
+  @@index([ambientSessionId, startTimeMs])
+}
+
+model TranscriptClinicalCandidate {
+  id               String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ambientSessionId String                          @db.Uuid
+  transcriptTurnId String?                         @db.Uuid
+  candidateType    TranscriptClinicalCandidateType
+  text             String
+  value            Json?
+  sourceReferences Json
+  confidence       Float?
+  status           String                          @default("unverified")
+  createdAt        DateTime                        @default(now())
+
+  ambientSession AmbientSessionState @relation(fields: [ambientSessionId], references: [id], onDelete: Cascade)
+  transcriptTurn TranscriptTurn? @relation(fields: [transcriptTurnId], references: [id], onDelete: SetNull)
+
+  @@index([ambientSessionId, candidateType])
+}
