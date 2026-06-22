@@ -110,6 +110,7 @@ describe("Phase 6 Gemini orchestration", () => {
         patientId: scoped.patientId,
         pregnancyEpisodeId: scoped.pregnancyEpisodeId,
         content: "Prior ANC visit noted normal BP.",
+        dedupeKey: "prior-anc-normal-bp",
         sourceType: "test_seed",
         provenance: { approvedBy: user.id },
         createdById: user.id
@@ -121,6 +122,7 @@ describe("Phase 6 Gemini orchestration", () => {
         patientId: other.patientId,
         pregnancyEpisodeId: other.pregnancyEpisodeId,
         content: "This memory must not leak.",
+        dedupeKey: "other-memory-must-not-leak",
         sourceType: "test_seed",
         provenance: { approvedBy: user.id },
         createdById: user.id

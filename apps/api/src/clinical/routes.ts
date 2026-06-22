@@ -286,6 +286,11 @@ clinicalRouter.get(
       });
       return sendOk(req, res, {
         encounter,
+        consentRecords: encounter.consentRecords,
+        clinicalFiles: encounter.clinicalFiles,
+        observations: encounter.observations,
+        sessionNote: encounter.sessionNote,
+        ruleResults: encounter.ruleResults,
         ambientSession: encounter.ambientSessions[0] ?? null,
         recentActivity: auditLogs
       });

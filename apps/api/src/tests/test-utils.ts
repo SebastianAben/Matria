@@ -10,6 +10,7 @@ export async function resetDatabase() {
   await prisma.$executeRawUnsafe(`
     TRUNCATE TABLE
       "AuditLog",
+      "FhirExport",
       "ClinicalApproval",
       "GeneratedOutput",
       "MedicalEvidenceFinding",

@@ -341,7 +341,7 @@ async function runEvidenceHandoff(
         clinicianReviewRequired: true
       }
     });
-    const [updatedHandoff] = await Promise.all([
+    const [, updatedHandoff] = await Promise.all([
       syncGeneratedOutputForEvidenceFinding(finding.id),
       prisma.medicalEvidenceHandoff.update({
         where: { id: handoff.id },

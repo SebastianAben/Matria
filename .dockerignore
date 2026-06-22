@@ -1,0 +1,14 @@
+.git
+.next
+.local-data
+node_modules
+apps/*/node_modules
+packages/*/node_modules
+apps/web/.next
+apps/api/dist
+apps/web/out
+coverage
+playwright-report
+test-results
+.agent/phase8-screenshots
+.agent/phase8-screenshots-refined

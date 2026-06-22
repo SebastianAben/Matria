@@ -176,6 +176,63 @@ class MockGeminiProvider implements GeminiProvider {
           memoryReferences: [],
           medGemmaReferences: [],
           clinicianActionRequired: true
+        },
+        {
+          patchId: `mock-referral-${input.contextSnapshotId}`,
+          contextSnapshotId: input.contextSnapshotId,
+          artifactType: "referral_summary_draft",
+          operation: "create",
+          content: {
+            title: "Referral summary draft",
+            referralSummary: buildReferralText(context),
+            memoryCandidates: ["Referral context reviewed during this ANC encounter."]
+          },
+          sourceReferences,
+          confidence: sourceReferences.length > 0 ? 0.7 : 0.4,
+          uncertaintyReasons,
+          ruleResultReferences,
+          memoryReferences: (context.patientMemory ?? []).map((memory) => memory.id),
+          medGemmaReferences: [],
+          clinicianActionRequired: true
+        },
+        {
+          patchId: `mock-teleconsult-${input.contextSnapshotId}`,
+          contextSnapshotId: input.contextSnapshotId,
+          artifactType: "teleconsult_summary_draft",
+          operation: "create",
+          content: {
+            title: "Teleconsult summary draft",
+            teleconsultSummary: buildTeleconsultText(context),
+            memoryCandidates: ["Teleconsult context reviewed during this ANC encounter."]
+          },
+          sourceReferences,
+          confidence: sourceReferences.length > 0 ? 0.7 : 0.4,
+          uncertaintyReasons,
+          ruleResultReferences,
+          memoryReferences: (context.patientMemory ?? []).map((memory) => memory.id),
+          medGemmaReferences: [],
+          clinicianActionRequired: true
+        },
+        {
+          patchId: `mock-fhir-${input.contextSnapshotId}`,
+          contextSnapshotId: input.contextSnapshotId,
+          artifactType: "fhir_export_draft_inputs",
+          operation: "create",
+          content: {
+            title: "FHIR draft inputs",
+            summary: buildSummaryText(context),
+            exportReadiness: {
+              clinicianApprovalRequired: true,
+              liveSubmission: false
+            }
+          },
+          sourceReferences,
+          confidence: sourceReferences.length > 0 ? 0.68 : 0.35,
+          uncertaintyReasons,
+          ruleResultReferences,
+          memoryReferences: (context.patientMemory ?? []).map((memory) => memory.id),
+          medGemmaReferences: [],
+          clinicianActionRequired: true
         }
       ],
       safetyNotes: ["Mock synthesis output is a clinician-review draft."]
@@ -221,4 +278,28 @@ function buildSummaryText(context: {
       : "No clinician note content yet."
   ];
   return pieces.join(" ");
+}
+
+function buildReferralText(context: {
+  transcriptTurns?: Array<{ text: string }>;
+  observations?: Array<{ type: string }>;
+  sessionNote?: { content?: string } | null;
+}) {
+  return [
+    "Referral-ready ANC draft for clinician review.",
+    buildSummaryText(context),
+    "Use only after clinician approval; this is not a final order or triage decision."
+  ].join(" ");
+}
+
+function buildTeleconsultText(context: {
+  transcriptTurns?: Array<{ text: string }>;
+  observations?: Array<{ type: string }>;
+  sessionNote?: { content?: string } | null;
+}) {
+  return [
+    "Teleconsult ANC draft for specialist review.",
+    buildSummaryText(context),
+    "Use only after clinician approval; this is not autonomous clinical advice."
+  ].join(" ");
 }

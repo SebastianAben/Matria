@@ -16,5 +16,70 @@ services:
       timeout: 5s
       retries: 12
 
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: matria-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://matria:matria@postgres:5432/matria?schema=public
+      API_PORT: 4000
+      WEB_ORIGIN: http://localhost:3000
+      SESSION_COOKIE_NAME: matria_session
+      SESSION_SECRET: local-development-secret
+      ADMIN_EMAIL: admin@matriacare.site
+      ADMIN_PASSWORD: change-me-in-local-dev
+      GEMINI_PROVIDER: mock
+      GEMINI_PRIMARY_MODEL: gemini-3.1-pro-preview
+      GEMINI_DIARIZATION_MODEL: gemini-flash-lite-latest
+      GOOGLE_CLOUD_LOCATION: global
+      GOOGLE_GENAI_USE_ENTERPRISE: "True"
+      STT_PROVIDER: mock
+      GOOGLE_STT_LANGUAGE_CODE: en-US
+      GOOGLE_STT_MODEL: latest_long
+      GOOGLE_STT_ENABLE_DIARIZATION: "true"
+      GOOGLE_STT_SPEAKER_COUNT: 2
+      MEDICAL_EVIDENCE_PROVIDER: mock
+      MEDICAL_EVIDENCE_MODEL: gemini-3.5-flash
+      CLINICAL_FILE_STORAGE_PROVIDER: local
+      CLINICAL_FILE_STORAGE_DIR: /app/.local-data/clinical-files
+      CLINICAL_FILE_MAX_BYTES: 26214400
+      MEDIA_FRAME_SAMPLE_INTERVAL_SECONDS: 5
+      MEDIA_FRAME_MAX_SAMPLES: 12
+    ports:
+      - "4000:4000"
+    volumes:
+      - .:/app
+      - matria-node-modules:/app/node_modules
+      - matria-local-data:/app/.local-data
+    command: >
+      sh -c "pnpm --filter @matria/api prisma:generate &&
+             pnpm --filter @matria/api prisma:migrate &&
+             pnpm --filter @matria/api seed &&
+             pnpm --filter @matria/api dev"
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: matria-web
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - matria-node-modules:/app/node_modules
+    command: pnpm --filter @matria/web dev --hostname 0.0.0.0 --port 3000
+
 volumes:
   matria-postgres-data:
+  matria-node-modules:
+  matria-local-data:

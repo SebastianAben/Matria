@@ -7,79 +7,80 @@ Purpose: stable handoff for the latest substantive Matria task/session
 
 ## Current Objective
 
-Phase 8 frontend implementation from the six supplied reference images is complete, including the intentional pull-forward of generated-output review persistence and a final image-to-code fidelity pass against every reference image.
+Phase 9 implementation is complete: approved generated outputs can now be written to durable patient memory, approved referral or teleconsult summaries can generate export-ready FHIR R4 document bundles, and the local app runs through Docker Compose with Postgres, API, and web services.
 
 ## Current Phase
 
-- Phase: 9 - Memory, FHIR, And Referral Outputs
-- Subphase: 9.4 - Durable memory writeback
-- Status: Phase 8 implementation complete; Phase 9 not started
+- Phase: 10 - CI And Hosted Runtime Preparation
+- Subphase: 10.1 - CI workflow
+- Status: Phase 9 implemented, verified, and running locally through Docker Compose
 
 ## Files Changed This Session
 
-- Frontend: `apps/web/app/globals.css`, `apps/web/app/layout.tsx`, `apps/web/app/page.tsx`, `apps/web/app/login/page.tsx`, `apps/web/app/patients/page.tsx`, `apps/web/app/workspace/page.tsx`, `apps/web/app/workspace/setup/page.tsx`, `apps/web/app/review/page.tsx`, `apps/web/app/admin/page.tsx`, `apps/web/app/audit/page.tsx`, `apps/web/app/components/clinical-ui.tsx`, `apps/web/app/components/demo-data.ts`
-- Frontend dependency: `apps/web/package.json`, `pnpm-lock.yaml`
-- Backend: `apps/api/prisma/schema.prisma`, `apps/api/prisma/migrations/20260622140000_phase8_frontend_approvals/migration.sql`, `apps/api/src/app.ts`, `apps/api/src/admin/routes.ts`, `apps/api/src/audit/routes.ts`, `apps/api/src/clinical/routes.ts`, `apps/api/src/outputs/routes.ts`, `apps/api/src/ai/orchestrator.ts`, `apps/api/src/ai/context-builder.ts`, `apps/api/src/evidence/routes.ts`
-- Shared: `packages/shared/src/index.ts`
-- Tests: `apps/e2e/tests/smoke.spec.ts`, `apps/api/src/tests/test-utils.ts`, `apps/api/src/tests/phase8-frontend-support.test.ts`
-- Docs: `.agent/PRD.md`, `.agent/implementationPhases.md`, `.agent/sessionHandoff.md`, `docs/adr/0007-reference-image-frontend-and-approval-pull-forward.md`
+- Backend schema/migration: `apps/api/prisma/schema.prisma`, `apps/api/prisma/migrations/20260622170000_phase9_memory_fhir_export/migration.sql`
+- Backend routes/services: `apps/api/src/app.ts`, `apps/api/src/outputs/phase9-routes.ts`, `apps/api/src/ai/gemini-provider.ts`, `apps/api/src/clinical/routes.ts`, `apps/api/src/evidence/routes.ts`
+- Shared contracts: `packages/shared/src/index.ts`
+- Tests: `apps/api/src/tests/phase9-memory-fhir.test.ts`, `apps/api/src/tests/test-utils.ts`, `apps/api/src/tests/ai.test.ts`
+- Frontend: `apps/web/app/review/page.tsx`, `apps/web/app/globals.css`
+- Local runtime: `docker-compose.yml`, `Dockerfile.dev`, `.dockerignore`
+- Docs: `.agent/implementationPhases.md`, `.agent/sessionHandoff.md`, `docs/adr/0008-approved-memory-and-fhir-export.md`
 
 ## Completed Work
 
-- Rebuilt the web app around a shared clinical shell matching the six reference screens.
-- Implemented `/patients`, `/workspace/setup`, `/workspace`, `/review`, `/admin`, and `/audit` with hybrid demo/live behavior.
-- Completed a second exact-reference pass using the `image-to-code` workflow:
-  - aligned sidebar navigation to the reference order and labels
-  - moved route titles into the top bar
-  - compressed panel, table, button, typography, and grid density to better match the 1586x992 reference boards
-  - reworked `/patients` with selected-patient identity, state examples, and duplicate review surfaces
-  - reworked `/workspace` into the reference dashboard grid with patient facts, ambient controls, transcript, observations, rules, note, and activity in one board
-  - reworked `/review` into the reference three-column intelligence board with highlight cards, evidence, suggestions, source trace, review queues, closeout actions, and blockers
-  - replaced the admin metric row with the reference alert/action strip
-- Kept `/login` functional and redirected `/` to `/workspace`.
-- Added `lucide-react` for icon fidelity.
-- Added generated-output and clinical approval persistence models and migration.
-- Added generated-output review routes for approve, edit, reject, and mark uncertain.
-- Added audit log filtering, patient encounter list, encounter workspace-state aggregate, admin system health, and admin user patch routes.
-- Synced reviewable AI artifacts and medical evidence findings into generated outputs.
-- Included generated output review state in context snapshots.
-- Added API tests for the new Phase 8 support routes and approval behavior.
-- Updated Playwright smoke tests for the six critical reference pages and tablet width.
-- Captured final reference-viewport screenshots at 1586x992 in `.agent/phase8-screenshots-refined/`.
+- Added `FhirExportKind`, `FhirExportStatus`, `FhirExport`, and `PatientMemoryFact.dedupeKey`.
+- Added memory writeback from approved or edited `GeneratedOutput.canonicalContent` only.
+- Added memory deduplication by patient, pregnancy episode, and normalized content hash.
+- Added FHIR export routes for referral and teleconsult summaries.
+- Generated persisted FHIR R4 document bundles with `Composition` first, Patient, Encounter, Practitioner, Observation, ServiceRequest, and Provenance resources.
+- Enforced FHIR export gates for `fhir:export` permission, `fhir_export` consent, gestational context, source-output approval, source scope, and critical acknowledgement-required rules.
+- Added top-level workspace-state aggregates expected by the frontend support contract.
+- Fixed medical evidence handoff response ordering so provider runs return the updated handoff instead of the generated-output sync result.
+- Expanded mock Gemini synthesis to produce referral summary, teleconsult summary, and FHIR draft-input generated outputs.
+- Added review-page controls for memory writeback, referral FHIR export, teleconsult FHIR export, and export JSON preview.
+- Added dev Docker Compose services for Postgres, API, and web using mock providers.
 
 ## Decisions Made
 
-- The six images in `.agent/design-reference-images/` are the visual source of truth for Phase 8.
-- Reference pages can render with realistic demo fixtures when no live API/database context is selected.
-- Refined screenshots in `.agent/phase8-screenshots-refined/` are the current visual QA artifacts for comparing implementation against the supplied images.
-- Approval/rejection persistence moved from Phase 9 into Phase 8.
-- Durable memory writeback, referral/teleconsult finalization, FHIR generation, FHIR provenance, export, and live SATUSEHAT/external submission remain deferred.
+- Phase 9 consumes Phase 8 generated-output review state rather than creating a parallel approval system.
+- Only `approved` and `edited` generated outputs can feed memory or FHIR export.
+- Rejected, uncertain, review-required, draft, and stale outputs remain audit-visible but are excluded from memory and export.
+- FHIR export is export-ready only; no SATUSEHAT or external FHIR submission is implemented.
+- Local Compose app runtime is intentionally dev-oriented and separate from future Phase 10 production Dockerfiles.
 
 ## Blockers And Open Questions
 
-- DB-backed API tests could not run because the local PostgreSQL test database at `localhost:54329` was not reachable.
-- No product questions are open.
+- No product blockers are open.
+- Production Dockerfiles, hosted Caddy config, CI, and deployment scripts remain Phase 10.
 
 ## Next Recommended Action
 
-Start Phase 9 from approved or clinician-edited generated outputs:
+Begin Phase 10:
 
-1. Implement durable patient memory writeback from approved generated outputs.
-2. Add deduplication and patient/pregnancy scoping tests.
-3. Finalize referral/teleconsult generation and FHIR R4 export artifacts from approved content only.
+1. Add CI for install, format, lint, typecheck, tests, build, E2E, and Compose config/build checks.
+2. Add production Dockerfiles and hosted Compose/Caddy runtime artifacts.
+3. Recreate deployment/environment docs only when hosted runtime work begins.
 
 ## Tests And Checks Run
 
 - `pnpm --filter @matria/api prisma:generate`
 - `pnpm --filter @matria/api typecheck`
 - `pnpm --filter @matria/web typecheck`
-- `pnpm --filter @matria/e2e typecheck`
-- `pnpm --filter @matria/web build`
+- `pnpm --filter @matria/shared typecheck`
 - `pnpm lint`
+- `pnpm typecheck`
+- `pnpm build`
+- `docker compose config`
+- `docker compose up --build -d postgres api web`
+- `curl http://localhost:4000/health`
+- `curl http://localhost:4000/ready`
+- `curl -I http://localhost:3000/review`
+- `pnpm --filter @matria/api test`
+- `pnpm test`
 - `pnpm e2e`
-- Playwright screenshots captured for all six Phase 8 pages at desktop and tablet sizes in `.agent/phase8-screenshots/`
-- Final exact-reference viewport screenshots captured for all six pages in `.agent/phase8-screenshots-refined/`
 
-## Tests Blocked
+## Runtime State
 
-- `pnpm --filter @matria/api test -- phase8-frontend-support` attempted to run the API suite but failed before tests executed because PostgreSQL was unavailable at `localhost:54329`.
+- Docker Compose is intentionally still running for user inspection.
+- Web: `http://localhost:3000`
+- API: `http://localhost:4000`
+- Postgres: `localhost:54329`

@@ -12,6 +12,7 @@ import { prisma } from "./db/prisma.js";
 import { evidenceRouter } from "./evidence/routes.js";
 import { clinicalRouter } from "./clinical/routes.js";
 import { outputsRouter } from "./outputs/routes.js";
+import { phase9OutputsRouter } from "./outputs/phase9-routes.js";
 import { requestContext } from "./http/request-context.js";
 import { errorHandler, notFoundHandler, sendOk } from "./http/responses.js";
 import { rulesRouter } from "./rules/routes.js";
@@ -64,6 +65,7 @@ export function createApp() {
   app.use("/", aiRouter);
   app.use("/", evidenceRouter);
   app.use("/", outputsRouter);
+  app.use("/", phase9OutputsRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

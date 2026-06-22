@@ -184,6 +184,8 @@ export const clinicalApprovalActions = [
   "mark_uncertain",
   "acknowledge"
 ] as const;
+export const fhirExportKinds = ["referral", "teleconsult"] as const;
+export const fhirExportStatuses = ["generated", "failed"] as const;
 export const medicalEvidenceProviders = ["mock", "gemini_flash", "ollama_medgemma"] as const;
 export const clinicalFileStorageProviders = ["local"] as const;
 export const medicalEvidenceTaskTypes = [
@@ -245,6 +247,8 @@ export type SuggestionStatus = (typeof suggestionStatuses)[number];
 export type GeneratedOutputType = (typeof generatedOutputTypes)[number];
 export type GeneratedOutputStatus = (typeof generatedOutputStatuses)[number];
 export type ClinicalApprovalAction = (typeof clinicalApprovalActions)[number];
+export type FhirExportKind = (typeof fhirExportKinds)[number];
+export type FhirExportStatus = (typeof fhirExportStatuses)[number];
 export type MedicalEvidenceProvider = (typeof medicalEvidenceProviders)[number];
 export type ClinicalFileStorageProvider = (typeof clinicalFileStorageProviders)[number];
 export type MedicalEvidenceTaskType = (typeof medicalEvidenceTaskTypes)[number];
@@ -495,6 +499,17 @@ export const generatedOutputEditSchema = z.object({
   editedContent: z
     .record(z.string(), z.unknown())
     .refine((value) => Object.keys(value).length > 0, "editedContent is required")
+});
+
+export const memoryWritebackSchema = z.object({
+  sourceOutputIds: z.array(z.string().uuid()).max(25).optional()
+});
+
+export const fhirExportCreateSchema = z.object({
+  exportKind: z.enum(fhirExportKinds),
+  sourceOutputId: z.string().uuid().optional(),
+  destinationLabel: z.string().max(200).optional(),
+  note: z.string().max(2000).optional()
 });
 
 export const synthesisTickCreateSchema = z.object({
