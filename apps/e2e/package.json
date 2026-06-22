@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "playwright test",
+    "test": "GEMINI_PROVIDER=mock STT_PROVIDER=mock MEDICAL_EVIDENCE_PROVIDER=mock pnpm --filter @matria/api seed && playwright test",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "echo e2e-build-ok"
   },

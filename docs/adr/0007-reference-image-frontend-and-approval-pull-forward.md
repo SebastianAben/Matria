@@ -1,7 +1,9 @@
 # ADR 0007: Reference Image Frontend And Approval Pull-forward
 
-Status: Accepted
+Status: Accepted  
 Date: 2026-06-22
+
+Supersession note: ADR 0009 supersedes the Phase 8 demo fallback runtime behavior. Reference-image layout decisions remain valid, but product pages must now use backend data only.
 
 ## Context
 

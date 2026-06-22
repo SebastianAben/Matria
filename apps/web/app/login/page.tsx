@@ -1,13 +1,15 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { LogIn } from "lucide-react";
 import { apiRequest } from "../../lib/api";
 import { ActionButton, Field } from "../components/clinical-ui";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("admin@matriacare.site");
-  const [password, setPassword] = useState("change-me-in-local-dev");
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [message, setMessage] = useState("Use an authorized clinical or admin account.");
 
   async function onSubmit(event: FormEvent) {
@@ -17,7 +19,12 @@ export default function LoginPage() {
       method: "POST",
       body: JSON.stringify({ email, password })
     });
-    setMessage(response.success ? `Signed in as ${response.data.user.email}` : response.error.message);
+    if (response.success) {
+      setMessage(`Signed in as ${response.data.user.email}`);
+      router.push("/patients");
+      return;
+    }
+    setMessage(response.error.message);
   }
 
   return (

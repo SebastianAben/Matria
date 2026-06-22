@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   Bell,
@@ -17,7 +18,17 @@ import {
   UserRound,
   UsersRound
 } from "lucide-react";
-import { patient, encounter } from "./demo-data";
+import { apiRequest } from "../../lib/api";
+import {
+  formatDate,
+  hasPermission,
+  initials,
+  scopedHref,
+  type EncounterRecord,
+  type PatientRecord,
+  type PregnancyEpisode,
+  type UserSession
+} from "../../lib/clinical-api";
 
 type Tone = "default" | "teal" | "green" | "amber" | "red" | "blue" | "gray";
 
@@ -42,6 +53,26 @@ const routeTitles: Record<string, string> = {
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLogin = pathname === "/login";
+  const [session, setSession] = useState<UserSession | null>(null);
+  const [scopeSearch, setScopeSearch] = useState("");
+
+  useEffect(() => {
+    setScopeSearch(window.location.search);
+    if (isLogin) return;
+    void apiRequest<{ user: UserSession | null }>("/auth/session").then((response) => {
+      setSession(response.success ? response.data.user : null);
+    });
+  }, [isLogin, pathname]);
+
+  async function signOut() {
+    await apiRequest("/auth/logout", { method: "POST" });
+    window.location.href = "/login";
+  }
+
+  const scopedNavItems = useMemo(() => {
+    const params = new URLSearchParams(scopeSearch);
+    return navItems.map((item) => ({ ...item, href: scopedHref(item.href, params) }));
+  }, [scopeSearch]);
 
   if (isLogin) {
     return <main className="login-canvas">{children}</main>;
@@ -50,19 +81,20 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
   return (
     <div className="clinical-shell">
       <aside className="side-rail">
-        <Link className="brand-mark" href="/workspace" aria-label="Matria workspace">
+        <Link className="brand-mark" href="/patients" aria-label="Matria workspace">
           <span className="brand-symbol">M</span>
           <span>Matria</span>
         </Link>
         <nav className="side-nav" aria-label="Primary navigation">
-          {navItems.map((item) => {
+          {scopedNavItems.map((item) => {
             const Icon = item.icon;
-            const exactActive = pathname === item.href && !(pathname === "/workspace/setup" && item.label === "Home");
+            const baseHref = item.href.split("?")[0];
+            const exactActive = pathname === baseHref && !(pathname === "/workspace/setup" && item.label === "Home");
             const active =
               exactActive ||
               (pathname === "/patients" && item.label === "Patients") ||
               (pathname === "/workspace/setup" && item.label === "Patients") ||
-              (item.href !== "/workspace" && pathname.startsWith(`${item.href}/`));
+              (baseHref !== "/workspace" && pathname.startsWith(`${baseHref}/`));
             return (
               <Link key={item.href} className={active ? "active" : ""} href={item.href}>
                 <Icon size={17} strokeWidth={2} />
@@ -72,10 +104,10 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
           })}
         </nav>
         <div className="rail-footer">
-          <Link href="/login">
+          <button type="button" onClick={signOut}>
             <LogOut size={16} />
             <span>Sign out</span>
-          </Link>
+          </button>
         </div>
       </aside>
       <div className="app-frame">
@@ -88,15 +120,14 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
           <div className="top-cluster">
             <button className="icon-button" aria-label="Notifications">
               <Bell size={17} />
-              <span className="notify-dot" />
             </button>
             <div className="facility-chip">
               <ShieldCheck size={16} />
-              <span>RSIA Melati</span>
+              <span>{hasPermission(session, "system:config") ? "Operations" : "Clinical"}</span>
             </div>
             <div className="user-chip">
-              <span className="avatar">HK</span>
-              <span>Dr. Hana</span>
+              <span className="avatar">{initials(session?.fullName)}</span>
+              <span>{session?.fullName ?? "Not signed in"}</span>
             </div>
           </div>
         </header>
@@ -242,26 +273,43 @@ export function StatTile({ label, value, detail, icon }: { label: string; value:
   );
 }
 
-export function PatientContextBar({ mode = "active" }: { mode?: "active" | "review" | "audit" }) {
+export function PatientContextBar({
+  mode = "active",
+  patient,
+  pregnancyEpisode,
+  encounter,
+  unresolvedCount = 0
+}: {
+  mode?: "active" | "review" | "audit";
+  patient: PatientRecord;
+  pregnancyEpisode: PregnancyEpisode;
+  encounter: EncounterRecord;
+  unresolvedCount?: number;
+}) {
   return (
     <div className="patient-context">
-      <div className="patient-avatar">{patient.initials}</div>
+      <div className="patient-avatar">{initials(patient.fullName)}</div>
       <div className="patient-main">
         <div>
           <strong>{patient.fullName}</strong>
         </div>
-        <p>{patient.mrn}</p>
-        <p>1992-06-14 ({patient.age})</p>
+        <p>MRN {patient.hospitalNumber}</p>
+        <p>DOB {formatDate(patient.dateOfBirth)}</p>
       </div>
-      <ContextFact label="Episode" value="Episode 02" detail="Active" tone="green" />
-      <ContextFact label="Gestational Age" value="28w 4d" detail="EDD 2025-08-05" />
-      <ContextFact label="Encounter" value={encounter.visitType} detail={mode === "review" ? "Reviewing" : "Active"} tone={mode === "review" ? "blue" : "green"} />
+      <ContextFact label="Episode" value={pregnancyEpisode.label} detail={pregnancyEpisode.status} tone={pregnancyEpisode.status === "active" ? "green" : "gray"} />
+      <ContextFact
+        label="Gestational Age"
+        value={pregnancyEpisode.gestationalAgeWeeks == null ? "Missing" : `${pregnancyEpisode.gestationalAgeWeeks}w`}
+        detail={`EDD ${formatDate(pregnancyEpisode.estimatedDueDate)}`}
+        tone={pregnancyEpisode.gestationalAgeWeeks == null ? "amber" : undefined}
+      />
+      <ContextFact label="Encounter" value={encounter.status} detail={mode === "review" ? "Review" : "Workspace"} tone={mode === "review" ? "blue" : encounter.status === "active" ? "green" : "amber"} />
       <ContextFact label="Visit Type" value={encounter.visitType} detail="" />
-      <ContextFact label="Facility / Location" value={patient.clinic} detail="RSIA Melati" />
-      <ContextFact label={mode === "audit" ? "Encounter State" : "Unresolved Items"} value={mode === "audit" ? "Completed" : "7"} detail="" tone={mode === "audit" ? "blue" : "amber"} />
+      <ContextFact label="Facility / Location" value={encounter.facilityName ?? "Not recorded"} detail="" />
+      <ContextFact label={mode === "audit" ? "Encounter State" : "Unresolved Items"} value={mode === "audit" ? encounter.status : String(unresolvedCount)} detail="" tone={mode === "audit" ? "blue" : unresolvedCount > 0 ? "amber" : "green"} />
       <div className="patient-status">
         <Badge tone={mode === "audit" ? "blue" : mode === "review" ? "amber" : "green"}>
-          {mode === "audit" ? "Audit Open" : mode === "review" ? "Review Required" : "Live"}
+          {mode === "audit" ? "Audit Open" : mode === "review" ? "Review" : encounter.status}
         </Badge>
       </div>
     </div>

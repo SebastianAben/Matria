@@ -107,7 +107,8 @@ button {
 }
 
 .side-nav a,
-.rail-footer a {
+.rail-footer a,
+.rail-footer button {
   min-height: 42px;
   display: grid;
   grid-template-columns: 20px 1fr;
@@ -123,10 +124,17 @@ button {
 
 .side-nav a.active,
 .side-nav a:hover,
-.rail-footer a:hover {
+.rail-footer a:hover,
+.rail-footer button:hover {
   color: var(--teal-dark);
   background: var(--surface-tint);
   border-color: #c9e9e4;
+}
+
+.rail-footer button {
+  width: 100%;
+  text-align: left;
+  background: transparent;
 }
 
 .app-frame {
@@ -258,10 +266,6 @@ button {
   justify-content: space-between;
   gap: 18px;
   margin-bottom: 10px;
-}
-
-.screen:not(.patients-screen) > .page-header {
-  display: none;
 }
 
 .page-header h1 {

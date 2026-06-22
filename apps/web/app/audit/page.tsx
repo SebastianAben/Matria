@@ -1,11 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { Download, Filter, Search } from "lucide-react";
+import { FormEvent, useEffect, useState } from "react";
+import { Download, Filter, Loader2, Search } from "lucide-react";
+import { apiRequest } from "../../lib/api";
+import {
+  formatDateTime,
+  formatJsonPreview,
+  type AuditLog,
+  type WorkspaceState
+} from "../../lib/clinical-api";
 import {
   ActionButton,
   Badge,
   DataTable,
+  EmptyState,
   Field,
   KeyValueList,
   PageHeader,
@@ -13,116 +21,166 @@ import {
   PatientContextBar,
   Timeline
 } from "../components/clinical-ui";
-import { auditEvents } from "../components/demo-data";
 
 export default function AuditPage() {
-  const fallbackEvent: [string, string, string, string, string, string] = [
-    "2025-05-08 10:15:22",
-    "System (AI)",
-    "AI Synthesis Call",
-    "Session Note",
-    "Success",
-    "Generated updated session note from transcript and observations."
-  ];
-  const [selected, setSelected] = useState(auditEvents[0] ?? fallbackEvent);
+  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [selectedLogId, setSelectedLogId] = useState("");
+  const [workspace, setWorkspace] = useState<WorkspaceState | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("Read-only audit review loaded from the backend.");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    void loadAudit(params);
+    const encounterId = params.get("encounterId");
+    if (encounterId) {
+      void apiRequest<WorkspaceState>(`/encounters/${encounterId}/workspace-state`).then((response) => {
+        if (response.success) setWorkspace(response.data);
+      });
+    }
+  }, []);
+
+  async function loadAudit(params: URLSearchParams) {
+    setLoading(true);
+    const query = new URLSearchParams();
+    for (const key of ["actorId", "action", "targetType", "targetId", "outcome", "requestId", "from", "to"]) {
+      const value = params.get(key);
+      if (value) query.set(key, value);
+    }
+    const response = await apiRequest<{ auditLogs: AuditLog[] }>(
+      `/audit-logs${query.toString() ? `?${query.toString()}` : ""}`
+    );
+    if (!response.success) {
+      setMessage(response.error.message);
+      setLoading(false);
+      return;
+    }
+    setLogs(response.data.auditLogs);
+    setSelectedLogId(response.data.auditLogs[0]?.id ?? "");
+    setMessage(`${response.data.auditLogs.length} backend audit event(s) loaded.`);
+    setLoading(false);
+  }
+
+  async function applyFilters(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const params = new URLSearchParams();
+    for (const key of ["action", "targetType", "targetId", "outcome", "requestId"]) {
+      const value = String(form.get(key) ?? "").trim();
+      if (value) params.set(key, value);
+    }
+    window.history.replaceState(null, "", params.toString() ? `/audit?${params}` : "/audit");
+    await loadAudit(params);
+  }
+
+  const selected = logs.find((log) => log.id === selectedLogId) ?? logs[0] ?? null;
+  const successCount = logs.filter((log) => log.outcome === "success").length;
+  const failureCount = logs.filter((log) => log.outcome !== "success").length;
 
   return (
     <main className="screen">
       <PageHeader
         eyebrow="Governance"
         title="Audit / Encounter Audit Trail"
-        description="Read-only audit review across encounter, generated outputs, rule evaluations, and clinician decisions."
+        description={message}
         actions={
           <>
             <ActionButton tone="secondary">
               <Download size={15} />
               Export CSV
             </ActionButton>
-            <ActionButton>
+            <ActionButton onClick={() => loadAudit(new URLSearchParams(window.location.search))}>
               <Filter size={15} />
-              Apply filters
+              Refresh
             </ActionButton>
           </>
         }
       />
 
       <div className="clinical-grid">
-        <PatientContextBar mode="audit" />
+        {workspace ? (
+          <PatientContextBar
+            mode="audit"
+            patient={workspace.encounter.patient}
+            pregnancyEpisode={workspace.encounter.pregnancyEpisode}
+            encounter={workspace.encounter}
+          />
+        ) : null}
 
-        <Panel title="Audit Filters" subtitle="Filter by date, actor, action, target, outcome, or trace ID.">
-          <div className="filters-row">
-            <Field label="Search">
-              <input defaultValue="ANC 281904" />
+        <Panel title="Audit Filters" subtitle="Filter backend audit logs by action, target, outcome, or request ID.">
+          <form className="filters-row" onSubmit={applyFilters}>
+            <Field label="Action">
+              <input name="action" placeholder="generated_output.approve" />
             </Field>
-            <Field label="Actor">
-              <select defaultValue="all">
-                <option value="all">All actors</option>
-                <option value="clinician">Clinicians</option>
-                <option value="system">System</option>
-              </select>
+            <Field label="Target type">
+              <input name="targetType" placeholder="encounter" />
+            </Field>
+            <Field label="Target ID">
+              <input name="targetId" />
             </Field>
             <Field label="Outcome">
-              <select defaultValue="all">
-                <option value="all">All outcomes</option>
+              <select name="outcome" defaultValue="">
+                <option value="">All outcomes</option>
                 <option value="success">Success</option>
-                <option value="acknowledged">Acknowledged</option>
+                <option value="failure">Failure</option>
                 <option value="denied">Denied</option>
               </select>
             </Field>
-            <Field label="Trace ID">
-              <input defaultValue="req_10-15-22" />
+            <Field label="Request ID">
+              <input name="requestId" />
             </Field>
-            <ActionButton>
+            <ActionButton type="submit">
               <Search size={15} />
               Search
             </ActionButton>
-          </div>
+          </form>
         </Panel>
 
         <div className="clinical-grid grid-main-aside">
           <div className="clinical-grid">
-            <Panel title="Audit Events" subtitle="Every review decision remains visible, including rejected outputs.">
-              <DataTable
-                columns={["Timestamp", "Actor", "Action", "Target", "Outcome", "Detail"]}
-                rows={auditEvents}
-                renderCell={(cell, index, rowIndex) => {
-                  if (index === 0) {
-                    return (
-                      <button type="button" className="action-button ghost" onClick={() => setSelected(auditEvents[rowIndex] ?? fallbackEvent)}>
-                        {cell}
-                      </button>
-                    );
-                  }
-                  if (index === 4) {
-                    const tone = cell === "Success" ? "green" : cell === "Acknowledged" ? "blue" : "amber";
-                    return <Badge tone={tone}>{cell}</Badge>;
-                  }
-                  return cell;
-                }}
-              />
+            <Panel title="Audit Events" subtitle="Only persisted backend events are shown.">
+              {loading ? (
+                <EmptyState title="Loading audit" description="Audit events are loading from the API." action={<Loader2 size={20} />} />
+              ) : logs.length === 0 ? (
+                <EmptyState title="No audit events" description="No backend events matched the current filters." />
+              ) : (
+                <DataTable
+                  columns={["Timestamp", "Actor", "Action", "Target", "Outcome", "Request ID"]}
+                  rows={logs.map((log) => [
+                    <button key={log.id} type="button" className="action-button ghost" onClick={() => setSelectedLogId(log.id)}>
+                      {formatDateTime(log.createdAt)}
+                    </button>,
+                    log.actor?.fullName ?? log.actor?.email ?? log.actorId ?? "System",
+                    log.action,
+                    `${log.targetType}${log.targetId ? ` · ${log.targetId}` : ""}`,
+                    <Badge key={`${log.id}-outcome`} tone={log.outcome === "success" ? "green" : log.outcome === "denied" ? "red" : "amber"}>{log.outcome}</Badge>,
+                    log.requestId
+                  ])}
+                />
+              )}
             </Panel>
 
             <Panel title="Outcome Summary">
               <div className="stat-row">
                 <div className="stat-tile">
                   <span>Total events</span>
-                  <strong>248</strong>
-                  <small>Current encounter</small>
-                </div>
-                <div className="stat-tile">
-                  <span>Clinical edits</span>
-                  <strong>17</strong>
-                  <small>Note and transcript</small>
-                </div>
-                <div className="stat-tile">
-                  <span>AI actions</span>
-                  <strong>12</strong>
-                  <small>Synthesis and evidence</small>
-                </div>
-                <div className="stat-tile">
-                  <span>Denied</span>
-                  <strong>0</strong>
+                  <strong>{logs.length}</strong>
                   <small>Current filter</small>
+                </div>
+                <div className="stat-tile">
+                  <span>Success</span>
+                  <strong>{successCount}</strong>
+                  <small>Persisted writes/reads</small>
+                </div>
+                <div className="stat-tile">
+                  <span>Failure/denied</span>
+                  <strong>{failureCount}</strong>
+                  <small>Backend outcomes</small>
+                </div>
+                <div className="stat-tile">
+                  <span>Encounter</span>
+                  <strong>{workspace ? "Scoped" : "Global"}</strong>
+                  <small>Current view</small>
                 </div>
               </div>
             </Panel>
@@ -130,60 +188,46 @@ export default function AuditPage() {
 
           <div className="clinical-grid">
             <Panel title="Event Detail">
-              <KeyValueList
-                items={[
-                  ["Timestamp", selected[0]],
-                  ["Actor", selected[1]],
-                  ["Action", selected[2]],
-                  ["Target", selected[3]],
-                  ["Outcome", <Badge tone={selected[4] === "Success" ? "green" : "blue"}>{selected[4]}</Badge>],
-                  ["Trace ID", "req_10-15-22"],
-                  ["Request", "workspace-state / generated-output-review"]
-                ]}
-              />
+              {selected ? (
+                <KeyValueList
+                  items={[
+                    ["Timestamp", formatDateTime(selected.createdAt)],
+                    ["Actor", selected.actor?.fullName ?? selected.actor?.email ?? selected.actorId ?? "System"],
+                    ["Action", selected.action],
+                    ["Target", `${selected.targetType}${selected.targetId ? ` · ${selected.targetId}` : ""}`],
+                    ["Outcome", <Badge key="outcome" tone={selected.outcome === "success" ? "green" : selected.outcome === "denied" ? "red" : "amber"}>{selected.outcome}</Badge>],
+                    ["Request ID", selected.requestId],
+                    ["Metadata", formatJsonPreview(selected.metadata)]
+                  ]}
+                />
+              ) : (
+                <EmptyState title="No event selected" description="Select an audit event from the backend results." />
+              )}
             </Panel>
 
             <Panel title="Audit Narrative">
-              <div className="note-box">
-                <h3>{selected[2]}</h3>
-                <p>{selected[5]}</p>
-              </div>
+              {selected ? (
+                <div className="note-box">
+                  <h3>{selected.action}</h3>
+                  <p>{selected.targetType} {selected.targetId ?? ""} recorded with outcome {selected.outcome}.</p>
+                </div>
+              ) : (
+                <EmptyState title="No narrative" description="An event narrative appears after selecting an audit row." />
+              )}
             </Panel>
 
-            <Panel title="Encounter Timeline">
-              <Timeline
-                items={auditEvents.slice(0, 6).map(([time, actor, action, target, outcome]) => [
-                  time.slice(11),
-                  `${action} · ${outcome}`,
-                  `${actor} on ${target}`
-                ])}
-              />
-            </Panel>
-
-            <Panel title="Legend">
-              <div className="state-stack">
-                <div className="state-card">
-                  <div className="button-cluster">
-                    <Badge tone="green">Success</Badge>
-                    <strong>Completed write</strong>
-                  </div>
-                  <p>Persisted action with actor, time, target, and trace.</p>
-                </div>
-                <div className="state-card">
-                  <div className="button-cluster">
-                    <Badge tone="blue">Acknowledged</Badge>
-                    <strong>Clinician acknowledgement</strong>
-                  </div>
-                  <p>Captured review of warning, correction, or uncertainty.</p>
-                </div>
-                <div className="state-card">
-                  <div className="button-cluster">
-                    <Badge tone="red">Denied</Badge>
-                    <strong>Permission denial</strong>
-                  </div>
-                  <p>Unauthorized approval attempts remain audit-visible.</p>
-                </div>
-              </div>
+            <Panel title="Timeline">
+              {logs.length === 0 ? (
+                <EmptyState title="No timeline" description="Backend audit events appear here in chronological order." />
+              ) : (
+                <Timeline
+                  items={logs.slice(0, 8).map((log) => [
+                    formatDateTime(log.createdAt),
+                    `${log.action} · ${log.outcome}`,
+                    log.actor?.fullName ?? log.actor?.email ?? "System"
+                  ])}
+                />
+              )}
             </Panel>
           </div>
         </div>

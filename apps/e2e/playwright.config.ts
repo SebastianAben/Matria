@@ -4,14 +4,14 @@ export default defineConfig({
   testDir: "./tests",
   timeout: 30000,
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL: "http://localhost:3000",
     trace: "on-first-retry"
   },
   webServer: {
-    command: "pnpm --filter @matria/web dev --hostname 127.0.0.1 --port 3000",
-    url: "http://127.0.0.1:3000",
+    command: "docker compose up --build postgres api web",
+    url: "http://localhost:3000",
     reuseExistingServer: true,
-    timeout: 120000
+    timeout: 180000
   },
   projects: [
     {

@@ -1,8 +1,18 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
 import { AlertCircle, Loader2, Plus, Search, UserPlus } from "lucide-react";
 import { apiRequest } from "../../lib/api";
+import {
+  formatDate,
+  formatDateTime,
+  initials,
+  scopedHref,
+  type EncounterRecord,
+  type PatientRecord,
+  type PregnancyEpisode
+} from "../../lib/clinical-api";
 import {
   ActionButton,
   Badge,
@@ -14,99 +24,106 @@ import {
   Panel,
   StatTile
 } from "../components/clinical-ui";
-import { episodes, patient, recentEncounters, searchResults } from "../components/demo-data";
 
-type PatientRecord = {
-  id?: string;
-  hospitalNumber: string;
-  fullName: string;
-  phone?: string | null;
-};
-
-type SearchMode = "results" | "empty" | "loading" | "error" | "duplicate";
+type LoadState = "idle" | "loading" | "loaded" | "error";
 
 export default function PatientsPage() {
-  const [query, setQuery] = useState("alya");
-  const [mode, setMode] = useState<SearchMode>("results");
-  const [createdPatient, setCreatedPatient] = useState<PatientRecord | null>(null);
-  const [message, setMessage] = useState("Exact and likely duplicate matches are shown before registration.");
+  const [query, setQuery] = useState("");
+  const [searchState, setSearchState] = useState<LoadState>("idle");
+  const [message, setMessage] = useState("Search or register a patient to begin an ANC encounter.");
+  const [patients, setPatients] = useState<PatientRecord[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<PatientRecord | null>(null);
+  const [episodes, setEpisodes] = useState<PregnancyEpisode[]>([]);
+  const [encounters, setEncounters] = useState<EncounterRecord[]>([]);
+  const [detailState, setDetailState] = useState<LoadState>("idle");
 
-  const rows = useMemo(() => {
-    if (createdPatient) {
-      return [
-        [
-          createdPatient.fullName,
-          createdPatient.hospitalNumber,
-          "ANC Clinic 2",
-          "Not recorded",
-          "-",
-          createdPatient.phone ?? "-",
-          "No episode",
-          "-",
-          "New"
-        ],
-        ...searchResults
-      ];
-    }
-    return searchResults;
-  }, [createdPatient]);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const patientId = params.get("patientId");
+    if (patientId) void loadPatient(patientId);
+  }, []);
 
   async function runSearch(event?: FormEvent) {
     event?.preventDefault();
-    if (mode === "loading") return;
-    setMode("loading");
-    setMessage("Searching registry and recent ANC encounters...");
+    if (!query.trim()) {
+      setSearchState("idle");
+      setPatients([]);
+      setMessage("Enter a name or MRN to search the hospital registry.");
+      return;
+    }
+    setSearchState("loading");
+    setMessage("Searching patients from the backend registry...");
     const response = await apiRequest<{ patients: PatientRecord[] }>(
-      `/patients?search=${encodeURIComponent(query)}`
+      `/patients?search=${encodeURIComponent(query.trim())}`
     );
-    if (response.success && response.data.patients.length > 0) {
-      const liveRows = response.data.patients.map((item) => [
-        item.fullName,
-        item.hospitalNumber,
-        "Live registry",
-        "-",
-        "-",
-        item.phone ?? "-",
-        "Select to load",
-        "-",
-        "Exact"
-      ]);
-      searchResults.splice(0, searchResults.length, ...(liveRows as typeof searchResults));
-      setMode("results");
-      setMessage(`${response.data.patients.length} live patient match${response.data.patients.length === 1 ? "" : "es"} found.`);
+    if (!response.success) {
+      setSearchState("error");
+      setMessage(response.error.message);
       return;
     }
-    if (response.success) {
-      setMode("empty");
-      setMessage("No live match found. Demo fallback remains available for design review.");
+    setPatients(response.data.patients);
+    setSearchState("loaded");
+    setMessage(
+      response.data.patients.length === 0
+        ? "No backend patient matched this search. Register only after confirming identity."
+        : `${response.data.patients.length} backend patient match${response.data.patients.length === 1 ? "" : "es"} found.`
+    );
+  }
+
+  async function loadPatient(patientId: string) {
+    setDetailState("loading");
+    const [patientResponse, episodeResponse, encounterResponse] = await Promise.all([
+      apiRequest<{ patient: PatientRecord & { pregnancyEpisodes?: PregnancyEpisode[] } }>(
+        `/patients/${patientId}`
+      ),
+      apiRequest<{ pregnancyEpisodes: PregnancyEpisode[] }>(
+        `/patients/${patientId}/pregnancy-episodes`
+      ),
+      apiRequest<{ encounters: EncounterRecord[] }>(`/patients/${patientId}/encounters`)
+    ]);
+    if (!patientResponse.success) {
+      setDetailState("error");
+      setMessage(patientResponse.error.message);
       return;
     }
-    setMode("error");
-    setMessage(response.error.message);
+    setSelectedPatient(patientResponse.data.patient);
+    setEpisodes(episodeResponse.success ? episodeResponse.data.pregnancyEpisodes : []);
+    setEncounters(encounterResponse.success ? encounterResponse.data.encounters : []);
+    setDetailState("loaded");
+    const next = new URLSearchParams(window.location.search);
+    next.set("patientId", patientId);
+    window.history.replaceState(null, "", scopedHref("/patients", next));
   }
 
   async function createPatient(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    setMessage("Creating patient in the backend registry...");
     const payload = {
-      hospitalNumber: String(form.get("hospitalNumber") ?? ""),
-      fullName: String(form.get("fullName") ?? ""),
-      phone: String(form.get("phone") ?? "") || undefined
+      hospitalNumber: String(form.get("hospitalNumber") ?? "").trim(),
+      fullName: String(form.get("fullName") ?? "").trim(),
+      dateOfBirth: String(form.get("dateOfBirth") ?? "") || undefined,
+      phone: String(form.get("phone") ?? "").trim() || undefined,
+      address: String(form.get("address") ?? "").trim() || undefined
     };
     const response = await apiRequest<{ patient: PatientRecord }>("/patients", {
       method: "POST",
       body: JSON.stringify(payload)
     });
-    if (response.success) {
-      setCreatedPatient(response.data.patient);
-      setMode("duplicate");
-      setMessage("Patient created. Duplicate review remains visible before episode setup.");
-    } else {
-      setCreatedPatient(payload);
-      setMode("duplicate");
-      setMessage("Demo patient staged because the live API was unavailable.");
+    if (!response.success) {
+      setMessage(response.error.message);
+      return;
     }
+    setPatients((current) => [response.data.patient, ...current]);
+    setMessage("Patient created and selected. Create or choose a pregnancy episode next.");
+    await loadPatient(response.data.patient.id);
+    event.currentTarget.reset();
   }
+
+  const selectedEpisode = episodes[0] ?? null;
+  const scopedParams = new URLSearchParams();
+  if (selectedPatient) scopedParams.set("patientId", selectedPatient.id);
+  if (selectedEpisode) scopedParams.set("pregnancyEpisodeId", selectedEpisode.id);
 
   return (
     <main className="screen patients-screen">
@@ -115,231 +132,174 @@ export default function PatientsPage() {
         title="Patient Search / Registration"
         description={message}
         actions={
-          <>
-            <ActionButton tone="secondary">
-              <Search size={15} />
-              Advanced search
-            </ActionButton>
-            <ActionButton>
-              <UserPlus size={15} />
-              New patient
-            </ActionButton>
-          </>
+          selectedPatient ? (
+            <Link className="action-button primary" href={scopedHref("/workspace/setup", scopedParams)}>
+              <Plus size={15} />
+              Continue setup
+            </Link>
+          ) : null
         }
       />
 
       <div className="clinical-grid grid-main-aside">
         <div className="clinical-grid">
-          <Panel title="Search and Match Review" subtitle="Search by MRN, name, phone, or national ID.">
+          <Panel title="Search and Match Review" subtitle="Backend search by partial name or hospital number.">
             <form className="filters-row" onSubmit={runSearch}>
               <Field label="Search">
-                <input value={query} onChange={(event) => setQuery(event.target.value)} />
+                <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Name or MRN" />
               </Field>
-              <Field label="Facility">
-                <select defaultValue="anc-clinic-2">
-                  <option value="anc-clinic-2">ANC Clinic 2</option>
-                  <option value="rsia-melati">RSIA Melati</option>
-                </select>
-              </Field>
-              <Field label="Match mode">
-                <select defaultValue="all">
-                  <option value="all">All matches</option>
-                  <option value="exact">Exact only</option>
-                  <option value="duplicate">Potential duplicates</option>
-                </select>
-              </Field>
-              <ActionButton type="submit">
-                <Search size={15} />
+              <ActionButton type="submit" disabled={searchState === "loading"}>
+                {searchState === "loading" ? <Loader2 size={15} /> : <Search size={15} />}
                 Search
               </ActionButton>
             </form>
           </Panel>
 
-          <Panel
-            title="Patient Results"
-            subtitle="Potential duplicates stay in the review lane until a clinician chooses the correct record."
-            actions={
-              <div className="segmented" aria-label="Search state examples">
-                {(["results", "empty", "loading", "error", "duplicate"] as const).map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    className={mode === item ? "active" : ""}
-                    onClick={() => setMode(item)}
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-            }
-          >
-            {mode === "loading" ? (
-              <EmptyState
-                title="Searching records"
-                description="Registry, recent encounter, and duplicate indexes are being checked."
-                action={<Loader2 size={20} />}
-              />
-            ) : mode === "empty" ? (
-              <EmptyState
-                title="No patient match"
-                description="Start a new registration after confirming name, birth date, and national ID."
-                action={<ActionButton tone="secondary"><Plus size={15} /> Start registration</ActionButton>}
-              />
-            ) : mode === "error" ? (
-              <EmptyState
-                title="Search unavailable"
-                description="Use the registration form only when the patient identity is confirmed."
-                action={<AlertCircle size={20} />}
-              />
+          <Panel title="Patient Results" subtitle="Rows appear only after backend search returns.">
+            {searchState === "loading" ? (
+              <EmptyState title="Searching records" description="Registry results are loading from the API." action={<Loader2 size={20} />} />
+            ) : searchState === "error" ? (
+              <EmptyState title="Search unavailable" description={message} action={<AlertCircle size={20} />} />
+            ) : searchState === "loaded" && patients.length === 0 ? (
+              <EmptyState title="No patient match" description="Register a patient only after duplicate review is complete." />
+            ) : patients.length === 0 ? (
+              <EmptyState title="No search yet" description="Search by name or MRN before selecting a patient." />
             ) : (
               <DataTable
-                columns={["Patient", "MRN", "Facility", "DOB", "Age", "Phone", "Episode", "Context", "Match"]}
-                rows={rows}
-                renderCell={(cell, index) => {
-                  if (index === 8) {
-                    const tone = cell === "Exact" || cell === "New" ? "green" : cell === "High" ? "amber" : "gray";
-                    return <Badge tone={tone}>{cell}</Badge>;
-                  }
-                  return cell;
-                }}
+                columns={["Patient", "MRN", "DOB", "Phone", "Status"]}
+                rows={patients.map((item) => [
+                  <button key={item.id} type="button" className="action-button ghost" onClick={() => loadPatient(item.id)}>
+                    {item.fullName}
+                  </button>,
+                  item.hospitalNumber,
+                  formatDate(item.dateOfBirth),
+                  item.phone ?? "-",
+                  <Badge key={`${item.id}-status`} tone={selectedPatient?.id === item.id ? "green" : "gray"}>
+                    {selectedPatient?.id === item.id ? "Selected" : "Registry"}
+                  </Badge>
+                ])}
               />
             )}
           </Panel>
 
-          <div className="patient-state-grid">
-            <div className="state-card">
-              <strong>No patients matched</strong>
-              <p>Try adjusting the search or create a new patient.</p>
-              <ActionButton tone="secondary" type="button"><Plus size={15} />Create New Patient</ActionButton>
-            </div>
-            <div className="state-card loading-card">
-              <strong>Loading results</strong>
-              <p>Registry and recent patient indexes are being checked.</p>
-              <div className="skeleton-line" />
-              <div className="skeleton-line short" />
-            </div>
-            <div className="state-card error-card">
-              <strong>Search error</strong>
-              <p>We could not complete your search due to a connection issue.</p>
-              <ActionButton tone="danger" type="button">Retry Search</ActionButton>
-            </div>
-          </div>
-
-          <div className="duplicate-card">
-            <strong>Possible duplicate detected</strong>
-            <p>A patient with similar details already exists. Review matches before confirming a new patient.</p>
-            <div className="duplicate-row">
-              <span>Alya Prameswari · MRN 281904</span>
-              <span>12 Aug 1992</span>
-              <span>0812 3456 7890</span>
-              <ActionButton tone="ghost" type="button">View match</ActionButton>
-            </div>
-          </div>
-
-          <Panel title="Patient Detail" subtitle="Selected demographic and ANC context.">
-            <div className="stat-row">
-              <StatTile label="MRN" value={patient.hospitalNumber} detail="Hospital number" />
-              <StatTile label="Age" value={patient.age} detail={patient.dobDisplay} />
-              <StatTile label="Blood" value={patient.bloodType} detail="Verified" />
-              <StatTile label="Episode" value="Active" detail="28w 4d" />
-            </div>
-          </Panel>
-        </div>
-
-        <div className="clinical-grid">
-          <Panel title="Selected Patient" subtitle="Safe identity match" actions={<ActionButton tone="ghost" type="button">Edit</ActionButton>}>
-            <div className="selected-patient-card">
-              <div className="patient-avatar">{patient.initials}</div>
-              <div>
-                <strong>{patient.fullName}</strong>
-                <p>{patient.mrn} · {patient.clinic}</p>
-                <Badge tone="green">Exact match</Badge>
-              </div>
-            </div>
-            <KeyValueList
-              items={[
-                ["Date of Birth", patient.dobDisplay],
-                ["Sex", patient.sex],
-                ["Phone", patient.phone],
-                ["Address", patient.address],
-                ["National ID", patient.nationalId],
-                ["Latest Episode", "ANC Follow-up · EDD 2025-08-05"]
-              ]}
-            />
-            <div className="duplicate-card compact">
-              <strong>Identity verification passed</strong>
-              <p>Name, DOB, and phone match with high confidence.</p>
-            </div>
-          </Panel>
-
-          <Panel title="Register Patient" subtitle="Create only after duplicate review.">
+          <Panel title="Register Patient" subtitle="Creates a backend patient record. No frontend staging is used.">
             <form className="form-grid" onSubmit={createPatient}>
               <Field label="Full name">
-                <input name="fullName" defaultValue="Alya Prameswari" />
+                <input name="fullName" required />
               </Field>
               <Field label="MRN">
-                <input name="hospitalNumber" defaultValue="281904" />
+                <input name="hospitalNumber" required />
               </Field>
-              <Field label="DOB">
-                <input name="dob" type="date" defaultValue="1992-08-12" />
+              <Field label="Date of birth">
+                <input name="dateOfBirth" type="date" />
               </Field>
               <Field label="Phone">
-                <input name="phone" defaultValue="0812 3456 7890" />
-              </Field>
-              <Field label="National ID">
-                <input name="nationalId" defaultValue={patient.nationalId} />
-              </Field>
-              <Field label="Facility">
-                <select name="facility" defaultValue="anc-clinic-2">
-                  <option value="anc-clinic-2">ANC Clinic 2</option>
-                  <option value="rsia-melati">RSIA Melati</option>
-                </select>
+                <input name="phone" />
               </Field>
               <Field label="Address">
-                <textarea name="address" defaultValue={patient.address} />
+                <textarea name="address" />
               </Field>
               <div className="wide button-cluster">
                 <ActionButton type="submit">
-                  <Plus size={15} />
+                  <UserPlus size={15} />
                   Save patient
-                </ActionButton>
-                <ActionButton tone="ghost" type="button">
-                  Clear
                 </ActionButton>
               </div>
             </form>
           </Panel>
+        </div>
 
-          <Panel title="Identity Summary">
-            <KeyValueList
-              items={[
-                ["Name", patient.fullName],
-                ["MRN", patient.mrn],
-                ["DOB", patient.dobDisplay],
-                ["Phone", patient.phone],
-                ["Email", patient.email],
-                ["Address", patient.address]
-              ]}
-            />
+        <div className="clinical-grid">
+          <Panel title="Selected Patient" subtitle="Loaded from backend after selection.">
+            {detailState === "loading" ? (
+              <EmptyState title="Loading patient" description="Patient scope is loading from the API." action={<Loader2 size={20} />} />
+            ) : selectedPatient ? (
+              <>
+                <div className="selected-patient-card">
+                  <div className="patient-avatar">{initials(selectedPatient.fullName)}</div>
+                  <div>
+                    <strong>{selectedPatient.fullName}</strong>
+                    <p>MRN {selectedPatient.hospitalNumber}</p>
+                    <Badge tone="green">Selected</Badge>
+                  </div>
+                </div>
+                <KeyValueList
+                  items={[
+                    ["Date of Birth", formatDate(selectedPatient.dateOfBirth)],
+                    ["Phone", selectedPatient.phone ?? "-"],
+                    ["Address", selectedPatient.address ?? "-"],
+                    ["Episodes", String(episodes.length)],
+                    ["Encounters", String(encounters.length)]
+                  ]}
+                />
+              </>
+            ) : (
+              <EmptyState title="No patient selected" description="Search or create a patient to load pregnancy episodes and encounters." />
+            )}
           </Panel>
 
-          <Panel title="Pregnancy Episodes">
-            <div className="episode-list">
-              {episodes.map((item, index) => (
-                <div className={`episode-card ${index === 0 ? "active" : ""}`} key={item.name}>
-                  <div className="button-cluster">
-                    <strong>{item.name}</strong>
-                    <Badge tone={item.status === "Active" ? "green" : "gray"}>{item.status}</Badge>
-                  </div>
-                  <p>{item.dates}</p>
-                  <p>{item.outcome} · {item.note}</p>
-                </div>
-              ))}
+          <Panel title="Patient Detail" subtitle="Backend demographics and current scope.">
+            <div className="stat-row">
+              <StatTile label="MRN" value={selectedPatient?.hospitalNumber ?? "-"} detail="Hospital number" />
+              <StatTile label="DOB" value={formatDate(selectedPatient?.dateOfBirth)} detail="Patient supplied" />
+              <StatTile label="Episodes" value={String(episodes.length)} detail="Backend records" />
+              <StatTile label="Encounters" value={String(encounters.length)} detail="Recent visits" />
             </div>
           </Panel>
 
+          <Panel title="Pregnancy Episodes">
+            {selectedPatient && episodes.length === 0 ? (
+              <EmptyState
+                title="No pregnancy episode"
+                description="Create a pregnancy episode in setup before starting an encounter."
+                action={
+                  <Link className="action-button secondary" href={scopedHref("/workspace/setup", scopedParams)}>
+                    Create episode
+                  </Link>
+                }
+              />
+            ) : episodes.length === 0 ? (
+              <EmptyState title="No patient scope" description="Episodes load after selecting a patient." />
+            ) : (
+              <div className="episode-list">
+                {episodes.map((item) => {
+                  const params = new URLSearchParams(scopedParams);
+                  params.set("pregnancyEpisodeId", item.id);
+                  return (
+                    <Link className={`episode-card ${item.status === "active" ? "active" : ""}`} href={scopedHref("/workspace/setup", params)} key={item.id}>
+                      <div className="button-cluster">
+                        <strong>{item.label}</strong>
+                        <Badge tone={item.status === "active" ? "green" : "gray"}>{item.status}</Badge>
+                      </div>
+                      <p>GA {item.gestationalAgeWeeks == null ? "missing" : `${item.gestationalAgeWeeks}w`} · EDD {formatDate(item.estimatedDueDate)}</p>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </Panel>
+
           <Panel title="Recent Encounters">
-            <DataTable columns={["Type", "Date", "Status", "Clinician"]} rows={recentEncounters} />
+            {encounters.length === 0 ? (
+              <EmptyState title="No encounters" description="Create an encounter after selecting or creating a pregnancy episode." />
+            ) : (
+              <DataTable
+                columns={["Visit", "Created", "Status", "Clinician"]}
+                rows={encounters.map((item) => {
+                  const params = new URLSearchParams(scopedParams);
+                  params.set("encounterId", item.id);
+                  params.set("pregnancyEpisodeId", item.pregnancyEpisodeId);
+                  return [
+                    <Link key={item.id} className="action-button ghost" href={scopedHref(item.status === "draft" ? "/workspace/setup" : "/workspace", params)}>
+                      {item.visitType}
+                    </Link>,
+                    formatDateTime(item.createdAt),
+                    <Badge key={`${item.id}-status`} tone={item.status === "active" ? "green" : item.status === "reviewing" ? "amber" : "gray"}>{item.status}</Badge>,
+                    item.createdBy?.fullName ?? "-"
+                  ];
+                })}
+              />
+            )}
           </Panel>
         </div>
       </div>

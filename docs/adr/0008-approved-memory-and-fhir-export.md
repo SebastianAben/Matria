@@ -44,7 +44,7 @@ The FHIR document-bundle shape follows HL7 FHIR R4 expectations: document bundle
   - `GET /encounters/:encounterId/fhir-exports`
   - `GET /fhir-exports/:exportId`
 - Mock Gemini now emits referral, teleconsult, and FHIR draft-input generated outputs for local workflows.
-- Review UI closeout actions can trigger memory writeback and FHIR export when live query IDs are present, while keeping demo fallback behavior.
+- Review UI closeout actions trigger memory writeback and FHIR export only for backend encounter/query scope and never synthesize local demo memory or FHIR bundles.
 - Compose services use mock AI/STT/evidence providers and leave production deployment hardening to Phase 10.
 
 ## Consequences

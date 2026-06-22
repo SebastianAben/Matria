@@ -285,6 +285,12 @@ Every clinical page must make the active patient, pregnancy episode, and encount
 
 If no patient or encounter is selected, workspace pages should guide the user to patient lookup or encounter creation instead of showing empty clinical panels with no context.
 
+### Backend-Driven Clinical Data
+
+Phase 9 and later frontend screens must not use local clinical fixtures, demo patients, demo transcripts, demo observations, demo audit events, or locally generated FHIR bundles. Pages should render only persisted backend data, explicit loading states, empty states, permission/consent/safety errors, or clinician-entered unsaved form text.
+
+Local mock providers remain allowed only behind backend APIs for development. Mock STT, Gemini, and evidence behavior may create data after a clinician-triggered API action, but the web app must not fabricate consultation content when the backend has no corresponding record.
+
 ### Consent Awareness
 
 Consent status should be visible wherever it affects user action.
@@ -926,6 +932,8 @@ Behavior:
 13. User reviews summary, highlights, suggestions, rule findings, and evidence.
 14. User resolves suggestions and updates the note.
 15. User closes the encounter or moves it into review.
+16. User approves or edits only reviewed generated outputs.
+17. User writes memory or generates referral/teleconsult FHIR export only from approved or edited backend outputs.
 
 ### 9.2 High-Risk Finding Flow
 

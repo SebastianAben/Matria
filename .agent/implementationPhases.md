@@ -29,7 +29,7 @@ Progress maintenance rules:
 
 - Current phase: Phase 10 - CI And Hosted Runtime Preparation
 - Current subphase: 10.1 - CI workflow
-- Last completed subphase: 9.10 - Rejection audit behavior and approved-source exclusion
+- Last completed subphase: 9.11 - Backend-driven progressive web flow
 - Active blockers: none
 - Next recommended task: begin Phase 10 CI and hosted runtime preparation after reviewing the Phase 9 local Compose runtime split from future production Dockerfiles.
 
@@ -519,18 +519,22 @@ Dependencies: Phase 8
 | 9.8  | FHIR R4 formatter             | `done` | Export-ready FHIR resources and composition where sufficient data exists.                                       |
 | 9.9  | FHIR provenance               | `done` | Clinician approval, timestamp, source artifact, and generation provenance.                                      |
 | 9.10 | Rejection audit behavior      | `done` | Pulled forward to Phase 8 for generated outputs; memory/export exclusion remains enforced by Phase 9 consumers. |
+| 9.11 | Progressive web flow          | `done` | Frontend pages use backend data only, with no local clinical fixtures or demo fallback behavior.                 |
 
 ### Deliverables
 
 - Patient memory writeback.
 - Referral and teleconsult summaries.
 - FHIR R4 export artifacts.
+- Backend-driven patient, setup, workspace, review, admin, and audit pages.
 
 ### Acceptance Checks
 
 - Approved edited text becomes export and memory source.
 - Rejected AI outputs are not exported or written to memory.
 - FHIR export includes clinician approval provenance.
+- Frontend clinical pages show backend data, loading states, empty states, or server errors only.
+- No frontend clinical fixture file or demo fallback path exists.
 
 ### Test Plan
 
@@ -539,6 +543,7 @@ Dependencies: Phase 8
 - Add FHIR formatter tests for expected R4 resources, missing-data handling, and approval provenance.
 - Add audit tests for approval, edit, rejection, memory write, and FHIR export events.
 - Add E2E tests for clinician-edited summary becoming the export source.
+- Add frontend fixture guards and progressive Playwright flow from admin-created clinician through patient setup, consultation, approval, memory, and FHIR export.
 
 ### Update Notes
 
@@ -548,6 +553,7 @@ Dependencies: Phase 8
 - `PatientMemoryFact.dedupeKey` prevents repeated writeback duplication within patient and pregnancy episode scope.
 - `FhirExport` persists export-ready FHIR R4 document bundles with `Composition` first, `ServiceRequest` draft/proposal intent, structured-observation entries, and `Provenance` tied to clinician approval.
 - Local Docker Compose now starts Postgres, API, and web in mock-provider mode for developer verification; production image/runtime hardening remains Phase 10.
+- Frontend demo clinical fixtures were removed after Phase 9 so consultation data appears only after clinician actions persist through the API.
 
 ## Phase 10: CI And Hosted Runtime Preparation
 

@@ -7,13 +7,13 @@ Purpose: stable handoff for the latest substantive Matria task/session
 
 ## Current Objective
 
-Phase 9 implementation is complete: approved generated outputs can now be written to durable patient memory, approved referral or teleconsult summaries can generate export-ready FHIR R4 document bundles, and the local app runs through Docker Compose with Postgres, API, and web services.
+Phase 9 implementation is complete: approved generated outputs can now be written to durable patient memory, approved referral or teleconsult summaries can generate export-ready FHIR R4 document bundles, and the web flow is backend-driven from patient lookup through consultation, review, memory, and FHIR export.
 
 ## Current Phase
 
 - Phase: 10 - CI And Hosted Runtime Preparation
 - Subphase: 10.1 - CI workflow
-- Status: Phase 9 implemented, verified, and running locally through Docker Compose
+- Status: Phase 9 backend and backend-driven web flow implemented, verified, and running locally through Docker Compose
 
 ## Files Changed This Session
 
@@ -21,9 +21,10 @@ Phase 9 implementation is complete: approved generated outputs can now be writte
 - Backend routes/services: `apps/api/src/app.ts`, `apps/api/src/outputs/phase9-routes.ts`, `apps/api/src/ai/gemini-provider.ts`, `apps/api/src/clinical/routes.ts`, `apps/api/src/evidence/routes.ts`
 - Shared contracts: `packages/shared/src/index.ts`
 - Tests: `apps/api/src/tests/phase9-memory-fhir.test.ts`, `apps/api/src/tests/test-utils.ts`, `apps/api/src/tests/ai.test.ts`
-- Frontend: `apps/web/app/review/page.tsx`, `apps/web/app/globals.css`
+- Frontend: `apps/web/app/page.tsx`, `apps/web/app/login/page.tsx`, `apps/web/app/patients/page.tsx`, `apps/web/app/workspace/setup/page.tsx`, `apps/web/app/workspace/page.tsx`, `apps/web/app/review/page.tsx`, `apps/web/app/admin/page.tsx`, `apps/web/app/audit/page.tsx`, `apps/web/app/components/clinical-ui.tsx`, `apps/web/app/globals.css`, `apps/web/lib/clinical-api.ts`
+- Frontend tests/E2E: `apps/web/tests/no-frontend-fixtures.test.ts`, `apps/e2e/package.json`, `apps/e2e/playwright.config.ts`, `apps/e2e/tests/progressive-consultation.spec.ts`
 - Local runtime: `docker-compose.yml`, `Dockerfile.dev`, `.dockerignore`
-- Docs: `.agent/implementationPhases.md`, `.agent/sessionHandoff.md`, `docs/adr/0008-approved-memory-and-fhir-export.md`
+- Docs: `.agent/pages.md`, `.agent/implementationPhases.md`, `.agent/sessionHandoff.md`, `docs/adr/0007-reference-image-frontend-and-approval-pull-forward.md`, `docs/adr/0008-approved-memory-and-fhir-export.md`, `docs/adr/0009-backend-driven-progressive-web-flow.md`
 
 ## Completed Work
 
@@ -38,6 +39,9 @@ Phase 9 implementation is complete: approved generated outputs can now be writte
 - Expanded mock Gemini synthesis to produce referral summary, teleconsult summary, and FHIR draft-input generated outputs.
 - Added review-page controls for memory writeback, referral FHIR export, teleconsult FHIR export, and export JSON preview.
 - Added dev Docker Compose services for Postgres, API, and web using mock providers.
+- Removed frontend clinical fixtures and demo fallback branches from patient, setup, workspace, review, admin, and audit pages.
+- Added backend-driven progressive UI flow: search/create patient, create episode, create encounter, record consent, enter observations/notes/transcript, run preflight/synthesis, approve outputs, write memory, generate FHIR, and view audit logs.
+- Added frontend fixture guards and Playwright coverage for the progressive consultation path.
 
 ## Decisions Made
 
@@ -46,6 +50,7 @@ Phase 9 implementation is complete: approved generated outputs can now be writte
 - Rejected, uncertain, review-required, draft, and stale outputs remain audit-visible but are excluded from memory and export.
 - FHIR export is export-ready only; no SATUSEHAT or external FHIR submission is implemented.
 - Local Compose app runtime is intentionally dev-oriented and separate from future Phase 10 production Dockerfiles.
+- Frontend runtime is not allowed to fabricate clinical data; local mock providers are backend-only and create data only after clinician-triggered API actions.
 
 ## Blockers And Open Questions
 
@@ -73,10 +78,13 @@ Begin Phase 10:
 - `docker compose up --build -d postgres api web`
 - `curl http://localhost:4000/health`
 - `curl http://localhost:4000/ready`
-- `curl -I http://localhost:3000/review`
+- `curl -I http://localhost:3000/login`
 - `pnpm --filter @matria/api test`
+- `pnpm --filter @matria/web test`
+- `pnpm --filter @matria/e2e exec playwright test --reporter=line`
 - `pnpm test`
 - `pnpm e2e`
+- `GEMINI_PROVIDER=mock STT_PROVIDER=mock MEDICAL_EVIDENCE_PROVIDER=mock pnpm --filter @matria/api seed`
 
 ## Runtime State
 

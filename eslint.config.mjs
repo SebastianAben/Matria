@@ -30,7 +30,18 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-namespace": "off",
       "@typescript-eslint/triple-slash-reference": "off",
-      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }]
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/demo-data", "**/demo-data.*"],
+              message: "Frontend clinical screens must load persisted backend data, not local demo fixtures."
+            }
+          ]
+        }
+      ]
     }
   },
   prettier
