@@ -7,13 +7,13 @@ Purpose: stable handoff for the latest substantive Matria task/session
 
 ## Current Objective
 
-Phase 9 implementation is complete: approved generated outputs can now be written to durable patient memory, approved referral or teleconsult summaries can generate export-ready FHIR R4 document bundles, and the web flow is backend-driven from patient lookup through consultation, review, memory, and FHIR export.
+Phase 9 implementation is complete and an isolated 06-LUS presenter demo is being added under `/demo/06-lus`. Normal clinical pages remain backend-driven and fixture-free; the new demo route is explicitly outside the production workflow.
 
 ## Current Phase
 
-- Phase: 10 - CI And Hosted Runtime Preparation
-- Subphase: 10.1 - CI workflow
-- Status: Phase 9 backend and backend-driven web flow implemented, verified, and running locally through Docker Compose
+- Phase: 11 - End-to-end Validation And Clinical Safety Hardening
+- Subphase: 11.8 - Demo data and fixtures
+- Status: Isolated 06-LUS mid-consultation mock demo implemented for local presentation; broader Phase 11 validation remains pending
 
 ## Files Changed This Session
 
@@ -25,6 +25,8 @@ Phase 9 implementation is complete: approved generated outputs can now be writte
 - Frontend tests/E2E: `apps/web/tests/no-frontend-fixtures.test.ts`, `apps/e2e/package.json`, `apps/e2e/playwright.config.ts`, `apps/e2e/tests/progressive-consultation.spec.ts`
 - Local runtime: `docker-compose.yml`, `Dockerfile.dev`, `.dockerignore`
 - Docs: `.agent/pages.md`, `.agent/implementationPhases.md`, `.agent/sessionHandoff.md`, `docs/adr/0007-reference-image-frontend-and-approval-pull-forward.md`, `docs/adr/0008-approved-memory-and-fhir-export.md`, `docs/adr/0009-backend-driven-progressive-web-flow.md`
+- Demo route/assets: `apps/web/app/demo/06-lus/page.tsx`, `apps/web/app/api/demo-video/06-lus/route.ts`, `apps/web/lib/demo-06-lus.ts`, `demo/script/06-lus-demo.md`
+- Demo tests: `apps/web/tests/demo-06-lus.test.ts`, `apps/e2e/tests/demo-06-lus.spec.ts`
 
 ## Completed Work
 
@@ -42,6 +44,8 @@ Phase 9 implementation is complete: approved generated outputs can now be writte
 - Removed frontend clinical fixtures and demo fallback branches from patient, setup, workspace, review, admin, and audit pages.
 - Added backend-driven progressive UI flow: search/create patient, create episode, create encounter, record consent, enter observations/notes/transcript, run preflight/synthesis, approve outputs, write memory, generate FHIR, and view audit logs.
 - Added frontend fixture guards and Playwright coverage for the progressive consultation path.
+- Added isolated `/demo/06-lus` mid-consultation route with patient 06 CSV-derived baseline, Range-served local video playback from 09:00 at 2x, synchronized 42-second English mock transcript/highlight/rule/recommendation/summary progression, and restart behavior.
+- Added presenter script for the 06-LUS demo in English with timeline-to-UI mapping.
 
 ## Decisions Made
 
@@ -50,7 +54,7 @@ Phase 9 implementation is complete: approved generated outputs can now be writte
 - Rejected, uncertain, review-required, draft, and stale outputs remain audit-visible but are excluded from memory and export.
 - FHIR export is export-ready only; no SATUSEHAT or external FHIR submission is implemented.
 - Local Compose app runtime is intentionally dev-oriented and separate from future Phase 10 production Dockerfiles.
-- Frontend runtime is not allowed to fabricate clinical data; local mock providers are backend-only and create data only after clinician-triggered API actions.
+- Frontend runtime is not allowed to fabricate clinical data in normal clinical pages; isolated `/demo/*` presenter routes may use clearly scoped mock data and must not act as fallback data for the app workflow.
 
 ## Blockers And Open Questions
 
@@ -59,11 +63,11 @@ Phase 9 implementation is complete: approved generated outputs can now be writte
 
 ## Next Recommended Action
 
-Begin Phase 10:
+Continue focused demo validation, then resume Phase 10/11:
 
-1. Add CI for install, format, lint, typecheck, tests, build, E2E, and Compose config/build checks.
-2. Add production Dockerfiles and hosted Compose/Caddy runtime artifacts.
-3. Recreate deployment/environment docs only when hosted runtime work begins.
+1. Verify `/demo/06-lus` locally with Compose and Playwright.
+2. Add CI for install, format, lint, typecheck, tests, build, E2E, and Compose config/build checks.
+3. Add production Dockerfiles and hosted Compose/Caddy runtime artifacts.
 
 ## Tests And Checks Run
 

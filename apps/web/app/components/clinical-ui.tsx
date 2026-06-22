@@ -47,12 +47,14 @@ const routeTitles: Record<string, string> = {
   "/workspace": "Clinical Workspace - Live Encounter",
   "/review": "Clinical Workspace - Review / Intelligence",
   "/admin": "Admin / Role Management",
-  "/audit": "Clinical Workspace - Read-Only Audit"
+  "/audit": "Clinical Workspace - Read-Only Audit",
+  "/demo/06-lus": "06-LUS Mid-Consultation"
 };
 
 export function AppChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLogin = pathname === "/login";
+  const isDemoRoute = pathname.startsWith("/demo/");
   const [session, setSession] = useState<UserSession | null>(null);
   const [scopeSearch, setScopeSearch] = useState("");
 
@@ -126,8 +128,8 @@ export function AppChrome({ children }: { children: React.ReactNode }) {
               <span>{hasPermission(session, "system:config") ? "Operations" : "Clinical"}</span>
             </div>
             <div className="user-chip">
-              <span className="avatar">{initials(session?.fullName)}</span>
-              <span>{session?.fullName ?? "Not signed in"}</span>
+              <span className="avatar">{isDemoRoute && !session ? "D" : initials(session?.fullName)}</span>
+              <span>{session?.fullName ?? (isDemoRoute ? "Demo presenter" : "Not signed in")}</span>
             </div>
           </div>
         </header>

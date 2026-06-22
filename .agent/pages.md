@@ -291,6 +291,8 @@ Phase 9 and later frontend screens must not use local clinical fixtures, demo pa
 
 Local mock providers remain allowed only behind backend APIs for development. Mock STT, Gemini, and evidence behavior may create data after a clinician-triggered API action, but the web app must not fabricate consultation content when the backend has no corresponding record.
 
+Exception: isolated presenter routes under `/demo/*` may use explicitly named mock fixtures when the route is outside the normal clinical workflow and is not used as a fallback by patient, setup, workspace, review, admin, or audit pages. The 06-LUS demo route is one such isolated route.
+
 ### Consent Awareness
 
 Consent status should be visible wherever it affects user action.

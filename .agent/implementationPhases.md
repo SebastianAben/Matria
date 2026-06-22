@@ -617,7 +617,7 @@ Dependencies: Phases 1 through 10
 | 11.5  | Cross-patient memory tests                | `not_started` | Memory retrieval and writes never leak across patient or pregnancy episode.                 |
 | 11.6  | Clinical safety cases                     | `not_started` | Severe BP, bleeding, fetal movement, missing gestational age, and low-confidence OCR cases. |
 | 11.7  | UI usability and accessibility pass       | `not_started` | Clinical workspace remains scannable, responsive, and keyboard/screen-reader reasonable.    |
-| 11.8  | Demo data and fixtures                    | `not_started` | Synthetic ANC scenarios for routine and high-risk workflows.                                |
+| 11.8  | Demo data and fixtures                    | `in_progress` | Isolated 06-LUS mid-consultation presenter demo added; broader routine/high-risk suite remains. |
 | 11.9  | Performance and provider-cost observation | `not_started` | Basic timings and provider-call visibility by session/tool type.                            |
 | 11.10 | Release readiness review                  | `not_started` | Final checklist of docs, tests, known gaps, and deferred decisions.                         |
 
@@ -625,7 +625,7 @@ Dependencies: Phases 1 through 10
 
 - End-to-end validation suite.
 - Clinical safety regression tests.
-- Demo data for routine and high-risk ANC flows.
+- Demo data for routine and high-risk ANC flows. Initial 06-LUS route is isolated under `/demo/06-lus` and does not reintroduce frontend fallback data into normal clinical pages.
 - First-release readiness summary.
 
 ### Acceptance Checks

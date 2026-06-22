@@ -322,6 +322,37 @@ button {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(330px, 0.85fr);
 }
 
+.demo-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(340px, 0.8fr);
+  gap: 10px;
+}
+
+.demo-review-grid {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.05fr) minmax(340px, 0.9fr);
+}
+
+.demo-bottom-grid {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(280px, 0.72fr);
+}
+
+.demo-video-frame {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0f1918;
+  aspect-ratio: 16 / 9;
+}
+
+.demo-video-frame video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #0f1918;
+  object-fit: contain;
+}
+
 .review-queue-grid {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
@@ -966,6 +997,14 @@ button {
   font-size: 13px;
 }
 
+.demo-note-text {
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--text);
+  font: inherit;
+  line-height: 1.45;
+}
+
 .ambient-strip {
   display: grid;
   grid-template-columns: 1.1fr repeat(3, minmax(130px, 0.4fr));
@@ -1085,6 +1124,9 @@ button {
   .grid-main-aside,
   .grid-even,
   .grid-3,
+  .demo-hero-grid,
+  .demo-review-grid,
+  .demo-bottom-grid,
   .ambient-strip {
     grid-template-columns: 1fr;
   }
