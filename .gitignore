@@ -11,3 +11,6 @@ apps/api/prisma/dev.db
 *.log
 *.tsbuildinfo
 .local-data/
+evals/**/.data/
+evals/**/results/*.json
+evals/**/results/*.tmp

@@ -1,0 +1,462 @@
+{
+  "dataset": {
+    "id": "yrzzw9m6kk",
+    "version": "2",
+    "doi": "10.17632/yrzzw9m6kk.2",
+    "license": "CC BY 4.0"
+  },
+  "model": {
+    "displayName": "MedGemma 1.5 4B",
+    "ollamaTag": "medgemma1.5:4b"
+  },
+  "seed": "matria-medgemma-1.5-4b-eval-40",
+  "targetCounts": {
+    "normal": 14,
+    "benign": 13,
+    "malignant": 13
+  },
+  "totalImages": 40,
+  "createdAt": "2026-06-25T06:10:05.118Z",
+  "records": [
+    {
+      "evalId": "fetal-us-001",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/benign/101_HC.png",
+      "imagePath": "data/eval-images/fetal-us-001-benign.png",
+      "label": "benign",
+      "sourceSplit": "unknown",
+      "sha256": "5e5b393d10c826bafa7c61466d14b591a8cf2080ad85e783d6aaa69feb594dd3",
+      "bytes": 128363
+    },
+    {
+      "evalId": "fetal-us-002",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/benign/229_HC.png",
+      "imagePath": "data/eval-images/fetal-us-002-benign.png",
+      "label": "benign",
+      "sourceSplit": "unknown",
+      "sha256": "70bcb4804f8b3d8d1de047e2787c01bcd23f6ad536432d2131cfc0a15178bb52",
+      "bytes": 126385
+    },
+    {
+      "evalId": "fetal-us-003",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/benign/294_HC.png",
+      "imagePath": "data/eval-images/fetal-us-003-benign.png",
+      "label": "benign",
+      "sourceSplit": "unknown",
+      "sha256": "62f4daad486ab8396a55b11685b39a39477a77ca9fabca9acad0238747baf8fc",
+      "bytes": 114627
+    },
+    {
+      "evalId": "fetal-us-004",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/benign/48_HC.png",
+      "imagePath": "data/eval-images/fetal-us-004-benign.png",
+      "label": "benign",
+      "sourceSplit": "unknown",
+      "sha256": "6ae2bc9e368828c4e04e0bff212555aab321befeca656e76cc4f33aa398c09d1",
+      "bytes": 132158
+    },
+    {
+      "evalId": "fetal-us-005",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/benign/68_HC.png",
+      "imagePath": "data/eval-images/fetal-us-005-benign.png",
+      "label": "benign",
+      "sourceSplit": "unknown",
+      "sha256": "bc6ae720e59b987b87eb1bd3b037434400b9372fe502dc6da1397e8b68128800",
+      "bytes": 108619
+    },
+    {
+      "evalId": "fetal-us-006",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/benign/benign (50)_mask.png",
+      "imagePath": "data/eval-images/fetal-us-006-benign.png",
+      "label": "benign",
+      "sourceSplit": "unknown",
+      "sha256": "3023af5eea7d9bbe5d54253fe5a0bf05abc5fe107faacd6faf69676b0c6692e6",
+      "bytes": 549
+    },
+    {
+      "evalId": "fetal-us-007",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/benign/benign (51)_mask.png",
+      "imagePath": "data/eval-images/fetal-us-007-benign.png",
+      "label": "benign",
+      "sourceSplit": "unknown",
+      "sha256": "b3a50bc748b0f21b002e4c0e82221ec5c5c6e409272eb9f184292387ba8ed595",
+      "bytes": 218
+    },
+    {
+      "evalId": "fetal-us-008",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/train/benign/118_HC.png",
+      "imagePath": "data/eval-images/fetal-us-008-benign.png",
+      "label": "benign",
+      "sourceSplit": "train",
+      "sha256": "5ee3bde7babdcae8d5616fc96197334dfe3cdd5af6935c7968beba05d4f55016",
+      "bytes": 136241
+    },
+    {
+      "evalId": "fetal-us-009",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/train/benign/296_HC.png",
+      "imagePath": "data/eval-images/fetal-us-009-benign.png",
+      "label": "benign",
+      "sourceSplit": "train",
+      "sha256": "77664bbe704ea42c710744ad4633248f864281ac505aaf5146356d296308fd09",
+      "bytes": 128406
+    },
+    {
+      "evalId": "fetal-us-010",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/train/benign/309_HC.png",
+      "imagePath": "data/eval-images/fetal-us-010-benign.png",
+      "label": "benign",
+      "sourceSplit": "train",
+      "sha256": "c0bc28e7207cc07c1863d39c512d690795b9d634dbb272f5fa70aeca6a23afb1",
+      "bytes": 98326
+    },
+    {
+      "evalId": "fetal-us-011",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/train/benign/321_HC.png",
+      "imagePath": "data/eval-images/fetal-us-011-benign.png",
+      "label": "benign",
+      "sourceSplit": "train",
+      "sha256": "715c59339625770b6b488961c9df19b8baf99e509f257062e63fd36bf803a8ac",
+      "bytes": 112184
+    },
+    {
+      "evalId": "fetal-us-012",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/validation/benign/247_2HC.png",
+      "imagePath": "data/eval-images/fetal-us-012-benign.png",
+      "label": "benign",
+      "sourceSplit": "validation",
+      "sha256": "6dcff30a7418e7f919ad44006ba0cfbb62bbb8a91d09d658b5a7639af58e2990",
+      "bytes": 133610
+    },
+    {
+      "evalId": "fetal-us-013",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/validation/benign/87_HC.png",
+      "imagePath": "data/eval-images/fetal-us-013-benign.png",
+      "label": "benign",
+      "sourceSplit": "validation",
+      "sha256": "99b79f1e8181c5c47446ac637b43a406a9ad60702be693936f03a87cb6743408",
+      "bytes": 130122
+    },
+    {
+      "evalId": "fetal-us-014",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/malignant/101_HC_Annotation.png",
+      "imagePath": "data/eval-images/fetal-us-014-malignant.png",
+      "label": "malignant",
+      "sourceSplit": "unknown",
+      "sha256": "ffa0faa30a7d0b74de86673a321e45979298e2133016567b576b589d54542784",
+      "bytes": 1724
+    },
+    {
+      "evalId": "fetal-us-015",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/malignant/118_HC_Annotation.png",
+      "imagePath": "data/eval-images/fetal-us-015-malignant.png",
+      "label": "malignant",
+      "sourceSplit": "unknown",
+      "sha256": "f4033650101e9fbbc1b5c041ef8877ba1f040a65c9cefef4d318af67a6318ef4",
+      "bytes": 1748
+    },
+    {
+      "evalId": "fetal-us-016",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/malignant/23_HC.png",
+      "imagePath": "data/eval-images/fetal-us-016-malignant.png",
+      "label": "malignant",
+      "sourceSplit": "unknown",
+      "sha256": "8f5eb78ca36ed42b40bf0f9847a18b7a09d3deffc41f807142ad367ea7b43cd3",
+      "bytes": 116799
+    },
+    {
+      "evalId": "fetal-us-017",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/malignant/306_2HC.png",
+      "imagePath": "data/eval-images/fetal-us-017-malignant.png",
+      "label": "malignant",
+      "sourceSplit": "unknown",
+      "sha256": "33e1b43b38d30308e811449d2ce15fb8702a80afd2256a9e1d4f3bd26898bde6",
+      "bytes": 85161
+    },
+    {
+      "evalId": "fetal-us-018",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/malignant/8_2HC.png",
+      "imagePath": "data/eval-images/fetal-us-018-malignant.png",
+      "label": "malignant",
+      "sourceSplit": "unknown",
+      "sha256": "e0896807a3049d8425ab55c3632cdb6e2530dafc8a9a64ebfa7a4c7404d03a8d",
+      "bytes": 92873
+    },
+    {
+      "evalId": "fetal-us-019",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/malignant/929_2HC_Annotation.png",
+      "imagePath": "data/eval-images/fetal-us-019-malignant.png",
+      "label": "malignant",
+      "sourceSplit": "unknown",
+      "sha256": "2d88db7d5ae66f81cd245ff0c305f2967e9b2c176c0c36d7c635114b16a0eeb2",
+      "bytes": 3514
+    },
+    {
+      "evalId": "fetal-us-020",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/malignant/937_HC_Annotation.png",
+      "imagePath": "data/eval-images/fetal-us-020-malignant.png",
+      "label": "malignant",
+      "sourceSplit": "unknown",
+      "sha256": "b8d6a3e43343556edae5b429209c4caf8b9a52b90075f9577e83b9c0550cf275",
+      "bytes": 3727
+    },
+    {
+      "evalId": "fetal-us-021",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/malignant/970_3HC_Annotation.png",
+      "imagePath": "data/eval-images/fetal-us-021-malignant.png",
+      "label": "malignant",
+      "sourceSplit": "unknown",
+      "sha256": "2fbbb5fa17ae270f331aadb12b6c5274c5b7bfdba03f2f80fcb010da0f6ed47c",
+      "bytes": 2635
+    },
+    {
+      "evalId": "fetal-us-022",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/OverlayedImages/malignant/434_HC.png",
+      "imagePath": "data/eval-images/fetal-us-022-malignant.png",
+      "label": "malignant",
+      "sourceSplit": "unknown",
+      "sha256": "77dba959ea0623409166ded62f5899805c3876dff0b55360c8182a15e980c4fa",
+      "bytes": 163778
+    },
+    {
+      "evalId": "fetal-us-023",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/OverlayedImages/malignant/514_HC_Annotation.png",
+      "imagePath": "data/eval-images/fetal-us-023-malignant.png",
+      "label": "malignant",
+      "sourceSplit": "unknown",
+      "sha256": "bad6ac87fc9e1ee940b78245df42a8cee4c147978fe0e854eeae74dc47b06df3",
+      "bytes": 3489
+    },
+    {
+      "evalId": "fetal-us-024",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/test/malignant/983_HC_Annotation.png",
+      "imagePath": "data/eval-images/fetal-us-024-malignant.png",
+      "label": "malignant",
+      "sourceSplit": "test",
+      "sha256": "9a00fbc2cba505a8b8f43632e0a9c017d3786fcd7c5327b75827d1d4e547d7c8",
+      "bytes": 3421
+    },
+    {
+      "evalId": "fetal-us-025",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/train/malignant/159_HC.png",
+      "imagePath": "data/eval-images/fetal-us-025-malignant.png",
+      "label": "malignant",
+      "sourceSplit": "train",
+      "sha256": "60422b323cdb5d7011ec480bc55e29a599b46c9ef67a57a35f87e595426543ec",
+      "bytes": 143583
+    },
+    {
+      "evalId": "fetal-us-026",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/validation/malignant/493_HC.png",
+      "imagePath": "data/eval-images/fetal-us-026-malignant.png",
+      "label": "malignant",
+      "sourceSplit": "validation",
+      "sha256": "cd0ccd93e15fed4192179e59960e952ee50a41c9dc96daea1941b05cf88e03e4",
+      "bytes": 122068
+    },
+    {
+      "evalId": "fetal-us-027",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/normal/16_HC.png",
+      "imagePath": "data/eval-images/fetal-us-027-normal.png",
+      "label": "normal",
+      "sourceSplit": "unknown",
+      "sha256": "34fcadce68d5927659885ea23797307a5ba476689123ee794d8df4ee8fbd8b51",
+      "bytes": 113803
+    },
+    {
+      "evalId": "fetal-us-028",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/normal/160_2HC.png",
+      "imagePath": "data/eval-images/fetal-us-028-normal.png",
+      "label": "normal",
+      "sourceSplit": "unknown",
+      "sha256": "98434e8f2c4c01bc2756d01974d70c280e795b77f31462485b450666a1c399b0",
+      "bytes": 103763
+    },
+    {
+      "evalId": "fetal-us-029",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/normal/202_2HC.png",
+      "imagePath": "data/eval-images/fetal-us-029-normal.png",
+      "label": "normal",
+      "sourceSplit": "unknown",
+      "sha256": "49500c09c1c2fc84f872d096bcc7219b1d6ee6f4f80e83b350381ce41aa51c59",
+      "bytes": 132606
+    },
+    {
+      "evalId": "fetal-us-030",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/normal/219_HC.png",
+      "imagePath": "data/eval-images/fetal-us-030-normal.png",
+      "label": "normal",
+      "sourceSplit": "unknown",
+      "sha256": "44c872a527229516dce2cc047859a74791ddc32df1f3403bb50b03cf36c8fa42",
+      "bytes": 162183
+    },
+    {
+      "evalId": "fetal-us-031",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/Datasets/normal/290_HC.png",
+      "imagePath": "data/eval-images/fetal-us-031-normal.png",
+      "label": "normal",
+      "sourceSplit": "unknown",
+      "sha256": "ae868517569d6fb164db3b392d333e96ee802166acff1eb0cfe32e828c0b9262",
+      "bytes": 130777
+    },
+    {
+      "evalId": "fetal-us-032",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/OverlayedImages/normal/134_HC.png",
+      "imagePath": "data/eval-images/fetal-us-032-normal.png",
+      "label": "normal",
+      "sourceSplit": "unknown",
+      "sha256": "c6d50e5d794d356c15fb8851cc7875ae2d6f50c0c873218f1395bbcaf131d944",
+      "bytes": 130708
+    },
+    {
+      "evalId": "fetal-us-033",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/OverlayedImages/normal/324_HC.png",
+      "imagePath": "data/eval-images/fetal-us-033-normal.png",
+      "label": "normal",
+      "sourceSplit": "unknown",
+      "sha256": "94878c34a7e6e0aa8db1542dd734618e7dd28a8744e01a2285c887f547f449c3",
+      "bytes": 127529
+    },
+    {
+      "evalId": "fetal-us-034",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/test/normal/110_HC.png",
+      "imagePath": "data/eval-images/fetal-us-034-normal.png",
+      "label": "normal",
+      "sourceSplit": "test",
+      "sha256": "d0724c7f14f6c8ba898eff81972510fc003774bb36c83fd484deed8b6ac5fa4d",
+      "bytes": 130994
+    },
+    {
+      "evalId": "fetal-us-035",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/test/normal/277_HC.png",
+      "imagePath": "data/eval-images/fetal-us-035-normal.png",
+      "label": "normal",
+      "sourceSplit": "test",
+      "sha256": "b282c84db366de37e2842a6526f168c9b00d823928e1005b469650f2bb7b687a",
+      "bytes": 138058
+    },
+    {
+      "evalId": "fetal-us-036",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/test/normal/324_HC.png",
+      "imagePath": "data/eval-images/fetal-us-036-normal.png",
+      "label": "normal",
+      "sourceSplit": "test",
+      "sha256": "94878c34a7e6e0aa8db1542dd734618e7dd28a8744e01a2285c887f547f449c3",
+      "bytes": 127529
+    },
+    {
+      "evalId": "fetal-us-037",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/train/normal/11_HC.png",
+      "imagePath": "data/eval-images/fetal-us-037-normal.png",
+      "label": "normal",
+      "sourceSplit": "train",
+      "sha256": "5f8615b381b7dab59a10ae6a0ee373524cd8b9af74553a3f735a94c2d8181cc4",
+      "bytes": 139206
+    },
+    {
+      "evalId": "fetal-us-038",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/train/normal/30_HC.png",
+      "imagePath": "data/eval-images/fetal-us-038-normal.png",
+      "label": "normal",
+      "sourceSplit": "train",
+      "sha256": "506b4a15bd92e62b7523a471f11f3d3f54a6527c832c48dec6b25d8ba890912e",
+      "bytes": 146711
+    },
+    {
+      "evalId": "fetal-us-039",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/train/normal/82_HC.png",
+      "imagePath": "data/eval-images/fetal-us-039-normal.png",
+      "label": "normal",
+      "sourceSplit": "train",
+      "sha256": "7b737b224a84efe57246f7b606fe16ec385af7ff8ac05394e89be4e0b3a09d0e",
+      "bytes": 153252
+    },
+    {
+      "evalId": "fetal-us-040",
+      "datasetId": "yrzzw9m6kk",
+      "datasetVersion": "2",
+      "sourceRelativePath": "Ultrasound Fetus Dataset/Datasets/Datasets/train/normal/90_HC.png",
+      "imagePath": "data/eval-images/fetal-us-040-normal.png",
+      "label": "normal",
+      "sourceSplit": "train",
+      "sha256": "6b94320f3279843185d0737f167b6b31f31bf320c2194823a458eaf2b7e7042e",
+      "bytes": 132228
+    }
+  ]
+}
